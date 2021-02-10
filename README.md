@@ -2,6 +2,9 @@
 
 赤司研内でphyvacを開発するためのrepositoryです
 
+頑張りましょう！
+=======
+
 ### 次回：2月19日10時~  
 #### APIドキュメント  
 沈君：Valve, Pump, CoolingTower  
@@ -21,3 +24,4 @@ AHP×1, AHU_simpleのドキュメント：野村さん
 松浪さん：蓄電池のモジュール  
 main_sample作成  
 小暮君：DHCモデル化  
+
