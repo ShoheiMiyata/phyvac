@@ -159,7 +159,7 @@ class Pump:
 
 
 # 空冷ヒートポンプ
-class RR:
+class AirSourceHeatPump:
     # 定格値の入力
     def __init__(self, tin_ch_d=12, tout_ch_d=7, g_ch_d=0.215, kr_ch=13.9, signal_hp=1):  # cooling mode
     # def __init__(self, tin_ch_d=40, tout_ch_d=45, g_ch_d=0.172, kr_ch=13.9, signal_hp=2):  # heating mode
