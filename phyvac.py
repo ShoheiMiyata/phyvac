@@ -128,7 +128,7 @@ class Pump:
             self.flag = 0
         
         
-# 負荷率-COP曲線に基づく冷凍機COP計算。
+# 負荷率-COP曲線に基づく冷凍機COP計算。表は左から右、上から下に負荷率や冷却水入口温度が上昇しなければならない。
 class Chiller:
     # 定格値の入力
     def __init__(self, spec_table=pd.read_csv("chiller_spec_table.csv",encoding="SHIFT-JIS",header=None)):
@@ -181,6 +181,7 @@ class Chiller:
         
     # 機器特性表に基づく冷凍機COPの算出
     def cal(self,tout_ch_sv, tin_ch, g_ch, tin_cd, g_cd):
+        self.flag = 0
         self.tout_ch_sv = tout_ch_sv
         self.tin_ch = tin_ch
         self.g_ch = g_ch
@@ -190,23 +191,38 @@ class Chiller:
         self.tout_ch = self.tout_ch_sv
         # 冷凍熱量[kW]
         self.q_ch = (self.tin_ch - self.tout_ch)*self.g_ch*1000*4.186/60
-        # print(self.q_ch, self.g_cd)
-        if self.q_ch > 0 and self.g_cd > 0:
-            # 部分負荷率
-            self.lf = self.q_ch / self.q_ch_d
-            if self.lf > 1.0:
-                self.lf = 1.0
-                self.tout_ch += (self.q_ch - self.q_ch_d)/(self.g_ch*1000*4.186/60)
-                self.q_ch = self.q_ch_d
 
-            elif self.lf < 0.1:
-                self.lf = 0.1
-            
+        if self.q_ch > 0 and self.g_cd > 0:
+             
             lf = self.data[0][1:].astype(np.float32)
             temp = self.data.transpose()[0][1:].astype(np.float32)
             dataset = self.data[1:].transpose()[1:].transpose().astype(np.float32)
             cop = RegularGridInterpolator((temp, lf), dataset)
-            self.cop = float(cop([[self.tin_cd, self.lf]]))
+            
+            # 部分負荷率
+            self.lf = self.q_ch / self.q_ch_d
+            lf_cop = self.lf
+            if self.lf > lf[-1]:
+                self.lf = lf[-1]
+                lf_cop = self.lf
+                self.tout_ch += (self.q_ch - self.q_ch_d)/(self.g_ch*1000*4.186/60)
+                self.q_ch = self.q_ch_d
+                self.flag = 1
+
+            elif self.lf < lf[0]:
+                lf_cop = lf[-1]
+                self.flag = 2
+            
+            tin_cd_cop = self.tin_cd-(self.tout_ch-self.tout_ch_d)
+            
+            if tin_cd_cop < temp[0]:
+                tin_cd_cop = temp[0]
+                self.flag = 3
+            elif tin_cd_cop > temp[-1]:
+                tin_cd_cop = temp[-1]
+                self.flag = 4
+
+            self.cop = float(cop([[tin_cd_cop, lf_cop]]))
             self.pw = self.q_ch / self.cop + self.pw_sub
             self.tout_cd = (self.q_ch + self.pw)/(4.186*self.g_cd*1000/60) + self.tin_cd
             
@@ -220,7 +236,7 @@ class Chiller:
             self.pw = 0
             self.cop = 0
             # self.tout_cd = self.tin_cd
-            self.flag = 1
+            self.flag = 5
         
         self.dp_ch = -self.kr_ch*g_ch**2
         self.dp_cd = -self.kr_cd*g_cd**2
