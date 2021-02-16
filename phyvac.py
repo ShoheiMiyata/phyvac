@@ -562,7 +562,7 @@ class PID:
         self.a_min = a_min
         self.kp = kp
         self.ti = ti
-        self.flag = np.zeros(t_reset)
+        self.flag_reset = np.zeros(t_reset)
         self.kg = kg
         self.sig = sig
         self.t_step = t_step
@@ -595,19 +595,19 @@ class PID:
                     self.a = self.a_min
                     
                 # 積分時間リセット
-                t_reset = self.flag.size
+                t_reset = self.flag_reset.size
                 for ii in range(t_reset - 1, 0, -1):
-                    self.flag[ii] = self.flag[ii - 1]
+                    self.flag_reset[ii] = self.flag_reset[ii - 1]
                 if sv - mv > 0:
-                    self.flag[0] = 1
+                    self.flag_reset[0] = 1
                 elif sv - mv < 0:
-                    self.flag[0] = -1
+                    self.flag_reset[0] = -1
                 else:
-                    self.flag[0] = 0
+                    self.flag_reset[0] = 0
             
-                if all(i == 1 for i in self.flag) == True or all(i == -1 for i in self.flag) == True:
+                if all(i == 1 for i in self.flag_reset) == True or all(i == -1 for i in self.flag_reset) == True:
                     self.sig = 0
-                    self.flag = np.zeros(t_reset)
+                    self.flag_reset = np.zeros(t_reset)
             
             
         elif self.mode == 0:
@@ -615,8 +615,120 @@ class PID:
             
         return self.a
 
+# バイパス弁を有するポンプについて、バイパス弁の開閉判断とPI制御を行う
+class PumpWithBypassValve: # コンポジションというpython文法を使う
+    def __init__(self, pump_pid, valve_pid, t_wait=15):
+        # pump_pid      :ポンプのPID制御
+        # valve_pid     :バイパス弁のPID制御
+        # t_wait        :バイパス弁開閉切り替えの効果待ち時間[min]
+        # a_min         :バイパス弁開閉判定の閾値として利用する
+        # flag_switch   :バイパス弁開閉判定のための配列
+        # switch        :0=ポンプのみ、1=バイパス弁開
+        self.pump_pid = pump_pid
+        self.valve_pid = valve_pid
+        self.t_wait = t_wait
+        self.flag_switch = np.zeros(self.t_wait)
+        self.switch = 0
+        self.sv = 0
+        self.mv = 0
+        
+    def control(self, sv, mv):
+        self.sv = sv
+        self.mv = mv
+        
+        for i in range(self.t_wait - 1, 0, -1):
+            self.flag_switch[i] = self.flag_switch[i-1]
+        # switch判定 pump_pid.aには前時刻の値が残っている
+        if self.switch == 0 and self.pump_pid.a == self.pump_pid.a_min:
+            self.flag_switch[0] = 1
+        elif self.switch == 0:
+            self.flag_switch[0] = 0
+        elif self.switch == 1 and self.valve_pid.a == self.valve_pid.a_min:
+            self.flag_switch[0] = 0
+        elif self.switch == 1:
+            self.flag_switch[0] = 1
+                
+        
+        if self.switch == 1 and all(i == 0 for i in self.flag_switch):
+            self.switch = 0
+            self.valve_pid.sig = 0　#切り替わる際に積分リセット（安定性向上のため）
+            self.pump_pid.sig = 0
+        elif self.switch == 0 and all(i == 1 for i in self.flag_switch):
+            self.switch = 1
+            self.valve_pid.sig = 0
+            self.pump_pid.sig = 0
+            
+        if self.switch == 0:
+            self.valve_pid.a = 0
+            self.pump_pid.mode = 1
+            self.pump_pid.control(sv=self.sv,mv=self.mv)
+        
+        elif  self.switch == 1:
+            self.valve_pid.control(sv=self.sv,mv=self.mv)
+            self.pump_pid.mode = 1
+            self.pump_pid.a = self.pump_pid.a_min
+        
+        return [self.pump_pid.a, self.valve_pid.a]
+
+# 冷却塔バイパス弁といった、ポンプとは別の制御目標値を持っているバイパス弁の開閉判定とPI制御。
+class BypassValve: # コンポジションというpython文法を使う
+    def __init__(self, valve_pid, t_wait=15, mode=0):
+        # valve_pid     :バイパス弁のPID制御
+        # t_wait        :バイパス弁開閉切り替えの効果待ち時間[min]
+        # mv_min, max   :バイパス弁の開閉判定の閾値
+        # mode          :0=mvが小さくなったらバイパス弁開、1=mvが大きくなったらバイパス弁開
+        # switch        :0=バイパス弁閉、1=バイパス弁開
+        self.valve_pid = valve_pid
+        self.t_wait = t_wait
+        self.flag_switch = np.zeros(self.t_wait)
+        self.mode = mode
+        self.thre = 0
+        self.switch = 0
+        
+    def control(self, sv, mv, thre):
+        self.sv = sv
+        self.mv = mv
+        self.thre = thre
+        
+        # switch判定 valve_pid.aには前時刻の値が残っている   
+        for i in range(self.t_wait - 1, 0, -1):
+            self.flag_switch[i] = self.flag_switch[i-1]
+        if self.mode == 0:
+            if self.switch == 0 and self.mv <= self.thre:
+                self.flag_switch[0] = 1
+            elif self.switch == 0:
+                self.flag_switch[0] = 0
+            elif self.switch == 1 and self.valve_pid.a == self.valve_pid.a_min:
+                self.flag_switch[0] = 0
+            elif self.switch == 1:
+                self.flag_switch[0] = 1
+        elif self.mode == 1:
+            if self.switch == 0 and self.mv >= self.thre:
+                self.flag_switch[0] = 1
+            elif self.switch == 0:
+                self.flag_switch[0] = 0
+            elif self.switch == 1 and self.valve_pid.a == self.valve_pid.a_min:
+                self.flag_switch[0] = 0
+            elif self.switch == 1:
+                self.flag_switch[0] = 1
+        
+        if self.switch == 1 and all(i == 0 for i in self.flag_switch):
+            self.switch = 0
+            self.valve_pid.sig = 0 #切り替わる際に積分リセット（安定性向上のため）
+        elif self.switch == 0 and all(i == 1 for i in self.flag_switch):
+            self.switch = 1
+            self.valve_pid.sig = 0
+            
+        if self.switch == 0:
+            self.valve_pid.a = 0
+        
+        elif  self.switch == 1:
+            self.valve_pid.control(sv=self.sv,mv=self.mv)
+       
+        return self.valve_pid.a
+
 # 増減段閾値と効果待ち時間を有する台数制御   
-class Unit_Num:
+class UnitNum:
     def __init__(self, thre_up=[0.5,1.0], thre_down=[0.4,0.9], t_wait=15):
         # thre_up_g     :増段閾値(1->2, 2->3といった時の値。型は配列またはリストとする) thre: threshold, g: 流量, q: 熱量
         # thre_down_q   :減段閾値(2->1, 3->2といった時の値。型は配列またはリストとする)
@@ -628,7 +740,7 @@ class Unit_Num:
         self.thre_down = thre_down
         self.t_wait = t_wait
         self.num = 1
-        self.flag = np.zeros(t_wait)
+        self.flag_switch = np.zeros(t_wait)
         self.g = 0      
             
     def control(self, g):
@@ -636,37 +748,37 @@ class Unit_Num:
         num_max = len(self.thre_up)+1
         
         for i in range(self.t_wait - 1, 0, -1):
-            self.flag[i] = self.flag[i-1]
+            self.flag_switch[i] = self.flag_switch[i-1]
           
         if self.num == num_max:
             if self.g < self.thre_down[self.num-2]:
-                self.flag[0] = self.num-1
+                self.flag_switch[0] = self.num-1
         elif self.num == 1:
             if self.g > self.thre_up[self.num-1]:
-                self.flag[0] = self.num+1
+                self.flag_switch[0] = self.num+1
                 
         elif self.g > self.thre_up[self.num-1]:
-            self.flag[0] = self.num+1
+            self.flag_switch[0] = self.num+1
         elif self.g < self.thre_down[self.num-2]:
-            self.flag[0] = self.num-1
+            self.flag_switch[0] = self.num-1
         else:
-            self.flag[0] = self.num
+            self.flag_switch[0] = self.num
             
-        if self.flag[0] < 1:
-            self.flag[0] = 1
-        elif self.flag[0] > num_max:
-            self.flag[0] = num_max
+        if self.flag_switch[0] < 1:
+            self.flag_switch[0] = 1
+        elif self.flag_switch[0] > num_max:
+            self.flag_switch[0] = num_max
         
             
-        if all(i > self.num for i in self.flag):
+        if all(i > self.num for i in self.flag_switch):
             self.num += 1
-        elif all(i < self.num for i in self.flag):
+        elif all(i < self.num for i in self.flag_switch):
             self.num -= 1
         
         return self.num
     
 # 冷凍機台数制御
-class Unit_Num_CC:
+class UnitNumChiller:
     def __init__(self, thre_up_g=[0.5,1.0], thre_down_g=[0.4,0.9], thre_up_q=[0.5,1.0], thre_down_q=[0.4,0.9],t_wait=15):
         # thre_up_g     :増段閾値(1->2, 2->3といった時の値。型は配列またはリストとする) thre: threshold, g: 流量, q: 熱量
         # thre_down_q   :減段閾値(2->1, 3->2といった時の値。型は配列またはリストとする)
@@ -680,7 +792,7 @@ class Unit_Num_CC:
         self.thre_down_q = thre_down_q
         self.t_wait = t_wait
         self.num = 1
-        self.flag = np.zeros(t_wait)
+        self.flag_switch = np.zeros(t_wait)
         self.g = 0      
             
     def control(self, g, q):
@@ -691,7 +803,7 @@ class Unit_Num_CC:
         flag_q = 0
         
         for i in range(self.t_wait - 1, 0, -1):
-            self.flag[i] = self.flag[i-1]
+            self.flag_switch[i] = self.flag_switch[i-1]
         
         # 熱量ベースの増減段指示
         if self.num == num_max:
@@ -719,15 +831,15 @@ class Unit_Num_CC:
         
         # 増減段指示
         if flag_g == 1 or flag_q == 1:
-            self.flag[0] = self.num+1
+            self.flag_switch[0] = self.num+1
         elif flag_g == -1 and flag_q == -1:
-            self.flag[0] = self.num-1
+            self.flag_switch[0] = self.num-1
         else:
-            self.flag[0] = self.num
+            self.flag_switch[0] = self.num
         
-        if all(i > self.num for i in self.flag):
+        if all(i > self.num for i in self.flag_switch):
             self.num += 1
-        elif all(i < self.num for i in self.flag):
+        elif all(i < self.num for i in self.flag_switch):
             self.num -= 1
         
         return self.num
@@ -775,7 +887,7 @@ class Branch00:
         return self.g     
 
 # 機器、バルブを有する枝
-class Branch01(): # コンポジションというpython文法を使う
+class Branch01: # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
     def __init__(self, valve, kr_eq=0.5, kr_pipe=0.5):
         # g         :枝の出入口流量[m3/min]
@@ -819,7 +931,7 @@ class Branch01(): # コンポジションというpython文法を使う
         
     
 # ポンプ・機器を有する枝   
-class Branch10(): # コンポジションというpython文法を使う
+class Branch10: # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
     def __init__(self, pump, kr_eq=0.8, kr_pipe=0.5):
         # pump      :ポンプのオブジェクト
@@ -861,7 +973,7 @@ class Branch10(): # コンポジションというpython文法を使う
             
 
 # 並列ポンプ複数台とバイパス弁を有する枝
-class Branch11(): # コンポジションというpython文法を使う
+class Branch11: # コンポジションというpython文法を使う
     def __init__(self, valve, pump, kr_pipe_pump=0.5, kr_pipe_valve=0.5):
         # pg            :ポンプ流量-圧損曲線係数
         # kr_pipe_pump  :ポンプ用管の圧損係数[kPa/(m3/min)^2]
@@ -915,7 +1027,7 @@ class Branch11(): # コンポジションというpython文法を使う
         return self.dp
         
 # ポンプ、機器、バイパス弁を有する枝
-class Branch12(): # コンポジションというpython文法を使う
+class Branch12: # コンポジションというpython文法を使う
     def __init__(self, valve, pump, kr_eq=0.5, kr_pipe=0.5, kr_pipe_bypass=0.5):
         # valve         :バルブのオブジェクト
         # pump          :ポンプのオブジェクト
