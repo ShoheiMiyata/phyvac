@@ -1,6 +1,6 @@
 # phyvac
 
-python+hvac => phyvac [fívæk]
+python+hvac => phyvac [fívæk][fáivæk]
 
 
 頑張りましょう！
