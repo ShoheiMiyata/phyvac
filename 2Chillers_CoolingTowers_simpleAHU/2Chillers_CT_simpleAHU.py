@@ -44,8 +44,8 @@ CP2 = pv.Pump(pg=[233.9,5.9578,-4.460], eg=[0.009964,0.4174,-0.0508])
 CP3 = pv.Pump(pg=[469.6,17.50,-12.39], eg=[0.01093,0.4411,-0.06426])
 CDP1 = pv.Pump(pg=[338.2,-2.499,-1.507], eg=[0.002915,0.2131,-0.01476])
 CDP2 = pv.Pump(pg=[338.2,-2.499,-1.507], eg=[0.002915,0.2131,-0.01476])
-TR1 = pv.CentrifugalChiller(kr_ch=23, kr_cd=1.5)
-TR2 = pv.CentrifugalChiller(kr_ch=23, kr_cd=1.5)
+TR1 = pv.Chiller(spec_table=pd.read_csv("chiller_spec_table.csv",encoding="SHIFT-JIS",header=None))
+TR2 = pv.Chiller(spec_table=pd.read_csv("chiller_spec_table.csv",encoding="SHIFT-JIS",header=None))
 CT = pv.CoolingTower(kr=2.0, ua=143000)
 
 # 枝の定義
@@ -92,12 +92,12 @@ def cal_num_TR_thre_q(TR_tin_cd):
     return [ll, hl]
 
 # 冷却水ポンプ流量設定値
-def cal_sv_CDP_g(t_wb,qf,wb_low=4,wb_high=26,g_wb_low0=0.3,g_wb_high0=0.375,g_wb_low100=0.8,g_wb_high100=1.0,sv_min=0.45):
-    # t_da:外気乾球温度, rh:外気相対湿度, qf:冷凍機負荷率
+def cal_sv_CDP_g(t_wb,lf,wb_low=4,wb_high=26,g_wb_low0=0.3,g_wb_high0=0.375,g_wb_low100=0.8,g_wb_high100=1.0,sv_min=0.45):
+    # t_da:外気乾球温度, rh:外気相対湿度, lf:冷凍機負荷率
     # wb_low:Lo側WB, wb_high:Hi側WB, g_wb_low0:負荷0%時WB_low流量比(0.0~1.0), g_wb_high0:負荷0%時WB_high流量比(0.0~1.0)
     # g_wb_low100:負荷100%時WB_low流量比(0.0~1.0), g_wb_high100:負荷100%時WB_high流量比(0.0~1.0)
-    y1 = qf*(g_wb_low100-g_wb_low0)+g_wb_low0
-    y2 = qf*(g_wb_high100-g_wb_high0)+g_wb_high0
+    y1 = lf*(g_wb_low100-g_wb_low0)+g_wb_low0
+    y2 = lf*(g_wb_high100-g_wb_high0)+g_wb_high0
     sv = y1 + (y2-y1)/(wb_high-wb_low)*(t_wb-wb_low)
     if sv > 1:
         sv = 1
@@ -147,7 +147,7 @@ for calstep in tqdm(range(24*60*(14))):
     if Unit_Num_TR.num == 1:
         CP1_g_sv = g_load*1.1
         CP2_g_sv = 0
-        CDP1_g_sv = cal_sv_CDP_g(t_wb=t_wb, qf=TR1.qf)*TR1.g_cd_d
+        CDP1_g_sv = cal_sv_CDP_g(t_wb=t_wb, lf=TR1.lf)*TR1.g_cd_d
         CDP2_g_sv = 0 
         CP1.inv = PID_CP1.control(sv=CP1_g_sv,mv=CP1.g)
         CP2.inv = 0
@@ -161,8 +161,8 @@ for calstep in tqdm(range(24*60*(14))):
     elif Unit_Num_TR.num == 2:
         CP1_g_sv = g_load*0.55
         CP2_g_sv = g_load*0.55
-        CDP1_g_sv = cal_sv_CDP_g(t_wb=t_wb, qf=TR1.qf)*TR1.g_cd_d
-        CDP2_g_sv = cal_sv_CDP_g(t_wb=t_wb, qf=TR2.qf)*TR2.g_cd_d
+        CDP1_g_sv = cal_sv_CDP_g(t_wb=t_wb, lf=TR1.lf)*TR1.g_cd_d
+        CDP2_g_sv = cal_sv_CDP_g(t_wb=t_wb, lf=TR2.lf)*TR2.g_cd_d
         CP1.inv = PID_CP1.control(sv=g_load*0.55,mv=CP1.g)
         CP2.inv = PID_CP2.control(sv=g_load*0.55,mv=CP2.g)
         CDP1.inv = PID_CDP1.control(sv=CDP1_g_sv, mv=CDP1.g)
