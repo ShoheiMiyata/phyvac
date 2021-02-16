@@ -10,6 +10,7 @@ import numpy as np
 
 # 1/25 冷却水温度低下で冷凍機が停止した際の制御ロジックは？
 # CP3バイパス弁制御の導入
+# 
 
 start = time.time()
 
@@ -64,13 +65,17 @@ PID_Bypass_Vlv = pv.PID(kp=0.06, ti=20)
 PID_CP1 = pv.PID(kp=0.001, ti=400, a_min=0.4)
 PID_CP2 = pv.PID(kp=0.02, ti=300, a_min=0.4)
 PID_CP3 = pv.PID(kp=0.002, ti=30, a_min=0.4)
+PID_Vlv_CP3 = pv.PID(kp=0.02, ti=200, kg=-1)
+Control_CP3_Vlv_CP3 = pv.PumpWithBypassValve(pump_pid=PID_CP3, valve_pid=PID_Vlv_CP3, t_wait=15)
 PID_CDP1 = pv.PID(kp=0.05, ti=200, a_min=0.4)
 PID_CDP2 = pv.PID(kp=0.05, ti=200, a_min=0.4)
-PID_CDP1_Vlv = pv.PID(kp=0.002, ti=200)
-PID_CDP2_Vlv = pv.PID(kp=0.002, ti=200)
+PID_CDP1_Vlv = pv.PID(kp=0.05, ti=100)
+PID_CDP2_Vlv = pv.PID(kp=0.05, ti=100)
+Control_CDP1_Vlv = pv.BypassValve(valve_pid=PID_CDP1_Vlv, t_wait=15, mode=0)
+Control_CDP2_Vlv = pv.BypassValve(valve_pid=PID_CDP2_Vlv, t_wait=15, mode=0)
 PID_CT = pv.PID(kp=0.005, ti=600, kg=-1)
-Unit_Num_TR = pv.Unit_Num_CC(thre_up_g=[3.145*0.8],thre_down_g=[3.145*0.6],thre_up_q=[2000],thre_down_q=[1600])
-Unit_Num_CP3 = pv.Unit_Num(thre_up=[1.0, 1.8],thre_down=[0.8, 1.6])
+Unit_Num_TR = pv.UnitNumChiller(thre_up_g=[3.145*0.8],thre_down_g=[3.145*0.6],thre_up_q=[2000],thre_down_q=[1600])
+Unit_Num_CP3 = pv.UnitNum(thre_up=[1.0, 1.8],thre_down=[0.8, 1.6])
 
 # 設定値演算式定義
 # 冷凍機台数制御閾値
@@ -115,7 +120,7 @@ def cal_sv_CT_tout(t_wb, dt_wb=4.0, sv_min=7.0):
         
     return sv
 
-
+# testdata = np.zeros((24*60*(14),5))
 # for calstep in tqdm(range(24*60*(365+6))):
 for calstep in tqdm(range(24*60*(14))):
 
@@ -141,9 +146,8 @@ for calstep in tqdm(range(24*60*(14))):
     # 制御
     Vlv_AHU.vlv = PID_AHU_Vlv.control(sv=g_load,mv=Vlv_AHU.g)
     Vlv_Bypass.vlv = 0.7    
-    CP3.inv = PID_CP3.control(sv=70,mv=-(Branch_ab.dp))
-    Vlv_CP3.vlv = 0
-    
+    [CP3.inv, Vlv_CP3.vlv] = Control_CP3_Vlv_CP3.control(sv=70,mv=-(Branch_ab.dp))
+
     if Unit_Num_TR.num == 1:
         CP1_g_sv = g_load*1.1
         CP2_g_sv = 0
@@ -153,11 +157,9 @@ for calstep in tqdm(range(24*60*(14))):
         CP2.inv = 0
         CDP1.inv = PID_CDP1.control(sv=CDP1_g_sv, mv=CDP1.g)
         CDP2.inv = 0
-        if TR1.tin_cd > TR1_tin_cd_ll:
-            Vlv_CDP1.vlv = 0
-        else:
-            Vlv_CDP1.vlv = PID_CDP1_Vlv.control(sv=TR1_tin_cd_ll, mv=TR1.tin_cd)
+        Vlv_CDP1.vlv = Control_CDP1_Vlv.control(sv=TR1_tin_cd_ll, mv=TR1.tin_cd, thre=TR1_tin_cd_ll)
         Vlv_CDP2.vlv = 0
+        
     elif Unit_Num_TR.num == 2:
         CP1_g_sv = g_load*0.55
         CP2_g_sv = g_load*0.55
@@ -167,17 +169,14 @@ for calstep in tqdm(range(24*60*(14))):
         CP2.inv = PID_CP2.control(sv=g_load*0.55,mv=CP2.g)
         CDP1.inv = PID_CDP1.control(sv=CDP1_g_sv, mv=CDP1.g)
         CDP2.inv = PID_CDP2.control(sv=CDP2_g_sv, mv=CDP2.g)
-        if TR1.tin_cd > TR1_tin_cd_ll:
-            Vlv_CDP1.vlv = 0
-        else:
-            Vlv_CDP1.vlv = PID_CDP1_Vlv.control(sv=TR1_tin_cd_ll, mv=TR1.tin_cd)
-            
-        if TR2.tin_cd > TR2_tin_cd_ll:
-            Vlv_CDP2.vlv = 0
-        else:
-            Vlv_CDP2.vlv = PID_CDP2_Vlv.control(sv=TR2_tin_cd_ll, mv=TR2.tin_cd)
+        Vlv_CDP1.vlv = Control_CDP1_Vlv.control(sv=TR1_tin_cd_ll, mv=TR1.tin_cd, thre=TR1_tin_cd_ll)
+        Vlv_CDP2.vlv = Control_CDP2_Vlv.control(sv=TR2_tin_cd_ll, mv=TR2.tin_cd, thre=TR2_tin_cd_ll)
 
     CT.inv = PID_CT.control(sv=CT_tout_sv,mv=CT.tout_w)
+    
+ 
+    # testdata[calstep,:] = np.array([[Vlv_CDP1.vlv, TR1_tin_cd_ll, TR1.tin_cd, Control_CDP1_Vlv.switch,PID_CDP1_Vlv.sig]])
+
     
     # 流量計算
     # 冷水系
