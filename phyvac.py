@@ -535,8 +535,164 @@ class AHU_simple:
     def f2p_co(self):
         return [0,0,-self.kr]
         
-        
+# 空冷ヒートポンプ
+class AirSourceHeatPump:
+    # 定格値の入力
+    def __init__(self, tin_ch_d=12, tout_ch_d=7, g_ch_d=0.116, kr_ch=13.9, signal_hp=1,
+                 coef=[[40.0, -6.2468, 15.891, -14.257, 4.2438, 2.3663],
+                       [35.0, -10.355, 26.218, -23.497, 7.516, 2.4734],
+                       [30.0, -9.3779, 24.859, -23.505, 7.8729, 2.9472],
+                       [25.0, -7.4934, 19.994, -18.946, 5.8718, 3.8933],
+                       [20.0, -6.5604, 17.853, -17.511, 5.4774, 4.6122],
+                       [15.0, -6.2842, 17.284, -17.138, 5.228, 5.4071]]):
+        # def __init__(self, tin_ch_d=40, tout_ch_d=45, g_ch_d=0.172, kr_ch=13.9, signal_hp=2,
+        #              coef= [[15.0, 0.3229, 0.6969, -2.8192, 2.0081, 2.8607], [7.0, 11.637, -24.052, 16.027, -3.7671, 2.8691],
+        #                     [5.0, 12.552, -22.918, 13.204, -2.5234, 2.601], [0.0, -3.2873, 3.2973, -2.2795, 1.2208, 2.0051],
+        #                     [-5.0, 9.563, -27.733, 21.397, -5.8191, 2.4375]]):
+        # tin        :入口水温[℃]
+        # tout       :出口水温[℃]
+        # g          :流量[m3/min]
+        # ch         :冷水(chilled water)
+        # d          :定格値
+        # sv         :現時刻の制御する要素の設定値(温度や圧力)
+        # pw         :消費電力[kW]
+        # pl         :部分負荷率(part-load ratio 0.0~1.0)
+        # kr         :圧力損失係数[kPa/(m3/min)**2]
+        # da         :外気乾球
+        # signal     :運転信号(1=cooling, 2=heating)
+        # COP = a * pl^4 + b * pl^3 + c * pl^2 + d^1 + e
+        # coef = [[t1, a_t1, b_t1, c_t1, d_t1, e_t1], ... , [tn, a_tn, b_tn, c_tn, d_tn, e_tn]]
+        # (a1_t1~e1_t1は、外気温t1のときのCOP曲線の係数、t1 >t2>...> tn, n>=3)
+        self.tin_ch_d = tin_ch_d
+        self.tout_ch_d = tout_ch_d
+        self.g_ch_d = g_ch_d
+        self.kr_ch = kr_ch
+        self.signal_hp = signal_hp
+        self.coef = coef
+        self.n = len(self.coef)
+        self.max_del_t = abs(self.tin_ch_d - self.tout_ch_d)  # 最大出入口温度差[℃]
+        # 以下、毎時刻変わる可能性のある値
+        self.tout_ch = 7
+        self.COP = 0
+        self.pw = 0
+        self.pl = 0
 
+    def cal(self, tin_ch, g_ch, t_da):
+        self.tin_ch = tin_ch
+        self.g_ch = g_ch
+        self.t_da = t_da
+
+        if self.signal_hp == 1:
+            if (self.g_ch > 0) and (self.tin_ch > self.tout_ch_d):
+                self.tout_ch = self.tout_ch_d
+                self.pl = (self.tin_ch - self.tout_ch) * self.g_ch / (self.max_del_t * self.g_ch_d)
+                if self.pl > 1:
+                    self.pl = 1
+                    self.tout_ch = self.tin_ch - self.max_del_t * self.g_ch_d / self.g_ch
+                elif self.pl < 0.2:
+                    self.pl = 0.2
+
+                if self.t_da >= self.coef[0][0]:
+                    self.COP = (self.coef[0][1] * self.pl ** 4 + self.coef[0][2] * self.pl ** 3 +
+                                self.coef[0][3] * self.pl ** 2 - self.coef[0][4] * self.pl + self.coef[0][5])
+                elif self.t_da < self.coef[self.n - 1][0]:
+                    self.COP = (self.coef[self.n - 1][1] * self.pl ** 4 + self.coef[self.n - 1][2] * self.pl ** 3 +
+                                self.coef[self.n - 1][3] * self.pl ** 2 + self.coef[self.n - 1][4] * self.pl ** 3 +
+                                self.coef[self.n - 1][5])
+                else:
+                    for i in range(1, self.n):  # 線形補間の上限・下限となる曲線を探す
+                        self.coef_a = self.coef[i - 1]
+                        self.coef_b = self.coef[i]
+                        if self.coef_b[0] <= self.t_da < self.coef_a[0]:
+                            break
+                    a = (self.coef_a[1] * self.pl ** 4 + self.coef_a[2] * self.pl ** 3 + self.coef_a[3] * self.pl ** 2 +
+                             self.coef_a[4] * self.pl + self.coef_a[5])
+                    b = (self.coef_b[1] * self.pl ** 4 + self.coef_b[2] * self.pl ** 3 + self.coef_b[3] * self.pl ** 2 +
+                             self.coef_b[4] * self.pl + self.coef_b[5])
+                    self.COP = (a - b) * (self.coef_a[0] - self.t_da) / (self.coef_a[0] - self.coef_b[0]) + b
+                # 消費電力の計算
+                self.pw = (self.tin_ch - self.tout_ch) * self.g_ch / 60 * pow(10, 3) * 4.186 / self.COP
+                if self.pw > 0:
+                    pass
+                else:
+                    self.pw = 0
+            else:
+                self.tout_ch = self.tin_ch
+                self.COP = 0
+                self.pw = 0
+                self.pl = 0
+
+        if self.signal_hp == 2:
+            if (self.g_ch > 0) and (self.tin_ch < self.tout_ch_d):
+                self.tout_ch = self.tout_ch_d
+                self.pl = (self.tout_ch - self.tin_ch) * self.g_ch / (self.max_del_t * self.g_ch_d)
+                if self.pl > 1:
+                    self.pl = 1
+                    self.tout_ch = self.tin_ch + self.max_del_t * self.g_ch_d / self.g_ch
+                elif self.pl < 0.2:
+                    self.pl = 0.2
+
+                if self.t_da >= self.coef[0][0]:
+                    self.COP = (self.coef[0][1] * self.pl ** 4 + self.coef[0][2] * self.pl ** 3 +
+                                self.coef[0][3] * self.pl ** 2 - self.coef[0][4] * self.pl + self.coef[0][5])
+                elif self.t_da < self.coef[self.n - 1][0]:
+                    self.COP = (self.coef[self.n - 1][1] * self.pl ** 4 + self.coef[self.n - 1][2] * self.pl ** 3 +
+                                self.coef[self.n - 1][3] * self.pl ** 2 + self.coef[self.n - 1][4] * self.pl ** 3 +
+                                self.coef[self.n - 1][5])
+                else:
+                    for i in range(1, self.n):  # 線形補間の上限・下限となる曲線を探す
+                        self.coef_a = self.coef[i - 1]  # higher limit curve
+                        self.coef_b = self.coef[i]  # lower limit curve
+                        if self.coef_b[0] <= self.t_da < self.coef_a[0]:
+                            break
+                    a = (self.coef_a[1] * self.pl ** 4 + self.coef_a[2] * self.pl ** 3 + self.coef_a[3] * self.pl ** 2 +
+                             self.coef_a[4] * self.pl + self.coef_a[5])
+                    b = (self.coef_b[1] * self.pl ** 4 + self.coef_b[2] * self.pl ** 3 + self.coef_b[3] * self.pl ** 2 +
+                             self.coef_b[4] * self.pl + self.coef_b[5])
+                    self.COP = (a - b) * (self.coef_a[0] - self.t_da) / (self.coef_a[0] - self.coef_b[0]) + b
+                # 消費電力の計算
+                self.pw = (self.tout_ch - self.tin_ch) * self.g_ch / 60 * pow(10, 3) * 4.178 / self.COP
+                if self.pw > 0:
+                    pass
+                else:
+                    self.pw = 0
+            else:
+                self.tout_ch = self.tin_ch
+                self.COP = 0
+                self.pw = 0
+                self.pl = 0
+
+        return self.tout_ch, self.COP, self.pw, self.pl
+    
+  
+class Damper():
+    def cal(self, g, damp,
+            coef=[[1.0,-0.00001944,0.018,0.18,-0.007], [0.8,0.0000864,0.036,0.132,0.0684],
+                 [0.6,0.001296,0.072,0.384,0.1001], [0.4,0.00108,0.36,-0.582,0.0662], [0.2,-0.0216,4.32,-5.34,0.2527]]):
+        # x     :ダンパ開度(0.0~1.0)
+        # dp    :圧力損失[Pa]
+        # g     :流量[m^3/min]
+        # dp = a * g^3 + b * g^2 + c * g + d
+        # coef = [[x1, a_x1, b_x1, c_x1, d_x1], ... , [xn, a_xn, b_xn, c_xn, d_xn]]  (x1 >x2 >...> xn)
+        self.g = g
+        self.damp = damp
+        self.coef = coef
+        n = len(self.coef)
+        if self.damp >= self.coef[0][0]:
+            self.dp = (self.coef[0][1] * self.g ** 3 + self.coef[0][2] * self.g ** 2 + self.coef[0][3] * self.g + self.coef[0][4])
+        elif self.damp < self.coef[n-1][0]:
+            self.dp = (self.coef[n-1][1] * self.g ** 3 + self.coef[n-1][2] * self.g ** 2 + self.coef[n-1][3] * self.g + self.coef[n-1][4])
+        else:
+            for i in range(1, n):    # 線形補間の上限・下限となる曲線を探す
+                self.hl = self.coef[i-1]  # higher limit curve
+                self.ll = self.coef[i]    # lower limit curve
+                if self.ll[0] <= self.damp < self.hl[0]:
+                    break
+            dp_h = (self.hl[1] * self.g ** 3 + self.hl[2] * self.g ** 2 + self.hl[3] * self.g + self.hl[4])
+            dp_l = (self.ll[1] * self.g ** 3 + self.ll[2] * self.g ** 2 + self.ll[3] * self.g + self.ll[4])
+            self.dp = (dp_h - dp_l) / (self.hl[0]-self.ll[0]) * (self.damp - self.ll[0]) + dp_l
+        return self.dp
+    
 
 # 制御関係モデル ###############################################################
 
