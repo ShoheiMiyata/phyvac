@@ -12,9 +12,13 @@ python+hvac => phyvac [fívək | fái-]
 小暮君：PID, Unit_Num  
 #### Engineering reference  
 野村さん：山本修論、IBEC報告書、張君修論、宮田博論から  
+#### モジュール  
+野村さん：ASHP, Damper  
+宮田：Chiller, PumpWithBypassValve, BypassValve  
 #### その他  
 宮田：流量計算解説  
 ### 次々回：3月上旬  
+Project Haystack, Brick Schemaに基づく変数名について議論  
 残りのモジュールのAPIドキュメント：沈君  
 AHP×1, AHU_simpleのドキュメント：野村さん  
 卒制システムのドキュメント：小暮君  
