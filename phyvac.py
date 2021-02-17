@@ -663,17 +663,18 @@ class AirSourceHeatPump:
                 self.pl = 0
 
         return self.tout_ch, self.COP, self.pw, self.pl
+
     
-  
+# ダンパ特性と圧力損失計算
 class Damper():
     def cal(self, g, damp,
             coef=[[1.0,-0.00001944,0.018,0.18,-0.007], [0.8,0.0000864,0.036,0.132,0.0684],
                  [0.6,0.001296,0.072,0.384,0.1001], [0.4,0.00108,0.36,-0.582,0.0662], [0.2,-0.0216,4.32,-5.34,0.2527]]):
-        # x     :ダンパ開度(0.0~1.0)
+        # damp  :ダンパ開度[0.0~1.0]
         # dp    :圧力損失[Pa]
         # g     :流量[m^3/min]
         # dp = a * g^3 + b * g^2 + c * g + d
-        # coef = [[x1, a_x1, b_x1, c_x1, d_x1], ... , [xn, a_xn, b_xn, c_xn, d_xn]]  (x1 >x2 >...> xn)
+        # coef = [[damp1, a_damp1, b_damp1, c_damp1, d_damp1], ... , [dampn, a_dampn, b_dampn, c_dampn, d_dampn]]  (x1 >...> xn, n>=3)
         self.g = g
         self.damp = damp
         self.coef = coef
