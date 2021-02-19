@@ -6,7 +6,7 @@ python+hvac => phyvac [fívək | fái-]
 頑張りましょう！
 =======
 
-### 次回：2月19日10時~  
+### 2月19日10時~  
 #### APIドキュメント  
 沈君：Valve, Pump, CoolingTower  
 小暮君：PID, Unit_Num  
@@ -15,16 +15,24 @@ python+hvac => phyvac [fívək | fái-]
 #### モジュール  
 野村さん：ASHP, Damper  
 宮田：Chiller, PumpWithBypassValve, BypassValve  
+
+### 次回：3月3日16:00~  
+Project Haystack, Brick Schemaに基づく変数名について議論  
+(各自一言ずつコメント)  
+#### APIドキュメント  
+沈君、小暮君：定めた形式(APIの記述、Google Colabの利用)に従ったものを紹介
+#### Engineering reference  
+野村さん：AHUとか    
+#### モジュール  
+野村さん：AHU追加など
+宮田：細かいところ
 #### その他  
 宮田：流量計算解説  
-### 次々回：3月上旬  
-Project Haystack, Brick Schemaに基づく変数名について議論  
-残りのモジュールのAPIドキュメント：沈君  
-AHP×1, AHU_simpleのドキュメント：野村さん  
-卒制システムのドキュメント：小暮君  
 ### 次々次回：3月下旬  
+サンプルコードの議論したい（簡単な派生システムを作ってみる）  
 モジュール開発  
 沈君：張君からもらったプログラムにあって、野村さんのプログラムにない部分  
+卒制システムのドキュメント：小暮君  
 野村さん：VAV制御の部分  
 松浪さん：蓄電池のモジュール  
 main_sample作成  
