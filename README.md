@@ -21,7 +21,7 @@ Project Haystack, Brick Schemaに基づく変数名について議論
 (各自一言ずつコメント)  
 #### APIドキュメント  
 定めた形式(APIの記述、Google Colabの利用)に従ったものを紹介  
-沈君：Valve, Pump, CoolingTower, (ASHP), Chiller 
+沈君：Valve, Pump, CoolingTower, (ASHP), Chiller  
 小暮君：PID, PumpWithBypassValve, BypassValve
 #### Engineering reference  
 野村さん：AHUとか    
