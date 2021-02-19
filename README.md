@@ -26,7 +26,7 @@ Project Haystack, Brick Schemaに基づく変数名について議論
 #### Engineering reference  
 野村さん：AHUとか    
 #### モジュール  
-野村さん：AHU追加など
+野村さん：AHU追加など  
 宮田：細かいところ
 #### その他  
 宮田：流量計算解説  
