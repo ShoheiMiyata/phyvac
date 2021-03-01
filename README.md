@@ -1,6 +1,7 @@
 # phyvac
 
-python+hvac => phyvac [fívək | fái-]
+python+hvac => phyvac [fívək | fái-]  
+他候補：pyhvac
 
 
 頑張りましょう！
@@ -39,5 +40,6 @@ Project Haystack, Brick Schemaに基づく変数名について議論
 松浪さん：蓄電池のモジュール  
 main_sample作成  
 小暮君：DHCモデル化  
+高君：室温計算をE+やTRNSYSと連成する方法について  
 ### python命名規則
 https://qiita.com/naomi7325/items/4eb1d2a40277361e898b
