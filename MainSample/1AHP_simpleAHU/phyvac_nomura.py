@@ -166,11 +166,13 @@ class AirSourceHeatPump:
                        [30.0, -9.3779, 24.859, -23.505, 7.8729, 2.9472],
                        [25.0, -7.4934, 19.994, -18.946, 5.8718, 3.8933],
                        [20.0, -6.5604, 17.853, -17.511, 5.4774, 4.6122],
-                       [15.0, -6.2842, 17.284, -17.138, 5.228, 5.4071]]):
+                       [15.0, -6.2842, 17.284, -17.138, 5.228, 5.4071]]):  # 冷房時
         # def __init__(self, tin_ch_d=40, tout_ch_d=45, g_ch_d=0.172, kr_ch=13.9, signal_hp=2,
-        #              coef= [[15.0, 0.3229, 0.6969, -2.8192, 2.0081, 2.8607], [7.0, 11.637, -24.052, 16.027, -3.7671, 2.8691],
-        #                     [5.0, 12.552, -22.918, 13.204, -2.5234, 2.601], [0.0, -3.2873, 3.2973, -2.2795, 1.2208, 2.0051],
-        #                     [-5.0, 9.563, -27.733, 21.397, -5.8191, 2.4375]]):
+        #              coef= [[15.0, 0.3229, 0.6969, -2.8192, 2.0081, 2.8607],
+        #              　　　  [7.0, 11.637, -24.052, 16.027, -3.7671, 2.8691],
+        #                     [5.0, 12.552, -22.918, 13.204, -2.5234, 2.601],
+        #                     [0.0, -3.2873, 3.2973, -2.2795, 1.2208, 2.0051],
+        #                     [-5.0, 9.563, -27.733, 21.397, -5.8191, 2.4375]]):  # 暖房時
         # tin        :入口水温[℃]
         # tout       :出口水温[℃]
         # g          :流量[m3/min]
@@ -178,13 +180,13 @@ class AirSourceHeatPump:
         # d          :定格値
         # sv         :現時刻の制御する要素の設定値(温度や圧力)
         # pw         :消費電力[kW]
-        # pl         :部分負荷率(part-load ratio 0.0~1.0)
+        # pl         :部分負荷率(0.0~1.0)  part-load ratio
         # kr         :圧力損失係数[kPa/(m3/min)**2]
         # da         :外気乾球
         # signal     :運転信号(1=cooling, 2=heating)
         # COP = a * pl^4 + b * pl^3 + c * pl^2 + d^1 + e
-        # coef = [[t1, a_t1, b_t1, c_t1, d_t1, e_t1], ... , [tn, a_tn, b_tn, c_tn, d_tn, e_tn]] 
-        # (a1_t1~e1_t1は、外気温t1のときのCOP曲線の係数、t1 >t2>...> tn, n>=3)
+        # coef = [[t1, a_t1, b_t1, c_t1, d_t1, e_t1], ... , [tn, a_tn, b_tn, c_tn, d_tn, e_tn]]
+        # (a1_t1~e1_t1は、外気温t1のときのCOP曲線の4次～0次の係数、t1 >t2>...> tn, n>=3)
         self.tin_ch_d = tin_ch_d
         self.tout_ch_d = tout_ch_d
         self.g_ch_d = g_ch_d
@@ -208,18 +210,19 @@ class AirSourceHeatPump:
             if (self.g_ch > 0) and (self.tin_ch > self.tout_ch_d):
                 self.tout_ch = self.tout_ch_d
                 self.pl = (self.tin_ch - self.tout_ch) * self.g_ch / (self.max_del_t * self.g_ch_d)
-                if self.pl > 1:
-                    self.pl = 1
+                pl = self.pl
+                if pl > 1:
+                    pl = 1
                     self.tout_ch = self.tin_ch - self.max_del_t * self.g_ch_d / self.g_ch
-                elif self.pl < 0.2:
-                    self.pl = 0.2
+                elif pl < 0.2:
+                    pl = 0.2
 
                 if self.t_da >= self.coef[0][0]:
-                    self.COP = (self.coef[0][1] * self.pl ** 4 + self.coef[0][2] * self.pl ** 3 +
-                                self.coef[0][3] * self.pl ** 2 - self.coef[0][4] * self.pl + self.coef[0][5])
+                    self.COP = (self.coef[0][1] * pl ** 4 + self.coef[0][2] * pl ** 3 +
+                                self.coef[0][3] * pl ** 2 - self.coef[0][4] * pl + self.coef[0][5])
                 elif self.t_da < self.coef[self.n - 1][0]:
-                    self.COP = (self.coef[self.n - 1][1] * self.pl ** 4 + self.coef[self.n - 1][2] * self.pl ** 3 +
-                                self.coef[self.n - 1][3] * self.pl ** 2 + self.coef[self.n - 1][4] * self.pl ** 3 +
+                    self.COP = (self.coef[self.n - 1][1] * pl ** 4 + self.coef[self.n - 1][2] * pl ** 3 +
+                                self.coef[self.n - 1][3] * pl ** 2 + self.coef[self.n - 1][4] * pl ** 3 +
                                 self.coef[self.n - 1][5])
                 else:
                     for i in range(1, self.n):  # 線形補間の上限・下限となる曲線を探す
@@ -227,15 +230,15 @@ class AirSourceHeatPump:
                         self.coef_b = self.coef[i]
                         if self.coef_b[0] <= self.t_da < self.coef_a[0]:
                             break
-                    a = (self.coef_a[1] * self.pl ** 4 + self.coef_a[2] * self.pl ** 3 + self.coef_a[3] * self.pl ** 2 +
-                             self.coef_a[4] * self.pl + self.coef_a[5])
-                    b = (self.coef_b[1] * self.pl ** 4 + self.coef_b[2] * self.pl ** 3 + self.coef_b[3] * self.pl ** 2 +
-                             self.coef_b[4] * self.pl + self.coef_b[5])
+                    a = (self.coef_a[1] * pl ** 4 + self.coef_a[2] * pl ** 3 + self.coef_a[3] * pl ** 2 +
+                             self.coef_a[4] * pl + self.coef_a[5])
+                    b = (self.coef_b[1] * pl ** 4 + self.coef_b[2] * pl ** 3 + self.coef_b[3] * pl ** 2 +
+                             self.coef_b[4] * pl + self.coef_b[5])
                     self.COP = (a - b) * (self.coef_a[0] - self.t_da) / (self.coef_a[0] - self.coef_b[0]) + b
                 # 消費電力の計算
-                self.pw = (self.tin_ch - self.tout_ch) * self.g_ch / 60 * pow(10, 3) * 4.186 / self.COP
-                if self.pw > 0:
-                    pass
+                pw = (self.tin_ch - self.tout_ch) * self.g_ch / 60 * pow(10, 3) * 4.186 / self.COP
+                if pw > 0:
+                    self.pw = pw
                 else:
                     self.pw = 0
             else:
@@ -248,18 +251,19 @@ class AirSourceHeatPump:
             if (self.g_ch > 0) and (self.tin_ch < self.tout_ch_d):
                 self.tout_ch = self.tout_ch_d
                 self.pl = (self.tout_ch - self.tin_ch) * self.g_ch / (self.max_del_t * self.g_ch_d)
-                if self.pl > 1:
-                    self.pl = 1
+                pl = self.pl
+                if pl > 1:
+                    pl = 1
                     self.tout_ch = self.tin_ch + self.max_del_t * self.g_ch_d / self.g_ch
-                elif self.pl < 0.2:
-                    self.pl = 0.2
+                elif pl < 0.2:
+                    pl = 0.2
 
                 if self.t_da >= self.coef[0][0]:
-                    self.COP = (self.coef[0][1] * self.pl ** 4 + self.coef[0][2] * self.pl ** 3 +
-                                self.coef[0][3] * self.pl ** 2 - self.coef[0][4] * self.pl + self.coef[0][5])
+                    self.COP = (self.coef[0][1] * pl ** 4 + self.coef[0][2] * pl ** 3 +
+                                self.coef[0][3] * pl ** 2 - self.coef[0][4] * pl + self.coef[0][5])
                 elif self.t_da < self.coef[self.n - 1][0]:
-                    self.COP = (self.coef[self.n - 1][1] * self.pl ** 4 + self.coef[self.n - 1][2] * self.pl ** 3 +
-                                self.coef[self.n - 1][3] * self.pl ** 2 + self.coef[self.n - 1][4] * self.pl ** 3 +
+                    self.COP = (self.coef[self.n - 1][1] * pl ** 4 + self.coef[self.n - 1][2] * pl ** 3 +
+                                self.coef[self.n - 1][3] * pl ** 2 + self.coef[self.n - 1][4] * pl ** 3 +
                                 self.coef[self.n - 1][5])
                 else:
                     for i in range(1, self.n):  # 線形補間の上限・下限となる曲線を探す
@@ -267,15 +271,15 @@ class AirSourceHeatPump:
                         self.coef_b = self.coef[i]  # lower limit curve
                         if self.coef_b[0] <= self.t_da < self.coef_a[0]:
                             break
-                    a = (self.coef_a[1] * self.pl ** 4 + self.coef_a[2] * self.pl ** 3 + self.coef_a[3] * self.pl ** 2 +
-                             self.coef_a[4] * self.pl + self.coef_a[5])
-                    b = (self.coef_b[1] * self.pl ** 4 + self.coef_b[2] * self.pl ** 3 + self.coef_b[3] * self.pl ** 2 +
-                             self.coef_b[4] * self.pl + self.coef_b[5])
+                    a = (self.coef_a[1] * pl ** 4 + self.coef_a[2] * pl ** 3 + self.coef_a[3] * pl ** 2 +
+                             self.coef_a[4] * pl + self.coef_a[5])
+                    b = (self.coef_b[1] * pl ** 4 + self.coef_b[2] * pl ** 3 + self.coef_b[3] * pl ** 2 +
+                             self.coef_b[4] * pl + self.coef_b[5])
                     self.COP = (a - b) * (self.coef_a[0] - self.t_da) / (self.coef_a[0] - self.coef_b[0]) + b
                 # 消費電力の計算
-                self.pw = (self.tout_ch - self.tin_ch) * self.g_ch / 60 * pow(10, 3) * 4.178 / self.COP
-                if self.pw > 0:
-                    pass
+                pw = (self.tout_ch - self.tin_ch) * self.g_ch / 60 * pow(10, 3) * 4.178 / self.COP
+                if pw > 0:
+                    self.pw = pw
                 else:
                     self.pw = 0
             else:
