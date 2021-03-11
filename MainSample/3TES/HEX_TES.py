@@ -1,23 +1,16 @@
+import math
 
-
-
+# 水・水熱交換器
 
 class Water_to_water():
-    # flowrate_high [m**3/min]
-    # flowrate_low [m**3/min]
-    # t_water_inlet_high
-    # t_water_inlet_low
-    # t_water_outlet_high
-    # t_water_outlet_low
-    # area_ex
-    # MTD
+
     def __init__(self):
-        self.flowrate_high = 0
-        self.flowrate_low = 0
-        self.t_water_inlet_high = 0
-        self.t_water_inlet_low = 0
-        self.t_water_outlet_high = 0
-        self.t_water_outlet_low = 0
+        self.flowrate_high = 0  # 高温側の流速[m**3/min]
+        self.flowrate_low = 0  # 低温側の流速[m**3/min]
+        self.t_water_inlet_high = 0  # 高温側の入口温度
+        self.t_water_inlet_low = 0  # 低温側の入口温度
+        self.t_water_outlet_high = 0  # 高温側の出口温度
+        self.t_water_outlet_low = 0  # 低温側の出口温度
 
     def cal(self, flowrate_high, flowrate_low, t_water_inlet_high, t_water_inlet_low, t_water_outlet_high, t_water_outlet_low):
         # 熱交換率 k [kW/m**2k]
@@ -148,10 +141,6 @@ class Water_to_water():
                 flowrate_temp = flowrate_high
                 flowrate_high = flowrate_low
                 flowrate_low = flowrate_temp
+                
+        return flowrate_high, flowrate_low, t_water_inlet_high, t_water_inlet_low, t_water_outlet_high, t_water_outlet_low
 
-        self.flowrate_high = flowrate_high
-        self.flowrate_low = flowrate_low
-        self.t_water_inlet_high = t_water_inlet_high
-        self.t_water_inlet_low = t_water_inlet_low
-        self.t_water_outlet_high = t_water_outlet_high
-        self.t_water_outlet_low = t_water_outlet_low
