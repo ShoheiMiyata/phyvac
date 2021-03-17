@@ -125,13 +125,14 @@ class Pump:
         
         else:
             self.pw = 0.0
+            self.ef = 0
             self.flag = 0
         
         
 # 負荷率-COP曲線に基づく冷凍機COP計算。表は左から右、上から下に負荷率や冷却水入口温度が上昇しなければならない。
 class Chiller:
     # 定格値の入力
-    def __init__(self, spec_table=pd.read_csv("chiller_spec_table.csv",encoding="SHIFT-JIS",header=None)):
+    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='Chiller',encoding="SHIFT-JIS",header=None)):
         # tin   :入口温度[℃]
         # tout  :出口温度[℃]
         # g     :流量[m3/min]
@@ -140,7 +141,7 @@ class Chiller:
         # cd    :冷却水(condenser water)
         # d     :定格値
         # pw    :消費電力[kW]  
-        # lf    :部分負荷率(load factor, 0.0~1.0)
+        # pl    :部分負荷率(load factor, 0.0~1.0)
         # kr_ch :蒸発器圧力損失係数[kPa/(m3/min)**2]
         # kr_cd :凝縮器圧力損失係数[kPa/(m3/min)**2]
         # dp    :機器による圧力損失[kPa]
@@ -173,10 +174,10 @@ class Chiller:
         self.tin_cd = 15
         self.tin_ch = 7
         
-        lf_cop = spec_table.drop(spec_table.index[[0, 1, 2]])
-        lf_cop.iat[0,0] = '-'
-        lf_cop = lf_cop.dropna(how='all', axis=1)
-        self.data = lf_cop.values
+        pl_cop = spec_table.drop(spec_table.index[[0, 1, 2]])
+        pl_cop.iat[0,0] = '-'
+        pl_cop = pl_cop.dropna(how='all', axis=1)
+        self.data = pl_cop.values
 
         
     # 機器特性表に基づく冷凍機COPの算出
@@ -194,23 +195,23 @@ class Chiller:
 
         if self.q_ch > 0 and self.g_cd > 0:
              
-            lf = self.data[0][1:].astype(np.float32)
+            pl = self.data[0][1:].astype(np.float32)
             temp = self.data.transpose()[0][1:].astype(np.float32)
             dataset = self.data[1:].transpose()[1:].transpose().astype(np.float32)
-            cop = RegularGridInterpolator((temp, lf), dataset)
+            cop = RegularGridInterpolator((temp, pl), dataset)
             
             # 部分負荷率
-            self.lf = self.q_ch / self.q_ch_d
-            lf_cop = self.lf
-            if self.lf > lf[-1]:
-                self.lf = lf[-1]
-                lf_cop = self.lf
+            self.pl = self.q_ch / self.q_ch_d
+            pl_cop = self.pl
+            if self.pl > pl[-1]:
+                self.pl = pl[-1]
+                pl_cop = self.pl
                 self.tout_ch += (self.q_ch - self.q_ch_d)/(self.g_ch*1000*4.186/60)
                 self.q_ch = self.q_ch_d
                 self.flag = 1
 
-            elif self.lf < lf[0]:
-                lf_cop = lf[-1]
+            elif self.pl < pl[0]:
+                pl_cop = pl[-1]
                 self.flag = 2
             
             tin_cd_cop = self.tin_cd-(self.tout_ch-self.tout_ch_d)
@@ -222,7 +223,7 @@ class Chiller:
                 tin_cd_cop = temp[-1]
                 self.flag = 4
 
-            self.cop = float(cop([[tin_cd_cop, lf_cop]]))
+            self.cop = float(cop([[tin_cd_cop, pl_cop]]))
             self.pw = self.q_ch / self.cop + self.pw_sub
             self.tout_cd = (self.q_ch + self.pw)/(4.186*self.g_cd*1000/60) + self.tin_cd
             
@@ -230,17 +231,119 @@ class Chiller:
         elif self.q_ch == 0:
             self.pw = 0
             self.cop = 0
+            self.pl = 0
             # self.tout_cd = self.tin_cd
             self.flag = 0
         else:
             self.pw = 0
             self.cop = 0
+            self.pl = 0
             # self.tout_cd = self.tin_cd
             self.flag = 5
         
         self.dp_ch = -self.kr_ch*g_ch**2
         self.dp_cd = -self.kr_cd*g_cd**2
+    
+
+# 負荷率-COP曲線に基づく空冷HPのCOP計算。表は左から右、上から下に負荷率や冷却水入口温度が上昇しなければならない。
+# https://salamann.com/python-multi-dimension-data-interpolation
+class AirSourceHeatPump:
+    # 定格値の入力
+    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='AirSourceHeatPump',encoding="SHIFT-JIS",header=None)):
+        # tin   :入口温度[℃]
+        # tout  :出口温度[℃]
+        # g     :流量[m3/min]
+        # q     :熱量[kW]
+        # ch    :冷水（chilled water）
+        # d     :定格値
+        # pw    :消費電力[kW]  
+        # pl    :部分負荷率(load factor, 0.0~1.0)
+        # kr_ch :冷水圧力損失係数[kPa/(m3/min)**2]
+        # dp    :機器による圧力損失[kPa]
+        # tdb   :外気乾球温度['C]
+        self.tout_ch_d = float(spec_table.iat[1,0])
+        self.tin_ch_d = float(spec_table.iat[1,1])
+        self.g_ch_d = float(spec_table.iat[1,2])
+        # 定格冷凍容量[kW]
+        self.q_ch_d = (self.tin_ch_d - self.tout_ch_d)*self.g_ch_d*1000*4.186/60
+        # 定格主電動機入力[kW]
+        self.pw_d = float(spec_table.iat[1,3])
+        self.kr_ch = float(spec_table.iat[1,4])
+        # 補機電力[kW]
+        self.pw_sub = 0
+        # 定格冷凍機COP
+        self.COP_rp = self.q_ch_d / self.pw_d
+        # 以下、毎時刻変わる可能性のある値
+        self.tout_ch = 7
+        self.pw = 0
+        self.q_ch = 0
+        self.pl = 0 # 負荷率(0.0~1.0)
+        self.cop = 0
+        self.flag = 0 #問題があったら1,なかったら0
+        self.dp_ch = 0
+        self.tin_ch = 7
+        self.g_ch = 0
+        self.tin_ch = 15
+        self.tout_ch = 7
+        self.tout_ch_sv = 7
         
+        pl_cop = spec_table.drop(spec_table.index[[0, 1, 2]])
+        pl_cop.iat[0,0] = '-'
+        pl_cop = pl_cop.dropna(how='all', axis=1)
+        self.data = pl_cop.values
+
+        
+    # 機器特性表に基づく空冷HPのCOPの算出
+    def cal(self,tout_ch_sv, tin_ch, g_ch, tdb):
+        self.flag = 0
+        self.tout_ch_sv = tout_ch_sv
+        self.tin_ch = tin_ch
+        self.g_ch = g_ch
+        # 冷水出口温度[℃]
+        self.tout_ch = self.tout_ch_sv
+        # 冷凍熱量[kW]
+        self.q_ch = (self.tin_ch - self.tout_ch)*self.g_ch*1000*4.186/60
+
+        if self.q_ch > 0:
+             
+            pl = self.data[0][1:].astype(np.float32)
+            temp = self.data.transpose()[0][1:].astype(np.float32)
+            dataset = self.data[1:].transpose()[1:].transpose().astype(np.float32)
+            cop = RegularGridInterpolator((temp, pl), dataset)
+            
+            # 部分負荷率 現在は負荷率100%以上でも冷水出口温度は設定値が保たれるものとしている。
+            self.pl = self.q_ch / self.q_ch_d
+            pl_cop = self.pl
+            if self.pl > pl[-1]:
+                self.pl = pl[-1]
+                pl_cop = self.pl
+                self.tout_ch += (self.q_ch - self.q_ch_d)/(self.g_ch*1000*4.186/60)
+                self.q_ch = self.q_ch_d
+                self.flag = 1
+
+            elif self.pl < pl[0]:
+                pl_cop = pl[-1]
+                self.flag = 2
+        
+
+            self.cop = float(cop([[tdb, pl_cop]]))
+            self.pw = self.q_ch / self.cop + self.pw_sub
+            
+            
+        elif self.q_ch == 0:
+            self.pw = 0
+            self.cop = 0
+            self.pl = 0
+            self.flag = 0
+        else:
+            self.pw = 0
+            self.cop = 0
+            self.pl = 0
+            self.flag = 1
+        
+        self.dp_ch = -self.kr_ch*g_ch**2
+
+    
 
 # 露点温度の算出
 def dew_point_temperature(Tda, rh):
@@ -517,10 +620,15 @@ class AHU_simple:
         self.tin = tin
         self.q_load = q_load
         self.flag = 0
-        self.tout = tin + q_load / 4.184 / self.g
+        if self.g > 0:
+            self.tout = self.tin + q_load / 4.184 / self.g
+        else:
+            self.tout = self.tin
+            
         if self.tout > 25:
             self.tout = 25
             self.flag = 1
+            
         self.q = (self.tout - self.tin) * self.g * 4.184
         
         self.dp = -self.kr*self.g**2
@@ -535,134 +643,134 @@ class AHU_simple:
     def f2p_co(self):
         return [0,0,-self.kr]
         
-# 空冷ヒートポンプ
-class AirSourceHeatPump:
-    # 定格値の入力
-    def __init__(self, tin_ch_d=12, tout_ch_d=7, g_ch_d=0.116, kr_ch=13.9, signal_hp=1,
-                 coef=[[40.0, -6.2468, 15.891, -14.257, 4.2438, 2.3663],
-                       [35.0, -10.355, 26.218, -23.497, 7.516, 2.4734],
-                       [30.0, -9.3779, 24.859, -23.505, 7.8729, 2.9472],
-                       [25.0, -7.4934, 19.994, -18.946, 5.8718, 3.8933],
-                       [20.0, -6.5604, 17.853, -17.511, 5.4774, 4.6122],
-                       [15.0, -6.2842, 17.284, -17.138, 5.228, 5.4071]]):
-        # def __init__(self, tin_ch_d=40, tout_ch_d=45, g_ch_d=0.172, kr_ch=13.9, signal_hp=2,
-        #              coef= [[15.0, 0.3229, 0.6969, -2.8192, 2.0081, 2.8607], [7.0, 11.637, -24.052, 16.027, -3.7671, 2.8691],
-        #                     [5.0, 12.552, -22.918, 13.204, -2.5234, 2.601], [0.0, -3.2873, 3.2973, -2.2795, 1.2208, 2.0051],
-        #                     [-5.0, 9.563, -27.733, 21.397, -5.8191, 2.4375]]):
-        # tin        :入口水温[℃]
-        # tout       :出口水温[℃]
-        # g          :流量[m3/min]
-        # ch         :冷水(chilled water)
-        # d          :定格値
-        # sv         :現時刻の制御する要素の設定値(温度や圧力)
-        # pw         :消費電力[kW]
-        # pl         :部分負荷率(part-load ratio 0.0~1.0)
-        # kr         :圧力損失係数[kPa/(m3/min)**2]
-        # da         :外気乾球
-        # signal     :運転信号(1=cooling, 2=heating)
-        # COP = a * pl^4 + b * pl^3 + c * pl^2 + d^1 + e
-        # coef = [[t1, a_t1, b_t1, c_t1, d_t1, e_t1], ... , [tn, a_tn, b_tn, c_tn, d_tn, e_tn]]
-        # (a1_t1~e1_t1は、外気温t1のときのCOP曲線の係数、t1 >t2>...> tn, n>=3)
-        self.tin_ch_d = tin_ch_d
-        self.tout_ch_d = tout_ch_d
-        self.g_ch_d = g_ch_d
-        self.kr_ch = kr_ch
-        self.signal_hp = signal_hp
-        self.coef = coef
-        self.n = len(self.coef)
-        self.max_del_t = abs(self.tin_ch_d - self.tout_ch_d)  # 最大出入口温度差[℃]
-        # 以下、毎時刻変わる可能性のある値
-        self.tout_ch = 7
-        self.COP = 0
-        self.pw = 0
-        self.pl = 0
+# # 空冷ヒートポンプ
+# class AirSourceHeatPump:
+#     # 定格値の入力
+#     def __init__(self, tin_ch_d=12, tout_ch_d=7, g_ch_d=0.116, kr_ch=13.9, signal_hp=1,
+#                  coef=[[40.0, -6.2468, 15.891, -14.257, 4.2438, 2.3663],
+#                        [35.0, -10.355, 26.218, -23.497, 7.516, 2.4734],
+#                        [30.0, -9.3779, 24.859, -23.505, 7.8729, 2.9472],
+#                        [25.0, -7.4934, 19.994, -18.946, 5.8718, 3.8933],
+#                        [20.0, -6.5604, 17.853, -17.511, 5.4774, 4.6122],
+#                        [15.0, -6.2842, 17.284, -17.138, 5.228, 5.4071]]):
+#         # def __init__(self, tin_ch_d=40, tout_ch_d=45, g_ch_d=0.172, kr_ch=13.9, signal_hp=2,
+#         #              coef= [[15.0, 0.3229, 0.6969, -2.8192, 2.0081, 2.8607], [7.0, 11.637, -24.052, 16.027, -3.7671, 2.8691],
+#         #                     [5.0, 12.552, -22.918, 13.204, -2.5234, 2.601], [0.0, -3.2873, 3.2973, -2.2795, 1.2208, 2.0051],
+#         #                     [-5.0, 9.563, -27.733, 21.397, -5.8191, 2.4375]]):
+#         # tin        :入口水温[℃]
+#         # tout       :出口水温[℃]
+#         # g          :流量[m3/min]
+#         # ch         :冷水(chilled water)
+#         # d          :定格値
+#         # sv         :現時刻の制御する要素の設定値(温度や圧力)
+#         # pw         :消費電力[kW]
+#         # pl         :部分負荷率(part-load ratio 0.0~1.0)
+#         # kr         :圧力損失係数[kPa/(m3/min)**2]
+#         # da         :外気乾球
+#         # signal     :運転信号(1=cooling, 2=heating)
+#         # COP = a * pl^4 + b * pl^3 + c * pl^2 + d^1 + e
+#         # coef = [[t1, a_t1, b_t1, c_t1, d_t1, e_t1], ... , [tn, a_tn, b_tn, c_tn, d_tn, e_tn]]
+#         # (a1_t1~e1_t1は、外気温t1のときのCOP曲線の係数、t1 >t2>...> tn, n>=3)
+#         self.tin_ch_d = tin_ch_d
+#         self.tout_ch_d = tout_ch_d
+#         self.g_ch_d = g_ch_d
+#         self.kr_ch = kr_ch
+#         self.signal_hp = signal_hp
+#         self.coef = coef
+#         self.n = len(self.coef)
+#         self.max_del_t = abs(self.tin_ch_d - self.tout_ch_d)  # 最大出入口温度差[℃]
+#         # 以下、毎時刻変わる可能性のある値
+#         self.tout_ch = 7
+#         self.COP = 0
+#         self.pw = 0
+#         self.pl = 0
 
-    def cal(self, tin_ch, g_ch, t_da):
-        self.tin_ch = tin_ch
-        self.g_ch = g_ch
-        self.t_da = t_da
+#     def cal(self, tin_ch, g_ch, t_da):
+#         self.tin_ch = tin_ch
+#         self.g_ch = g_ch
+#         self.t_da = t_da
 
-        if self.signal_hp == 1:
-            if (self.g_ch > 0) and (self.tin_ch > self.tout_ch_d):
-                self.tout_ch = self.tout_ch_d
-                self.pl = (self.tin_ch - self.tout_ch) * self.g_ch / (self.max_del_t * self.g_ch_d)
-                if self.pl > 1:
-                    self.pl = 1
-                    self.tout_ch = self.tin_ch - self.max_del_t * self.g_ch_d / self.g_ch
-                elif self.pl < 0.2:
-                    self.pl = 0.2
+#         if self.signal_hp == 1:
+#             if (self.g_ch > 0) and (self.tin_ch > self.tout_ch_d):
+#                 self.tout_ch = self.tout_ch_d
+#                 self.pl = (self.tin_ch - self.tout_ch) * self.g_ch / (self.max_del_t * self.g_ch_d)
+#                 if self.pl > 1:
+#                     self.pl = 1
+#                     self.tout_ch = self.tin_ch - self.max_del_t * self.g_ch_d / self.g_ch
+#                 elif self.pl < 0.2:
+#                     self.pl = 0.2
 
-                if self.t_da >= self.coef[0][0]:
-                    self.COP = (self.coef[0][1] * self.pl ** 4 + self.coef[0][2] * self.pl ** 3 +
-                                self.coef[0][3] * self.pl ** 2 - self.coef[0][4] * self.pl + self.coef[0][5])
-                elif self.t_da < self.coef[self.n - 1][0]:
-                    self.COP = (self.coef[self.n - 1][1] * self.pl ** 4 + self.coef[self.n - 1][2] * self.pl ** 3 +
-                                self.coef[self.n - 1][3] * self.pl ** 2 + self.coef[self.n - 1][4] * self.pl ** 3 +
-                                self.coef[self.n - 1][5])
-                else:
-                    for i in range(1, self.n):  # 線形補間の上限・下限となる曲線を探す
-                        self.coef_a = self.coef[i - 1]
-                        self.coef_b = self.coef[i]
-                        if self.coef_b[0] <= self.t_da < self.coef_a[0]:
-                            break
-                    a = (self.coef_a[1] * self.pl ** 4 + self.coef_a[2] * self.pl ** 3 + self.coef_a[3] * self.pl ** 2 +
-                             self.coef_a[4] * self.pl + self.coef_a[5])
-                    b = (self.coef_b[1] * self.pl ** 4 + self.coef_b[2] * self.pl ** 3 + self.coef_b[3] * self.pl ** 2 +
-                             self.coef_b[4] * self.pl + self.coef_b[5])
-                    self.COP = (a - b) * (self.coef_a[0] - self.t_da) / (self.coef_a[0] - self.coef_b[0]) + b
-                # 消費電力の計算
-                self.pw = (self.tin_ch - self.tout_ch) * self.g_ch / 60 * pow(10, 3) * 4.186 / self.COP
-                if self.pw > 0:
-                    pass
-                else:
-                    self.pw = 0
-            else:
-                self.tout_ch = self.tin_ch
-                self.COP = 0
-                self.pw = 0
-                self.pl = 0
+#                 if self.t_da >= self.coef[0][0]:
+#                     self.COP = (self.coef[0][1] * self.pl ** 4 + self.coef[0][2] * self.pl ** 3 +
+#                                 self.coef[0][3] * self.pl ** 2 - self.coef[0][4] * self.pl + self.coef[0][5])
+#                 elif self.t_da < self.coef[self.n - 1][0]:
+#                     self.COP = (self.coef[self.n - 1][1] * self.pl ** 4 + self.coef[self.n - 1][2] * self.pl ** 3 +
+#                                 self.coef[self.n - 1][3] * self.pl ** 2 + self.coef[self.n - 1][4] * self.pl ** 3 +
+#                                 self.coef[self.n - 1][5])
+#                 else:
+#                     for i in range(1, self.n):  # 線形補間の上限・下限となる曲線を探す
+#                         self.coef_a = self.coef[i - 1]
+#                         self.coef_b = self.coef[i]
+#                         if self.coef_b[0] <= self.t_da < self.coef_a[0]:
+#                             break
+#                     a = (self.coef_a[1] * self.pl ** 4 + self.coef_a[2] * self.pl ** 3 + self.coef_a[3] * self.pl ** 2 +
+#                              self.coef_a[4] * self.pl + self.coef_a[5])
+#                     b = (self.coef_b[1] * self.pl ** 4 + self.coef_b[2] * self.pl ** 3 + self.coef_b[3] * self.pl ** 2 +
+#                              self.coef_b[4] * self.pl + self.coef_b[5])
+#                     self.COP = (a - b) * (self.coef_a[0] - self.t_da) / (self.coef_a[0] - self.coef_b[0]) + b
+#                 # 消費電力の計算
+#                 self.pw = (self.tin_ch - self.tout_ch) * self.g_ch / 60 * pow(10, 3) * 4.186 / self.COP
+#                 if self.pw > 0:
+#                     pass
+#                 else:
+#                     self.pw = 0
+#             else:
+#                 self.tout_ch = self.tin_ch
+#                 self.COP = 0
+#                 self.pw = 0
+#                 self.pl = 0
 
-        if self.signal_hp == 2:
-            if (self.g_ch > 0) and (self.tin_ch < self.tout_ch_d):
-                self.tout_ch = self.tout_ch_d
-                self.pl = (self.tout_ch - self.tin_ch) * self.g_ch / (self.max_del_t * self.g_ch_d)
-                if self.pl > 1:
-                    self.pl = 1
-                    self.tout_ch = self.tin_ch + self.max_del_t * self.g_ch_d / self.g_ch
-                elif self.pl < 0.2:
-                    self.pl = 0.2
+#         if self.signal_hp == 2:
+#             if (self.g_ch > 0) and (self.tin_ch < self.tout_ch_d):
+#                 self.tout_ch = self.tout_ch_d
+#                 self.pl = (self.tout_ch - self.tin_ch) * self.g_ch / (self.max_del_t * self.g_ch_d)
+#                 if self.pl > 1:
+#                     self.pl = 1
+#                     self.tout_ch = self.tin_ch + self.max_del_t * self.g_ch_d / self.g_ch
+#                 elif self.pl < 0.2:
+#                     self.pl = 0.2
 
-                if self.t_da >= self.coef[0][0]:
-                    self.COP = (self.coef[0][1] * self.pl ** 4 + self.coef[0][2] * self.pl ** 3 +
-                                self.coef[0][3] * self.pl ** 2 - self.coef[0][4] * self.pl + self.coef[0][5])
-                elif self.t_da < self.coef[self.n - 1][0]:
-                    self.COP = (self.coef[self.n - 1][1] * self.pl ** 4 + self.coef[self.n - 1][2] * self.pl ** 3 +
-                                self.coef[self.n - 1][3] * self.pl ** 2 + self.coef[self.n - 1][4] * self.pl ** 3 +
-                                self.coef[self.n - 1][5])
-                else:
-                    for i in range(1, self.n):  # 線形補間の上限・下限となる曲線を探す
-                        self.coef_a = self.coef[i - 1]  # higher limit curve
-                        self.coef_b = self.coef[i]  # lower limit curve
-                        if self.coef_b[0] <= self.t_da < self.coef_a[0]:
-                            break
-                    a = (self.coef_a[1] * self.pl ** 4 + self.coef_a[2] * self.pl ** 3 + self.coef_a[3] * self.pl ** 2 +
-                             self.coef_a[4] * self.pl + self.coef_a[5])
-                    b = (self.coef_b[1] * self.pl ** 4 + self.coef_b[2] * self.pl ** 3 + self.coef_b[3] * self.pl ** 2 +
-                             self.coef_b[4] * self.pl + self.coef_b[5])
-                    self.COP = (a - b) * (self.coef_a[0] - self.t_da) / (self.coef_a[0] - self.coef_b[0]) + b
-                # 消費電力の計算
-                self.pw = (self.tout_ch - self.tin_ch) * self.g_ch / 60 * pow(10, 3) * 4.178 / self.COP
-                if self.pw > 0:
-                    pass
-                else:
-                    self.pw = 0
-            else:
-                self.tout_ch = self.tin_ch
-                self.COP = 0
-                self.pw = 0
-                self.pl = 0
+#                 if self.t_da >= self.coef[0][0]:
+#                     self.COP = (self.coef[0][1] * self.pl ** 4 + self.coef[0][2] * self.pl ** 3 +
+#                                 self.coef[0][3] * self.pl ** 2 - self.coef[0][4] * self.pl + self.coef[0][5])
+#                 elif self.t_da < self.coef[self.n - 1][0]:
+#                     self.COP = (self.coef[self.n - 1][1] * self.pl ** 4 + self.coef[self.n - 1][2] * self.pl ** 3 +
+#                                 self.coef[self.n - 1][3] * self.pl ** 2 + self.coef[self.n - 1][4] * self.pl ** 3 +
+#                                 self.coef[self.n - 1][5])
+#                 else:
+#                     for i in range(1, self.n):  # 線形補間の上限・下限となる曲線を探す
+#                         self.coef_a = self.coef[i - 1]  # higher limit curve
+#                         self.coef_b = self.coef[i]  # lower limit curve
+#                         if self.coef_b[0] <= self.t_da < self.coef_a[0]:
+#                             break
+#                     a = (self.coef_a[1] * self.pl ** 4 + self.coef_a[2] * self.pl ** 3 + self.coef_a[3] * self.pl ** 2 +
+#                              self.coef_a[4] * self.pl + self.coef_a[5])
+#                     b = (self.coef_b[1] * self.pl ** 4 + self.coef_b[2] * self.pl ** 3 + self.coef_b[3] * self.pl ** 2 +
+#                              self.coef_b[4] * self.pl + self.coef_b[5])
+#                     self.COP = (a - b) * (self.coef_a[0] - self.t_da) / (self.coef_a[0] - self.coef_b[0]) + b
+#                 # 消費電力の計算
+#                 self.pw = (self.tout_ch - self.tin_ch) * self.g_ch / 60 * pow(10, 3) * 4.178 / self.COP
+#                 if self.pw > 0:
+#                     pass
+#                 else:
+#                     self.pw = 0
+#             else:
+#                 self.tout_ch = self.tin_ch
+#                 self.COP = 0
+#                 self.pw = 0
+#                 self.pl = 0
 
-        return self.tout_ch, self.COP, self.pw, self.pl
+#         return self.tout_ch, self.COP, self.pw, self.pl
 
     
 # ダンパ特性と圧力損失計算
@@ -808,7 +916,7 @@ class PumpWithBypassValve: # コンポジションというpython文法を使う
         
         if self.switch == 1 and all(i == 0 for i in self.flag_switch):
             self.switch = 0
-            self.valve_pid.sig = 0　#切り替わる際に積分リセット（安定性向上のため）
+            self.valve_pid.sig = 0 #切り替わる際に積分リセット（安定性向上のため）
             self.pump_pid.sig = 0
         elif self.switch == 0 and all(i == 1 for i in self.flag_switch):
             self.switch = 1
@@ -1103,29 +1211,37 @@ class Branch10: # コンポジションというpython文法を使う
         self.g = 0
         self.flag = 0
     
-    def f2p(self, g):
-        self.g = g
-        # 枝の出入口差圧=ポンプ加圧-配管圧損-機器圧損
-        self.dp = self.pump.f2p(self.g) - self.kr_pipe*self.g**2 - self.kr_eq*self.g**2
+    def f2p(self, g):        
+        if self.pump.inv == 0: #　ポンプ停止時の対応
+            self.dp = 0
+        else:
+            self.g = g
+            # 枝の出入口差圧=ポンプ加圧-配管圧損-機器圧損
+            self.dp = self.pump.f2p(self.g) - self.kr_pipe*self.g**2 - self.kr_eq*self.g**2
+        
         return self.dp
         
     def p2f(self, dp): # 圧力差から流量を求める
-        self.dp = dp
-        self.flag = 0
-        [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp, 0, -self.kr_pipe-self.kr_eq]) # 二次関数の係数の算出
-        if co_1**2 - 4*co_2*co_0 > 0:
-            g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-            g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-            if max(g1, g2) < 0:
+        
+        if self.pump.inv == 0: #　ポンプ停止時の対応
+            self.g = 0
+        else:
+            self.dp = dp
+            self.flag = 0
+            [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp, 0, -self.kr_pipe-self.kr_eq]) # 二次関数の係数の算出
+            if co_1**2 - 4*co_2*co_0 > 0:
+                g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
+                g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
+                if max(g1, g2) < 0:
+                    self.g = 0
+                    self.flag = 1
+                else:
+                    self.g = max(g1, g2)
+            else:
                 self.g = 0
                 self.flag = 1
-            else:
-                self.g = max(g1, g2)
-        else:
-            self.g = 0
-            self.flag = 1
-        self.pump.g = self.g
-        
+            self.pump.g = self.g
+            
         return self.g
             
 
