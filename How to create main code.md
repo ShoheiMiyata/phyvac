@@ -11,7 +11,7 @@ The main code is structured as follows:
 ## Code example - 1AHU_simpleAHU.py
 The full code is uploaded [here](https://github.com/ShoheiMiyata/phyvac/tree/main/MainSample/1AHP_simpleAHU/miyata).  
   
-import modules used in this program
+First of all, import modules used in this program.
 ```
 import phyvac as pv
 import pandas as pd
