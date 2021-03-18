@@ -33,7 +33,7 @@ output_data = output_data.assign(g_load=0.0, AHU_g=0.0, AHU_tin=0.0, AHU_tout=0.
 
 define equipment
 ~~~
-AHU = pv.AHU_simple(kr=1000)  # HEXのAHUであり、単位は[kPa/(m3/min)^2]だがkr=1000で、オーダー大丈夫？なおパイプのKr=500
+AHU = pv.AHU_simple(kr=1000)
 Vlv_AHU = pv.Valve(cv_max=40, r=100)
 CP1 = pv.Pump(pg=[108.22, 37.32, -1543.39], eg=[0, 5.6657, -13.8139], r_ef=0.8)
 AHP1 = pv.AirSourceHeatPump(spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='AirSourceHeatPump',encoding="SHIFT-JIS",header=None))
@@ -48,6 +48,17 @@ define control
 PID_AHU_Vlv = pv.PID(kp=0.3, ti=400)
 PID_CP1 = pv.PID(kp=0.3, ti=500, a_min=0)
 ~~~
+time step calculation: input boundary condition
+~~~
+current_time = datetime.datetime(2018, 9, 21, 0, 0)
+for calstep in tqdm(range(24*60*4)):
+    g_load = input_data.iat[calstep, 0]        # 負荷流量[m3/min]
+    q_load = input_data.iat[calstep, 1]        # 負荷熱量[MJ/min]
+    t_supply_sv = input_data.iat[calstep, 2]   # 供給水温設定値[℃]
+    tdb = input_data.iat[calstep, 3]           # 外気乾球温度[℃]
+    rh = input_data.iat[calstep, 4]            # 外気相対湿度[%](0~100)
+~~~
+
 
 
 ## Main文の構成
