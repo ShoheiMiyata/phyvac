@@ -32,7 +32,7 @@ output_data = output_data.assign(g_load=0.0, AHU_g=0.0, AHU_tin=0.0, AHU_tout=0.
                                  AHP1_pw=0.0, AHP1_pl=0.0, tdb=0.0)
 ```
 ### define equipment, branch and control
-equipment (AHU, valve for AHU, pump for ASHP1, ASHP1)  
+`AHU`:air handling units, `Vlv_AHU`: valve for AHU, `ASHP1`: air source heat pump, `CP1`: pump for ASHP1 (abbreviation of chiller-water pump)  
 If the default value of the module is not suitable for the target equipment, input specification parameters.
 ```
 AHU = pv.AHU_simple(kr=1000)
@@ -41,7 +41,7 @@ ASHP1 = pv.AirSourceHeatPump(spec_table=pd.read_excel('equipment_spec.xlsx', she
 CP1 = pv.Pump(pg=[108.22, 37.32, -1543.39], eg=[0, 5.6657, -13.8139], r_ef=0.8)
 ```
 branch  
-The following loop can be regarded as two branches. One is the branch from point a through AHU to point b. The other is the branch from point b through ASHP to point a.  
+The following loop can be regarded as two branches. `Branch_aAHUb` is the branch from point a through AHU to point b. `Branch_bASHP1a` is the branch from point b through ASHP1 to point a.  
 In order to perform a flow balance calculation, it is necessary to set up a branch that does not have a pump but will always have a flow rate during operation. This applies no matter how complex the pipe network is.  
 <img src="https://user-images.githubusercontent.com/27459538/111591618-0b44ad00-880b-11eb-83d8-9b713edc8672.png" width=30%>
 ```
@@ -55,7 +55,7 @@ PID_Vlv_AHU = pv.PID(kp=0.3, ti=400)
 PID_CP1 = pv.PID(kp=0.3, ti=500, a_min=0)
 ```
 ### time step calculation: input boundary condition
-g_load: flow load which is the set value of valve for AHU [m3/min], q_load: heat load [MJ/min], t_supply_sv: set value for supply chilled water ['C], tdb: outdoor air dry bulb temperature ['C], rh: relative humidity \[%](0~100)
+`g_load`: flow load which is the set value of valve for AHU [m3/min], `q_load`: heat load [MJ/min], `t_supply_sv`: set value for supply chilled water ['C], `tdb`: outdoor air dry bulb temperature ['C], `rh`: relative humidity \[%](0~100)
 ```
 current_time = datetime.datetime(2018, 8, 21, 0, 0)
 for calstep in tqdm(range(24*60*4)):
@@ -77,7 +77,8 @@ The valve for AHU is controled according to the load flow and the pump is contro
         Vlv_AHU.vlv = 0
 ```
 ### flow balance calculation  
-The first step is to set the minimum (`g_min = 0.0`) and maximum flow rates (g_max = 0.5) for the branch where the flow always occurs (Branch_aAHUb). Give appropriate initial value to the variable for the convergence judgment (g_eva).
+The first step is to set the minimum (`g_min = 0.0`) and maximum flow rates (`g_max = 0.5`) for the branch where the flow always occurs (`Branch_aAHUb`). Give appropriate initial value to the variable for the convergence judgment (`g_eva = 0.5`).  
+The variable for the convergence judgement is the difference between flow in `Branch_aAHUb` and `Branch_bASHP1a`.
 ```
         g_min = 0.0
         g_max = 0.5
