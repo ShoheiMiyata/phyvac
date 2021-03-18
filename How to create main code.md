@@ -9,7 +9,7 @@ The main code is structured as follows:
   - temperature and power calculation
 - save output files
 ## Code example - 1AHU_simpleAHU.py
-The full code is uploaded [here](https://github.com/ShoheiMiyata/phyvac/tree/main/MainSample/1AHP_simpleAHU).  
+The full code is uploaded [here](https://github.com/ShoheiMiyata/phyvac/tree/main/MainSample/1AHP_simpleAHU/miyata).  
   
 import modules used in this program
 ```
