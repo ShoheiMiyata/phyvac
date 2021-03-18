@@ -1,5 +1,12 @@
 ## Main code structure
-
+The main code is structured as follows:
+- define equipment, branch, control
+- time step calculation
+  - input boundary condition such as outdoor air temperature, heat load, etc.
+  - control equiment
+  - flow balance calculation
+  - temperature and power calculation
+- output
 
 
 ## Main文の構成
