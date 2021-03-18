@@ -107,7 +107,7 @@ This methodology itself can be applied even when the piping network becomes comp
                 break
 ```
 ### temperature and power calculation  
-`AHU_0` and `ASHP1_0` store the value of the equipment variable as the value of the previous time step. In this program, the inlet temperature of the equipment refers to the outlet temperature of the previous time step.
+`AHU_0` and `ASHP1_0` store the value of the equipment variable as the value of the previous time step. In this program, the inlet temperature of the equipment refers to the outlet temperature of the other equipment at the previous time step.
 ```
     AHU_0 = copy.deepcopy(AHU)
     ASHP1_0 = copy.deepcopy(AHP1)
