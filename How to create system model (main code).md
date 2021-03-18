@@ -55,9 +55,9 @@ PID_Vlv_AHU = pv.PID(kp=0.3, ti=400)
 PID_CP1 = pv.PID(kp=0.3, ti=500, a_min=0)
 ~~~
 ### time step calculation: input boundary condition
-g_load [m3/min]: flow load which is the set value of valve for AHU, q_load [MJ/min]: heat load, t_supply_sv ['C]: set value for supply chilled water, tdb ['C]: outdoor air dry bulb temperature, rh[%](0~100): relative humidity
+g_load [m3/min]: flow load which is the set value of valve for AHU, q_load [MJ/min]: heat load, t_supply_sv ['C]: set value for supply chilled water, tdb ['C]: outdoor air dry bulb temperature, rh\[%](0~100): relative humidity
 ~~~
-current_time = datetime.datetime(2018, 9, 21, 0, 0)
+current_time = datetime.datetime(2018, 8, 21, 0, 0)
 for calstep in tqdm(range(24*60*4)):
     g_load = input_data.iat[calstep, 0]        # 負荷流量[m3/min]
     q_load = input_data.iat[calstep, 1]        # 負荷熱量[MJ/min]
