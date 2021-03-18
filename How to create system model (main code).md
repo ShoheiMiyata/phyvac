@@ -27,7 +27,7 @@ input_data = input_data.resample('1min').interpolate()
 Create a data frame to store the calculation results.
 ~~~
 output_data = input_data.drop(input_data.columns[[0, 1, 2, 3, 4]], axis=1)
-output_data = output_data.assign(g_load=0.0, AHU_g=0.0, AHU_tin=0.0, AHU_tout=0.0, AHU_vlv=0.0, dp_header=0.0, CP1_g=0.0, CP1_inv=0.0, CP1_pw=0.0,
+output_data = output_data.assign(g_load=0.0, AHU_g=0.0, AHU_tin=0.0, AHU_tout=0.0, Vlv_AHU=0.0, dp_header=0.0, CP1_g=0.0, CP1_inv=0.0, CP1_pw=0.0,
                                  CP1_dp=0.0, CP1_ef=0.0, AHP1_g_ch=0.0, AHP1_tin_ch=0.0, AHP1_tout_ch=0.0, AHP1_COP=0.0,
                                  AHP1_pw=0.0, AHP1_pl=0.0, tdb=0.0)
 ~~~
@@ -41,18 +41,21 @@ ASHP1 = pv.AirSourceHeatPump(spec_table=pd.read_excel('equipment_spec.xlsx', she
 CP1 = pv.Pump(pg=[108.22, 37.32, -1543.39], eg=[0, 5.6657, -13.8139], r_ef=0.8)
 ~~~
 branch  
+The following loop can be regarded as two branches. One is the branch from point a through AHU to point b. The other is the branch from point b through ASHP to point a.  
+In order to perform a flow balance calculation, it is necessary to set up a branch that does not have a pump but will always have a flow rate during operation. This applies no matter how complex the pipe network is.
 <img src="https://user-images.githubusercontent.com/27459538/111591618-0b44ad00-880b-11eb-83d8-9b713edc8672.png" width=50%>
-
 ~~~
 Branch_aAHUb = pv.Branch01(valve=Vlv_AHU, kr_eq=AHU.kr, kr_pipe=1000)
 Branch_bASHP1a = pv.Branch10(pump=CP1, kr_eq=ASHP1.kr_ch, kr_pipe=1000)
 ~~~
-control
+control (PI control for )
+If the default value of the module is not suitable for the target control, input control parameters.
 ~~~
-PID_AHU_Vlv = pv.PID(kp=0.3, ti=400)
+PID_Vlv_AHU = pv.PID(kp=0.3, ti=400)
 PID_CP1 = pv.PID(kp=0.3, ti=500, a_min=0)
 ~~~
-time step calculation: input boundary condition
+### time step calculation: input boundary condition
+g_load [m3/min]: flow load which is the set value of valve for AHU, q_load [MJ/min]: heat load, t_supply_sv ['C]: set value for supply chilled water, tdb ['C]: outdoor air dry bulb temperature, rh[%](0~100): relative humidity
 ~~~
 current_time = datetime.datetime(2018, 9, 21, 0, 0)
 for calstep in tqdm(range(24*60*4)):
@@ -67,7 +70,7 @@ The system is operated from 9:00 to 18:00. The valve for AHU is controled accord
 ~~~
     if current_time.hour >= 9 and current_time.hour < 18: # daytime
         CP1.inv = PID_CP1.control(sv=50, mv=-Branch_aAHUb.dp)
-        Vlv_AHU.vlv = PID_AHU_Vlv.control(sv=g_load, mv=Vlv_AHU.g)
+        Vlv_AHU.vlv = PID_Vlv_AHU.control(sv=g_load, mv=Vlv_AHU.g)
     else: # nighttime
         CP1.inv = 0
         Vlv_AHU.vlv = 0
