@@ -81,7 +81,7 @@ The valve for AHU is controled according to the load flow and the pump is contro
 ```
 ### flow balance calculation  
 The first step is to set the minimum (`g_min = 0.0`) and maximum flow rates (`g_max = 0.5`) for the branch where the flow always occurs (`Branch_aAHUb`). Give appropriate initial value to the variable for the convergence judgment (`g_eva = 0.5`).  
-In the while sentense, we first assume flow rate for `Branch_aAHUb` (` g = (g_max + g_min) / 2`, bi-sectional method). Then, calculate differential pressure between point a and b (`dp1 = Branch_aAHUb.f2p(g)`). Then, calculate flow rate in `Branch_bAHP1a` is calculated based on `dp1` (`Branch_bAHP1a.p2f(-dp1)`).
+In the while sentense, we first assume flow rate for `Branch_aAHUb` (`g = (g_max + g_min) / 2`, bi-sectional method). Then, calculate differential pressure between point a and b (`dp1 = Branch_aAHUb.f2p(g)`). Then, calculate flow rate in `Branch_bAHP1a` is calculated based on `dp1` (`Branch_bAHP1a.p2f(-dp1)`).
 The variable for the convergence judgement `g_eva` is the difference between flow in `Branch_aAHUb` and `Branch_bASHP1a`. If `g_eva` is greater than 0, reset `g_max`; otherwise, reset `g_min`.  
 What the flow balance calculation does is; it first assumes the flow rate of one branch and calculate differential pressure of the branch, then calculates the flow rate of the other branches based on the differential pressure, and then performs a convergence calculation to see if the sum of them is equal to the assumed flow rate. This methodology itself can be applied even when the piping network becomes complex.
 ```
@@ -123,16 +123,3 @@ Write calculation result to the dataframe
 output_data = output_data.resample('15min').mean()
 output_data.to_csv('result_15min.csv')
 ```
-
-## Main文の構成
-main文は  
-- 入力ファイルの読み込み
-- 機器・枝・制御の定義
-- 毎時刻計算
-  - 外気温湿度や熱負荷などの境界条件の入力
-  - 機器制御
-  - 流量計算
-  - 温度・消費電力計算
-- 出力ファイルの保存  
-
-という流れで構成されます。
