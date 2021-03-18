@@ -9,7 +9,7 @@ The main code is structured as follows:
   - temperature and power calculation
 - save output files
 ## Code example
-'''
+~~~
 import pandas as pd
 import time
 import phyvac as pv
@@ -17,7 +17,7 @@ from tqdm import tqdm
 import copy
 import numpy as np
 import datetime
-'''
+~~~
 
 ## Main文の構成
 main文は  
