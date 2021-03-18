@@ -58,8 +58,54 @@ for calstep in tqdm(range(24*60*4)):
     tdb = input_data.iat[calstep, 3]           # 外気乾球温度[℃]
     rh = input_data.iat[calstep, 4]            # 外気相対湿度[%](0~100)
 ~~~
-
-
+control pump and valve
+The system is operated from 9:00 to 18:00. The valve for AHU is controled according to the load flow and the pump is controled to keep the differential pressure between headers to the set value.
+~~~
+    if current_time.hour >= 9 and current_time.hour < 18: # daytime
+        CP1.inv = PID_CP1.control(sv=50, mv=-Branch_aAHUb.dp)
+        Vlv_AHU.vlv = PID_AHU_Vlv.control(sv=g_load, mv=Vlv_AHU.g)
+    else: # nighttime
+        CP1.inv = 0
+        Vlv_AHU.vlv = 0
+~~~
+flow balance calculation  
+~~~
+        g_eva = 0.28
+        g_max = 0.28  # ポンプの最大流量
+        g_min = 0
+        cnt = 0
+        while (g_eva > 0.001) or (g_eva < -0.001):
+            cnt += 1
+            g = (g_max + g_min) / 2
+            p1 = Branch_aAHUb.f2p(g)
+            Branch_bAHP1a.p2f(-p1)
+            g_eva = Branch_aAHUb.g - Branch_bAHP1a.g
+            if g_eva > 0:
+                g_max = g
+            else:
+                g_min = g
+            if cnt > 30:
+                break
+~~~
+temperature and power calculation  
+Inlet temperature of equipment refers the outlet temperature at the previous time step.
+~~~
+    AHU_0 = copy.deepcopy(AHU)
+    AHP1_0 = copy.deepcopy(AHP1)
+    AHU.cal(g=Vlv_AHU.g, tin=AHP1_0.tout_ch, q_load=q_load)
+    AHP1.cal(tout_ch_sv=t_supply_sv, tin_ch=AHU_0.tout, g_ch=CP1.g, tdb=tdb)
+    CP1.cal()
+~~~
+Write calculation result to the dataframe and save it as an output file.
+~~~
+    output_data.iloc[calstep] = np.array([[g_load, AHU.g, AHU.tin, AHU.tout, Vlv_AHU.vlv, -Branch_aAHUb.dp, CP1.g, CP1.inv, CP1.pw, CP1.dp, CP1.ef,
+                                           AHP1.g_ch, AHP1.tin_ch, AHP1.tout_ch, AHP1.cop, AHP1.pw, AHP1.pl, tdb]])
+    
+    current_time += datetime.timedelta(minutes=1)
+    
+output_data = output_data.resample('15min').mean()
+output_data.to_csv('result_15min.csv')
+~~~
 
 ## Main文の構成
 main文は  
