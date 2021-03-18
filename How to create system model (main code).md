@@ -18,7 +18,7 @@ import copy
 import numpy as np
 import datetime
 ~~~  
-read input files
+### read input files
 ~~~
 input_data = pd.read_csv("Input15min.csv", index_col=0, parse_dates=True)
 input_data = input_data.resample('1min').interpolate()
@@ -30,20 +30,20 @@ output_data = output_data.assign(g_load=0.0, AHU_g=0.0, AHU_tin=0.0, AHU_tout=0.
                                  CP1_dp=0.0, CP1_ef=0.0, AHP1_g_ch=0.0, AHP1_tin_ch=0.0, AHP1_tout_ch=0.0, AHP1_COP=0.0,
                                  AHP1_pw=0.0, AHP1_pl=0.0, tdb=0.0)
 ~~~
-
-define equipment
+#### define equipment, branch and control
+equipment (AHU, valve for AHU, pump for ASHP1, ASHP1)
 ~~~
 AHU = pv.AHU_simple(kr=1000)
 Vlv_AHU = pv.Valve(cv_max=40, r=100)
+ASHP1 = pv.AirSourceHeatPump(spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='AirSourceHeatPump',encoding="SHIFT-JIS",header=None))
 CP1 = pv.Pump(pg=[108.22, 37.32, -1543.39], eg=[0, 5.6657, -13.8139], r_ef=0.8)
-AHP1 = pv.AirSourceHeatPump(spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='AirSourceHeatPump',encoding="SHIFT-JIS",header=None))
 ~~~
-define branch
+branch
 ~~~
 Branch_aAHUb = pv.Branch01(valve=Vlv_AHU, kr_eq=AHU.kr, kr_pipe=1000)
-Branch_bAHP1a = pv.Branch10(pump=CP1, kr_eq=AHP1.kr_ch, kr_pipe=1000)
+Branch_bASHP1a = pv.Branch10(pump=CP1, kr_eq=ASHP1.kr_ch, kr_pipe=1000)
 ~~~
-define control
+control
 ~~~
 PID_AHU_Vlv = pv.PID(kp=0.3, ti=400)
 PID_CP1 = pv.PID(kp=0.3, ti=500, a_min=0)
@@ -79,7 +79,7 @@ flow balance calculation
             g = (g_max + g_min) / 2
             p1 = Branch_aAHUb.f2p(g)
             Branch_bAHP1a.p2f(-p1)
-            g_eva = Branch_aAHUb.g - Branch_bAHP1a.g
+            g_eva = Branch_aAHUb.g - Branch_bASHP1a.g
             if g_eva > 0:
                 g_max = g
             else:
@@ -91,15 +91,15 @@ temperature and power calculation
 Inlet temperature of equipment refers the outlet temperature at the previous time step.
 ~~~
     AHU_0 = copy.deepcopy(AHU)
-    AHP1_0 = copy.deepcopy(AHP1)
-    AHU.cal(g=Vlv_AHU.g, tin=AHP1_0.tout_ch, q_load=q_load)
-    AHP1.cal(tout_ch_sv=t_supply_sv, tin_ch=AHU_0.tout, g_ch=CP1.g, tdb=tdb)
+    ASHP1_0 = copy.deepcopy(AHP1)
+    AHU.cal(g=Vlv_AHU.g, tin=ASHP1_0.tout_ch, q_load=q_load)
+    ASHP1.cal(tout_ch_sv=t_supply_sv, tin_ch=AHU_0.tout, g_ch=CP1.g, tdb=tdb)
     CP1.cal()
 ~~~
 Write calculation result to the dataframe and save it as an output file.
 ~~~
     output_data.iloc[calstep] = np.array([[g_load, AHU.g, AHU.tin, AHU.tout, Vlv_AHU.vlv, -Branch_aAHUb.dp, CP1.g, CP1.inv, CP1.pw, CP1.dp, CP1.ef,
-                                           AHP1.g_ch, AHP1.tin_ch, AHP1.tout_ch, AHP1.cop, AHP1.pw, AHP1.pl, tdb]])
+                                           ASHP1.g_ch, ASHP1.tin_ch, ASHP1.tout_ch, ASHP1.cop, ASHP1.pw, ASHP1.pl, tdb]])
     
     current_time += datetime.timedelta(minutes=1)
     
