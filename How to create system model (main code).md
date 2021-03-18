@@ -41,7 +41,7 @@ ASHP1 = pv.AirSourceHeatPump(spec_table=pd.read_excel('equipment_spec.xlsx', she
 CP1 = pv.Pump(pg=[108.22, 37.32, -1543.39], eg=[0, 5.6657, -13.8139], r_ef=0.8)
 ~~~
 branch  
-![image](https://user-images.githubusercontent.com/27459538/111591618-0b44ad00-880b-11eb-83d8-9b713edc8672.png)
+<img src="https://user-images.githubusercontent.com/27459538/111591618-0b44ad00-880b-11eb-83d8-9b713edc8672.png" width=50%>
 
 ~~~
 Branch_aAHUb = pv.Branch01(valve=Vlv_AHU, kr_eq=AHU.kr, kr_pipe=1000)
