@@ -19,19 +19,21 @@ import numpy as np
 import datetime
 ~~~  
 ### read input files
+Here, the input data is at 15-minute intervals, so it is converted to 1-minute intervals for the simulation.
 ~~~
 input_data = pd.read_csv("Input15min.csv", index_col=0, parse_dates=True)
 input_data = input_data.resample('1min').interpolate()
 ~~~
-create output dataframe
+Create a data frame to store the calculation results.
 ~~~
 output_data = input_data.drop(input_data.columns[[0, 1, 2, 3, 4]], axis=1)
 output_data = output_data.assign(g_load=0.0, AHU_g=0.0, AHU_tin=0.0, AHU_tout=0.0, AHU_vlv=0.0, dp_header=0.0, CP1_g=0.0, CP1_inv=0.0, CP1_pw=0.0,
                                  CP1_dp=0.0, CP1_ef=0.0, AHP1_g_ch=0.0, AHP1_tin_ch=0.0, AHP1_tout_ch=0.0, AHP1_COP=0.0,
                                  AHP1_pw=0.0, AHP1_pl=0.0, tdb=0.0)
 ~~~
-#### define equipment, branch and control
-equipment (AHU, valve for AHU, pump for ASHP1, ASHP1)
+### define equipment, branch and control
+equipment (AHU, valve for AHU, pump for ASHP1, ASHP1)  
+If the default value of the module is not suitable for the target equipment, input specification parameters.
 ~~~
 AHU = pv.AHU_simple(kr=1000)
 Vlv_AHU = pv.Valve(cv_max=40, r=100)
@@ -39,6 +41,8 @@ ASHP1 = pv.AirSourceHeatPump(spec_table=pd.read_excel('equipment_spec.xlsx', she
 CP1 = pv.Pump(pg=[108.22, 37.32, -1543.39], eg=[0, 5.6657, -13.8139], r_ef=0.8)
 ~~~
 branch
+![image](https://user-images.githubusercontent.com/27459538/111591450-d0427980-880a-11eb-9659-4592095e2b87.png)
+
 ~~~
 Branch_aAHUb = pv.Branch01(valve=Vlv_AHU, kr_eq=AHU.kr, kr_pipe=1000)
 Branch_bASHP1a = pv.Branch10(pump=CP1, kr_eq=ASHP1.kr_ch, kr_pipe=1000)
