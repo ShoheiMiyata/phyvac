@@ -58,15 +58,15 @@ PID_Vlv_AHU = pv.PID(kp=0.3, ti=400)
 PID_CP1 = pv.PID(kp=0.3, ti=500, a_min=0)
 ```
 ### time step calculation: input boundary condition
-`g_load`: flow load which is the set value of valve for AHU [m3/min], `q_load`: heat load [MJ/min], `t_supply_sv`: set value for supply chilled water ['C], `tdb`: outdoor air dry bulb temperature ['C], `rh`: relative humidity \[%](0~100)
+`g_load`: flow load which is the set value of valve for AHU [m<sup>3</sup>/min], `q_load`: heat load [MJ/min], `t_supply_sv`: set value for supply chilled water ['C], `tdb`: outdoor air dry bulb temperature ['C], `rh`: relative humidity \[%](0~100)
 ```
 current_time = datetime.datetime(2018, 8, 21, 0, 0)
 for calstep in tqdm(range(24*60*4)):
-    g_load = input_data.iat[calstep, 0]        # 負荷流量[m3/min]
-    q_load = input_data.iat[calstep, 1]        # 負荷熱量[MJ/min]
-    t_supply_sv = input_data.iat[calstep, 2]   # 供給水温設定値[℃]
-    tdb = input_data.iat[calstep, 3]           # 外気乾球温度[℃]
-    rh = input_data.iat[calstep, 4]            # 外気相対湿度[%](0~100)
+    g_load = input_data.iat[calstep, 0]
+    q_load = input_data.iat[calstep, 1]
+    t_supply_sv = input_data.iat[calstep, 2]
+    tdb = input_data.iat[calstep, 3]
+    rh = input_data.iat[calstep, 4]
 ```
 ### control pump and valve
 The system is operated from 9:00 to 18:00.  
