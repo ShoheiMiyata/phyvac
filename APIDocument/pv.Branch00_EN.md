@@ -8,7 +8,7 @@ A branch with only equipment
 | ---- | ---- | ---- |
 |kr_eq|float|coefficient of equipment pressure loss \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
 |kr_pipe|float|coefficient of pipe pressure loss \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
-|heat_act|float|actual head \[kPa] 開放系での実揚程|
+|heat_act|float|actual head \[kPa]|
 |g|float|flow rate \[m<sup>3</sup>/min] |
 |dp|float|differential pressure of the branch \[kPa] Pressurize along the direction of the flow：+, otherwise：- |
   
