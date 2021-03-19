@@ -1,5 +1,5 @@
 ## pv.Branch00(kr_eq=0.8, kr_pipe=0.5, head_act=0)
-A branch with only equipment
+A branch with equipment only
   
 <img src="https://user-images.githubusercontent.com/27459538/111773622-be87d180-88f1-11eb-928c-eae0ba653c3a.png" width=30%>
   
