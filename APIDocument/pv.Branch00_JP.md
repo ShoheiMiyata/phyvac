@@ -1,7 +1,7 @@
 ## pv.Branch00(kr_eq=0.8, kr_pipe=0.5, head_act=0)
 機器のみを有する枝
   
-<img src="https://user-images.githubusercontent.com/27459538/111766590-0d7d3900-88e9-11eb-91a8-8359b90be87b.png" width=30%>
+<img src="https://user-images.githubusercontent.com/27459538/111773622-be87d180-88f1-11eb-928c-eae0ba653c3a.png" width=30%>
   
 ### Parameters:
 |  name  |  type  | description |
