@@ -8,7 +8,7 @@
 | ---- | ---- | ---- |
 |kr_eq|float|機器の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
 |kr_pipe|float|管の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
-|heat_act|float|実揚程 \[kPa] (開放系での実揚程)|
+|heat_act|float|実揚程 \[kPa] 開放系での実揚程|
 |g|float|流量 \[m<sup>3</sup>/min] |
 |dp|float|枝の出入口圧力差 \[kPa] 流れの向きに対して加圧：+, 減圧：- |
   
