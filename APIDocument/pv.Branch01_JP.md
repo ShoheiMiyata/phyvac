@@ -1,7 +1,8 @@
 ## pv.Branch00(valve, kr_eq=0.8, kr_pipe=0.5)
 機器、弁を有する枝
   
-<img src="https://user-images.githubusercontent.com/27459538/111773622-be87d180-88f1-11eb-928c-eae0ba653c3a.png" width=30%>
+<img src="https://user-images.githubusercontent.com/27459538/111778441-00b41180-88f8-11eb-8c16-95e53ee139c6.png" width=30%>
+
   
 ### Parameters:
 |  name  |  type  | description |
