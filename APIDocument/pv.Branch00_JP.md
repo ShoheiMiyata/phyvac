@@ -26,4 +26,19 @@
 ## サンプルコード
 ```
 import phyvac as pv
+
+Branch_aEb = pv.Branch00(kr_eq=1.3)
+print(Branch_aEb.kr_eq, Branch_aEb.kr_pipe, Branch_aEb.g, Branch_aEb.dp)
 ```
+> 1.3 0.5 0.0 0.0
+```
+dp1 = Branch_aEb.f2p(2.1)
+print(dp1, Branch_aEb.dp, Branch_aEb.g)
+```
+> -7.938000000000001 -7.938000000000001 2.1
+```
+g1 = Branch_aEb.p2f(-8.0)
+print(g1, Branch_aEb.g, Branch_aEb.dp)
+```
+> 2.1081851067789192 2.1081851067789192 -8.0
+
