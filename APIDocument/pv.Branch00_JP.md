@@ -41,4 +41,8 @@ g1 = Branch_aEb.p2f(-8.0)
 print(g1, Branch_aEb.g, Branch_aEb.dp)
 ```
 > 2.1081851067789192 2.1081851067789192 -8.0
-
+```
+Branch_aEb.f2p(2.1)
+print(Branch_aEb.dp, Branch_aEb.g)
+```
+> -7.938000000000001 2.1
