@@ -1,4 +1,4 @@
-## pv.Branch00(valve, kr_eq=0.8, kr_pipe=0.5)
+## pv.Branch01(valve, kr_eq=0.8, kr_pipe=0.5)
 機器、弁を有する枝
   
 <img src="https://user-images.githubusercontent.com/27459538/111778441-00b41180-88f8-11eb-8c16-95e53ee139c6.png" width=30%>
@@ -26,12 +26,13 @@
   
 ## サンプルコード
 ```
-import phyvac as pv # phyvacモジュールのインポート
+import phyvac as pv
 
-Branch_aEb = pv.Branch00(kr_eq=1.3) # 点aからEquipmentを通って点bまでの枝を定義
-print(Branch_aEb.kr_eq, Branch_aEb.kr_pipe, Branch_aEb.g, Branch_aEb.dp)
+Vlv1 = pv.Valve()
+Branch_aEVb = pv.Branch01(valve = Vlv1, kr_eq=1.3)
+print(Branch_aEVb.valve.vlv, Branch_aEVb.kr_pipe, Branch_aEVb.g, Branch_aEVb.dp)
 ```
-> 1.3 0.5 0.0 0.0
+> 0.0 0.5 0.0 0.0
 ```
 dp1 = Branch_aEb.f2p(2.1) # 流量2.1 m3/minの時の圧力損失を算出
 print(dp1, Branch_aEb.dp, Branch_aEb.g)
