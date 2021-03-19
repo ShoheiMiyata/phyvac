@@ -10,7 +10,7 @@ A branch with only equipment
 |kr_pipe|float|coefficient of pipe pressure loss \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
 |heat_act|float|actual head \[kPa]|
 |g|float|flow rate \[m<sup>3</sup>/min] |
-|dp|float|differential pressure of the branch \[kPa] Pressurize along the direction of the flow：+, otherwise：- |
+|dp|float|differential pressure of the branch \[kPa] Pressurize along the direction of the flow: +, otherwise: - |
   
 ## pv.Branch00.f2p(g)
 calculate differential pressure from flow rate
