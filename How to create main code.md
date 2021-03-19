@@ -83,11 +83,6 @@ The valve for AHU is controled according to the load flow and the pump is contro
 The first step is to set the minimum (`g_min = 0.0`) and maximum flow rates (`g_max = 0.5`) for the branch where the flow always occurs (`Branch_aAHUb`). Give appropriate initial value to the variable for the convergence judgment (`g_eva = 0.5`).  
 In the while sentense, we first assume flow rate for `Branch_aAHUb` (`g = (g_max + g_min) / 2`, bi-sectional method). Then, calculate differential pressure between point a and b (`dp1 = Branch_aAHUb.f2p(g)`). Then, calculate flow rate in `Branch_bAHP1a` is calculated based on `dp1` (`Branch_bAHP1a.p2f(-dp1)`).
 The variable for the convergence judgement `g_eva` is the difference between flow in `Branch_aAHUb` and `Branch_bASHP1a`. If `g_eva` is greater than 0, reset `g_max`; otherwise, reset `g_min`.  
-What the flow balance calculation does is;  
-1. assumes the flow rate of one branch and calculate differential pressure of the branch  
-2. calculates the flow rate of the other branches based on the differential pressure calculated in 1.  
-3. performs a convergence calculation to see if the sum of flow rate calculated in 2. is equal to the flow rate assumed in 1.  
-This methodology itself can be applied even when the piping network becomes complex.
 ```
         g_min = 0.0
         g_max = 0.5
@@ -106,6 +101,12 @@ This methodology itself can be applied even when the piping network becomes comp
             if cnt > 30:
                 break
 ```
+What the flow balance calculation does is;  
+1. assumes the flow rate of one branch and calculate differential pressure of the branch  
+2. calculates the flow rate of the other branches based on the differential pressure calculated in 1.  
+3. performs a convergence calculation to see if the sum of flow rate calculated in 2. is equal to the flow rate assumed in 1.  
+  
+This methodology itself can be applied even when the piping network becomes complex.
 ### temperature and power calculation  
 `AHU_0` and `ASHP1_0` store the value of the equipment variable as the value of the previous time step. In this program, the inlet temperature of the equipment refers to the outlet temperature of the other equipment at the previous time step.
 ```
