@@ -25,24 +25,24 @@
   
 ## サンプルコード
 ```
-import phyvac as pv
+import phyvac as pv # phyvacモジュールのインポート
 
-Branch_aEb = pv.Branch00(kr_eq=1.3)
+Branch_aEb = pv.Branch00(kr_eq=1.3) # 点aからEquipmentを通って点bまでの枝を定義
 print(Branch_aEb.kr_eq, Branch_aEb.kr_pipe, Branch_aEb.g, Branch_aEb.dp)
 ```
 > 1.3 0.5 0.0 0.0
 ```
-dp1 = Branch_aEb.f2p(2.1)
+dp1 = Branch_aEb.f2p(2.1) # 流量2.1 m3/minの時の圧力損失を算出
 print(dp1, Branch_aEb.dp, Branch_aEb.g)
 ```
 > -7.938000000000001 -7.938000000000001 2.1
 ```
-g1 = Branch_aEb.p2f(-8.0)
+g1 = Branch_aEb.p2f(-8.0) # 圧力差が-8.0 kPaの時の流量を算出
 print(g1, Branch_aEb.g, Branch_aEb.dp)
 ```
 > 2.1081851067789192 2.1081851067789192 -8.0
 ```
-Branch_aEb.f2p(2.1)
+Branch_aEb.f2p(2.1) # 返り値を指定しなくても関数の実行は可能
 print(Branch_aEb.dp, Branch_aEb.g)
 ```
 > -7.938000000000001 2.1
