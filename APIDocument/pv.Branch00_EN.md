@@ -23,7 +23,7 @@ calculate flow rate from differential pressure
 ### returns:
 flow rate of the branch (The value is also stored in the variable g.)
   
-## サンプルコード
+## Sample Code
 ```
 import phyvac as pv # import phyvac module
 
