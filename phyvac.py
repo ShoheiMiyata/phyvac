@@ -11,6 +11,371 @@ import numpy as np
 import math
 import pandas as pd
 from scipy.interpolate import RegularGridInterpolator
+from scipy import optimize
+
+# 空気状態関数　###############################################################
+# 空気調和・衛生工学会編：空気調和・衛生工学便覧14版，1基礎編，第3章, pp.39-56，2010.
+# 式の読み方↓
+# tdb_w2h   [input]tdb(dry-bulb temperature), w(absolute humidity) -> [output] h(enthalpy)
+
+# twb       湿球温度['C]
+# tdb       乾球温度['C]
+# tdp       露点温度['C]
+# w         絶対湿度[kg/kg']
+# pv        水蒸気分圧[kPa]            vapor pressure
+# psat      飽和空気の水蒸気分圧[kPa]    saturated vapor pressure
+# h         比エンタルピー[kJ/kg']
+# rh        相対湿度[%]
+# den       密度[kg/m^3]              density
+# p_atm     標準大気圧[kPa]
+
+
+CA = 1.006  # 乾き空気の定圧比熱 [kJ/kg・K]
+CV = 1.86  # 水蒸気の定圧比熱 [kJ/kg・K]
+R0 = 2.501 * 10 ** 3  # 0'Cの水の蒸発潜熱 [kJ/kg]
+
+
+# 乾球温度と相対湿度から露点温度['C]
+def tdb_rh2tdp(tdb, rh):
+    # 飽和水蒸気圧psat[mmHg]の計算
+    c = 373.16 / (273.16 + tdb)
+    b = c - 1
+    a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10 ** (-7) * (10 ** (11.344 * b / c) - 1) + 8.1328 * 10 ** (
+        -3) * (10 ** (-3.49149 * b) - 1)
+    psat = 760 * 10 ** a
+    # 入力した絶対湿度
+    x = 0.622 * (rh * psat) / 100 / (760 - rh * psat / 100)
+
+    # この絶対湿度で相対湿度100%となる飽和水蒸気圧psat
+    psat = 100 * 760 * x / (100 * (0.622 + x))
+    psat0 = 0
+    tdp_max = tdb
+    tdp_min = -20
+    tdp = 0
+    cnt = 0
+    # 飽和水蒸気圧が上のpsatの値となる温度twb
+    while (psat - psat0 < -0.01) or (psat - psat0 > 0.01):
+
+        tdp = (tdp_max + tdp_min) / 2
+
+        c = 373.16 / (273.16 + tdp)
+        b = c - 1
+        a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10 ** (-7) * (
+                    10 ** (11.344 * b / c) - 1) + 8.1328 * 10 ** (-3) * (10 ** (-3.49149 * b) - 1)
+        psat0 = 760 * 10 ** a
+
+        if psat - psat0 > 0:
+            tdp_min = tdp
+        else:
+            tdp_max = tdp
+
+        cnt += 1
+        if cnt > 30:
+            break
+
+    return tdp
+
+
+# 乾球温度tdbと相対湿度rhから比エンタルピーh[kJ/kg']と絶対湿度x[kg/kg']
+def tdb_rh2h_x(tdb, rh):
+    # 飽和水蒸気圧Ps[mmHg]の計算
+    c = 373.16 / (273.16 + tdb)
+    b = c - 1
+    a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10 ** (-7) * (10 ** (11.344 * b / c) - 1) + 8.1328 * 10 ** (
+        -3) * (10 ** (-3.49149 * b) - 1)
+    psat = 760 * 10 ** a
+    w = 0.622 * (rh * psat) / 100 / (760 - rh * psat / 100)
+    h = CA * tdb + (R0 + CV * tdb) * w
+
+    return [h, w]
+
+
+# 乾球温度から飽和水蒸気圧[kPa]
+def tdb2psat(tdb):
+    # Wagner equation
+    x = (1 - (tdb + 273.15) / 647.3)
+    psat = 221200 * math.exp((-7.76451 * x + 1.45838 * x ** 1.5 + -2.7758 * x ** 3 - 1.23303 * x ** 6) / (1-x))  # [hPa]
+    return psat / 10  # [hPa] -> [kPa]
+
+
+# 乾球温度と相対湿度から湿球温度['C]
+def tdb_rh2twb(tdb, rh):
+    psat = tdb2psat(tdb)
+    pv_1 = rh / 100 * psat
+    pv_2 = -99999
+    twb = 0
+    twb_max = 50
+    twb_min = -50
+    cnt = 0
+    while abs(pv_1 - pv_2) > 0.01:
+        twb = (twb_max + twb_min) / 2
+        # Sprung equation
+        pv_2 = tdb2psat(twb) - 0.000662 * 1013.25 * (tdb - twb)
+
+        if pv_1 - pv_2 > 0:
+            twb_min = twb
+        else:
+            twb_max = twb
+
+        cnt += 1
+        if cnt > 20:
+            break
+
+    return twb
+
+ 
+# # 湿球温度の算出
+# def wet_bulb_temperature(Tda, rh):
+#     # cpw   :水比熱[J/kg'C]
+#     cpw = 4184
+    
+#     Tdp = dew_point_temperature(Tda,rh)
+#     # print(Tdp)
+
+#     Twbmax = Tda
+#     Twbmin = Tdp
+#     Twb = 1
+#     Twb0 = 0
+#     cnt = 0
+#     while(Twb - Twb0 > 0.01)or(Twb - Twb0 < - 0.01):
+    
+#         Twb = (Twbmax + Twbmin) / 2
+#         [h,x] = tdb_rh2h_x(Tda,rh)
+#         [hs,xs] = tdb_rh2h_x(Twb,100)
+#         Twb0 = (hs - h) / ((xs - x) * cpw)
+        
+#         if Twb - Twb0 > 0:
+#             Twbmin = Twb
+#         else:
+#             Twbmax = Twb
+          
+#         cnt += 1
+#         if cnt > 30:
+#             break
+    
+#     return Twb
+
+
+
+# 乾球温度と絶対湿度から比エンタルピー[kJ/kg']
+def tdb_w2h(tdb, w):
+    return CA * tdb + (CV * tdb + R0) * w
+
+
+# 乾球温度から飽和水蒸気圧の比エンタルピー[kJ/kg']
+def tdb2hsat(tdb):
+    psat = tdp2psat(tdb)
+    wsat = pv2w(psat)
+    hsat = tdb_w2h(tdb, wsat)
+    return hsat
+
+
+# 絶対湿度から蒸気圧[kPa]
+def w2pv(w, p_atm=101.325):
+    return p_atm * w / (0.622 + w)
+
+
+# 蒸気圧から絶対湿度['C]
+def pv2w(pv, p_atm=101.325):
+    w = 0.622 * pv / (p_atm - pv)
+    return w
+
+
+# 露点温度から飽和水蒸気圧[単位不明、おそらくkPaだが…]
+def tdp2psat(tdp):
+    p_convert = 0.001
+
+    c1 = -5.6745359e3
+    c2 = 6.3925247
+    c3 = -9.6778430e-3
+    c4 = 6.2215701e-7
+    c5 = 2.0747825e-9
+    c6 = -9.4840240e-13
+    c7 = 4.1635019
+
+    n1 = 0.11670521452767e4
+    n2 = -0.72421316703206e6
+    n3 = -0.17073846940092e2
+    n4 = 0.12020824702470e5
+    n5 = -0.32325550322333e7
+    n6 = 0.14915108613530e2
+    n7 = -0.4823265731591e4
+    n8 = 0.40511340542057e6
+    n9 = -0.23855557567849e0
+    n10 = 0.65017534844798e3
+
+    t = tdp + 273.15
+    if tdp < 0.01:
+        psat = math.exp(c1 / t + c2 + c3 * t + c4 * t ** 2 + c5 * t ** 3 + c6 * t ** 4 + c7 * math.log(t)) * p_convert
+
+    else:
+        alpha = t + n9 / (t - n10)
+        a2 = alpha ** 2
+        a = a2 + n1 * alpha + n2
+        b = n3 * a2 + n4 * alpha + n5
+        c = n6 * a2 + n7 * alpha + n8
+        psat = pow(2 * c / (-b + pow(b ** 2 - 4 * a * c, 0.5)), 4) / p_convert
+
+    return psat
+
+
+# 比エンタルピーと相対湿度から絶対湿度[kg/kg']
+def h_rh2w(h, rh):
+    tdb = h_rh2tdb(h, rh)
+    w = tdb_rh2w(tdb, rh)
+    return w
+
+
+# 乾球温度から密度[kg/m^3]
+def tdb2den(tdb):
+    return 1.293 * 273.3 / (273.2 + tdb)
+
+
+# 比エンタルピーと相対湿度から乾球温度['C]
+def h_rh2tdb(h, rh):
+    def h_rh2tdb_fun(tdb):
+        return h - tdb_rh2h(tdb, rh)
+    return optimize.newton(h_rh2tdb_fun, x0=1e-5, tol=1e-4, maxiter=20)
+
+
+# 乾球温度と相対湿度から比エンタルピー[kJ/kg']
+def tdb_rh2h(tdb, rh):
+    w = tdb_rh2w(tdb, rh)
+    h = tdb_w2h(tdb, w)
+    return h
+
+
+# 乾球温度と相対湿度から絶対湿度[kg/kg']
+def tdb_rh2w(tdb, rh):
+    psat = tdp2psat(tdb)
+    pv = 0.01 * rh * psat
+    w = pv2w(pv)
+    return w
+
+
+# 飽和水蒸気圧から露点温度['C]
+def psat2tdp(psat):
+    p_convert = 0.001
+
+    d1 = -6.0662e1
+    d2 = 7.4624
+    d3 = 2.0594e-1
+    d4 = 1.6321e-2
+
+    n1 = 0.11670521452767e4
+    n2 = -0.72421316703206e6
+    n3 = -0.17073846940092e2
+    n4 = 0.12020824702470e5
+    n5 = -0.32325550322333e7
+    n6 = 0.14915108613530e2
+    n7 = -0.4823265731591e4
+    n8 = 0.40511340542057e6
+    n9 = -0.23855557567849e0
+    n10 = 0.65017534844798e3
+
+    if psat < 0.611213:
+        y = math.log(psat / p_convert)
+        tdp = d1 + y * (d2 + y * (d3 + y * d4))
+    else:
+        ps = psat * p_convert
+        beta = pow(ps, 0.25)
+        b2 = beta ** 2
+        e = b2 + n3 * beta + n6
+        f = n1 * b2 + n4 * beta + n7
+        g = n2 * b2 + n5 * beta + n8
+        d = 2 * g / (-f - pow(f ** 2 - 4 * e * g, 0.5))
+        tdp = (n10 + d - pow((n10 + d) ** 2 - 4 * (n9 + n10 * d), 0.5)) / 2 - 273.15
+    return tdp
+
+
+# 絶対湿度と比エンタルピーから乾球温度['C]
+def w_h2tdb(w, h):
+    tdb = (h - 2501 * w) / (1.006 + 1.86 * w)
+    return tdb
+
+
+# 絶対湿度と相対湿度から乾球温度['C]
+def w_rh2tdb(w, rh):
+    psat = w2pv(w)
+    tdb = psat2tdp(psat / rh * 100)
+    return tdb
+
+
+# 絶対湿度から水蒸気の定圧比熱[kJ/kg･K] (= CA + CV)
+def w2cpair(w):
+    cpair = 1.006 + 1.86 * w
+    return cpair
+
+
+# 絶対湿度と乾球温度から相対湿度['C]
+def w_tdb2rh(w, tdb):
+    pv = w2pv(w)
+    psat = tdp2psat(tdb)
+    if psat <= 0:
+        return 0
+    else:
+        return pv / psat * 100
+
+
+# 乾球温度と湿球湿度から絶対湿度[kg/kg']
+def tdb_twb2w(tdb, twb):
+    psat = tdp2psat(twb)
+    wsat = pv2w(psat)
+    a = wsat * (2501 + (1.86 - 4.186) * twb) + 1.006 * (twb - tdb)  # 4.186[kJ/kg･K] 水の比熱
+    b = 2501 + 1.86 * tdb - 4.186 * twb
+    return a / b
+
+
+#######################
+# HEX function
+# 宇田川光弘：パソコンによる空気調和計算法，オーム社，p.8-219，1986 年.
+#######################
+# 熱交換器の計算に必要なパラメータを取得する
+def getparameter_hex(tdb):
+    delta = 0.001
+    hws1 = tdb2hsat(tdb)
+    hws2 = tdb2hsat(tdb + delta)
+    fa = (hws2 - hws1) / delta
+    fb = hws1 - fa * tdb
+    return fa, fb
+
+
+# 熱通過有効度[-]を求める
+def hex_effectiveness(ntu, ratio_heat_cap, flowtype):
+    # flowtype : {'counterflow', 'parallelflow'}
+    ratio = ratio_heat_cap
+
+    if ratio <= 0:
+        return 1 - math.exp(-ntu)
+    if ntu == 0:
+        return 0
+    if flowtype == 'counterflow':
+        if ratio < 1:
+            return (1 - math.exp((ratio - 1) * ntu)) / (1 - ratio * math.exp((ratio - 1) * ntu))
+        else:
+            return ntu / (1 + ntu)
+    elif flowtype == 'parallelflow':
+        if ratio < 1:
+            return (1 - math.exp(-ntu * (ratio + 1))) / (1 + ratio)
+        else:
+            return 0.5 * (1 - math.exp(-2 * ntu))
+    else:
+        print('error:flowtype')
+
+
+# NTU(熱通過数:Number of transfer unit[-])を求める
+def hex_ntu(feff, fratio_heat_cap, fflowtype):
+    # flowtype : {'counterflow', 'parallelflow'}
+    hex_eff = feff
+    hex_ratio = fratio_heat_cap
+    hex_flowtype = fflowtype
+
+    def hex_efunc(fntu):
+        return hex_eff - hex_effectiveness(fntu, hex_ratio, hex_flowtype)
+
+    return optimize.newton(hex_efunc, x0=0, tol=1e-6, maxiter=20)  # rtol=1e-6 fprime=1e-4,
+
+
 
 
 # 機器関係モデル ###############################################################
@@ -343,146 +708,6 @@ class AirSourceHeatPump:
         
         self.dp_ch = -self.kr_ch*g_ch**2
 
-    
-
-# 露点温度の算出
-def dew_point_temperature(Tda, rh):
-    # t_da      :外気乾球温度[℃]
-    # rh        :外気相対湿度(0~100)
-    # Tdp       :露天温度['C]
-    # 飽和水蒸気圧Ps[mmHg]の計算
-    c = 373.16 / (273.16 + Tda)
-    b = c - 1
-    a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10**(-7) * (10**(11.344 * b / c) - 1) + 8.1328 * 10**(-3) * (10**(-3.49149 * b) - 1)
-    Ps = 760 * 10**a
-    # 入力した絶対湿度
-    x = 0.622 * (rh * Ps) / 100 / (760 - rh * Ps / 100)
-
-    # この絶対湿度で相対湿度100%となる飽和水蒸気圧Ps
-    Ps = 100 * 760 * x / (100 * (0.622 + x))
-    Ps0 = 0
-    Tdpmax = Tda
-    Tdpmin = -20
-    Tdp = 0
-    cnt = 0
-    # 飽和水蒸気圧が上のPsの値となる温度Twb
-    while (Ps - Ps0 < -0.01)or(Ps - Ps0 > 0.01):
-        
-        Tdp = (Tdpmax + Tdpmin) / 2
-        
-        c = 373.16 / (273.16 + Tdp)
-        b = c - 1
-        a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10**(-7) * (10**(11.344 * b / c) - 1) + 8.1328 * 10**(-3) * (10**(-3.49149 * b) - 1)
-        Ps0 = 760 * 10**a
-        
-        if Ps - Ps0 > 0:
-            Tdpmin = Tdp
-        else:
-            Tdpmax = Tdp
-        
-        cnt += 1  
-        if cnt > 30:
-            break
-        
-    return Tdp
-
-
-# 比エンタルピーの算出
-def enthalpy(Tda, rh):
-    # 乾球温度Tdaと相対湿度rhから比エンタルピーhと絶対湿度xを求める
-    # h     :enthalpy [J/kg]
-    # Tda   :Temperature of dry air ['C]
-    # rh    :relative humidity [%]
-    # cpd   :乾き空気の定圧比熱 [J / kg(DA)'C]
-    # gamma :飽和水蒸気の蒸発潜熱 [J/kg]
-    # cpv   :水蒸気の定圧比熱 [J / kg(DA)'C]
-    # x     :絶対湿度 [kg/kg(DA)]
-    
-    cpd = 1007
-    gamma = 2499 * 10**3
-    cpv = 1845
-    
-    # 飽和水蒸気圧Ps[mmHg]の計算
-    c = 373.16 / (273.16 + Tda)
-    b = c - 1
-    a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10**(-7) * (10**(11.344 * b / c) - 1) + 8.1328 * 10**(-3) * (10**(-3.49149 * b) - 1)
-    Ps = 760 * 10**a
-    
-    x = 0.622 * (rh * Ps) / 100 / (760 - rh * Ps / 100)
-    
-    h = cpd * Tda + (gamma + cpv * Tda) * x
-    
-    return [h, x]
-
-
-# 乾球温度から飽和水蒸気圧[hPa]
-def tda2ps(tda):
-    # ps:飽和水蒸気圧[hPa]
-    # Wagner equation
-    x = (1 - (tda+273.15)/647.3)
-    ps = 221200*math.exp((-7.76451*x + 1.45838*x**1.5+-2.7758*x**3-1.23303*x**6)/(1-x))
-    return ps
-
-# 乾球温度と相対湿度から湿球温度['C]
-def tda_rh2twb(tda, rh):
-    # pv:水蒸気分圧[hPa]
-    ps = tda2ps(tda)
-    pv_1 = rh/100*ps
-    pv_2 = -99999
-    twb = 0
-    twbmax = 50
-    twbmin = -50
-    cnt = 0
-    while abs(pv_1-pv_2) > 0.01:
-        twb = (twbmax + twbmin) / 2
-        # Sprung equation
-        pv_2 = tda2ps(twb)-0.000662*1013.25*(tda-twb)
-
-        if pv_1-pv_2 > 0:
-            twbmin = twb
-        else:
-            twbmax = twb
-            
-        cnt += 1
-        if cnt > 20:
-            break
-            
-    return twb
-
-
-
-   
-# # 湿球温度の算出
-# def wet_bulb_temperature(Tda, rh):
-#     # cpw   :水比熱[J/kg'C]
-#     cpw = 4184
-    
-#     Tdp = dew_point_temperature(Tda,rh)
-#     # print(Tdp)
-
-#     Twbmax = Tda
-#     Twbmin = Tdp
-#     Twb = 1
-#     Twb0 = 0
-#     cnt = 0
-#     while(Twb - Twb0 > 0.01)or(Twb - Twb0 < - 0.01):
-    
-#         Twb = (Twbmax + Twbmin) / 2
-#         [h,x] = enthalpy(Tda,rh)
-#         [hs,xs] = enthalpy(Twb,100)
-#         Twb0 = (hs - h) / ((xs - x) * cpw)
-        
-#         if Twb - Twb0 > 0:
-#             Twbmin = Twb
-#         else:
-#             Twbmax = Twb
-          
-#         cnt += 1
-#         if cnt > 30:
-#             break
-    
-#     return Twb
-
 
 # 冷却塔
 class CoolingTower:
@@ -529,8 +754,8 @@ class CoolingTower:
         if g_w > 0:
         
             # 乾球温度と湿球温度から外気比エンタルピーを求める
-            [hin,xin] = enthalpy(Tda,rh)
-            Twbin = tda_rh2twb(Tda,rh)
+            [hin,xin] = tdb_rh2h_x(Tda,rh)
+            Twbin = tdb_rh2twb(Tda,rh)
             
             # 湿球温度の飽和空気の比エンタルピーを求める
             # print(Twin,Twbin)
@@ -550,7 +775,7 @@ class CoolingTower:
                 Twbout0 = (Twboutmax + Twboutmin) / 2
                 
                 # 出口空気は飽和空気という仮定で、出口空気の比エンタルピーを求める。
-                [hout, xout] = enthalpy(Twbout0,100)
+                [hout, xout] = tdb_rh2h_x(Twbout0,100)
                 
                 # 空気平均比熱cpeの計算
                 dh = hout - hin
@@ -642,135 +867,217 @@ class AHU_simple:
     
     def f2p_co(self):
         return [0,0,-self.kr]
-        
-# # 空冷ヒートポンプ
-# class AirSourceHeatPump:
-#     # 定格値の入力
-#     def __init__(self, tin_ch_d=12, tout_ch_d=7, g_ch_d=0.116, kr_ch=13.9, signal_hp=1,
-#                  coef=[[40.0, -6.2468, 15.891, -14.257, 4.2438, 2.3663],
-#                        [35.0, -10.355, 26.218, -23.497, 7.516, 2.4734],
-#                        [30.0, -9.3779, 24.859, -23.505, 7.8729, 2.9472],
-#                        [25.0, -7.4934, 19.994, -18.946, 5.8718, 3.8933],
-#                        [20.0, -6.5604, 17.853, -17.511, 5.4774, 4.6122],
-#                        [15.0, -6.2842, 17.284, -17.138, 5.228, 5.4071]]):
-#         # def __init__(self, tin_ch_d=40, tout_ch_d=45, g_ch_d=0.172, kr_ch=13.9, signal_hp=2,
-#         #              coef= [[15.0, 0.3229, 0.6969, -2.8192, 2.0081, 2.8607], [7.0, 11.637, -24.052, 16.027, -3.7671, 2.8691],
-#         #                     [5.0, 12.552, -22.918, 13.204, -2.5234, 2.601], [0.0, -3.2873, 3.2973, -2.2795, 1.2208, 2.0051],
-#         #                     [-5.0, 9.563, -27.733, 21.397, -5.8191, 2.4375]]):
-#         # tin        :入口水温[℃]
-#         # tout       :出口水温[℃]
-#         # g          :流量[m3/min]
-#         # ch         :冷水(chilled water)
-#         # d          :定格値
-#         # sv         :現時刻の制御する要素の設定値(温度や圧力)
-#         # pw         :消費電力[kW]
-#         # pl         :部分負荷率(part-load ratio 0.0~1.0)
-#         # kr         :圧力損失係数[kPa/(m3/min)**2]
-#         # da         :外気乾球
-#         # signal     :運転信号(1=cooling, 2=heating)
-#         # COP = a * pl^4 + b * pl^3 + c * pl^2 + d^1 + e
-#         # coef = [[t1, a_t1, b_t1, c_t1, d_t1, e_t1], ... , [tn, a_tn, b_tn, c_tn, d_tn, e_tn]]
-#         # (a1_t1~e1_t1は、外気温t1のときのCOP曲線の係数、t1 >t2>...> tn, n>=3)
-#         self.tin_ch_d = tin_ch_d
-#         self.tout_ch_d = tout_ch_d
-#         self.g_ch_d = g_ch_d
-#         self.kr_ch = kr_ch
-#         self.signal_hp = signal_hp
-#         self.coef = coef
-#         self.n = len(self.coef)
-#         self.max_del_t = abs(self.tin_ch_d - self.tout_ch_d)  # 最大出入口温度差[℃]
-#         # 以下、毎時刻変わる可能性のある値
-#         self.tout_ch = 7
-#         self.COP = 0
-#         self.pw = 0
-#         self.pl = 0
 
-#     def cal(self, tin_ch, g_ch, t_da):
-#         self.tin_ch = tin_ch
-#         self.g_ch = g_ch
-#         self.t_da = t_da
 
-#         if self.signal_hp == 1:
-#             if (self.g_ch > 0) and (self.tin_ch > self.tout_ch_d):
-#                 self.tout_ch = self.tout_ch_d
-#                 self.pl = (self.tin_ch - self.tout_ch) * self.g_ch / (self.max_del_t * self.g_ch_d)
-#                 if self.pl > 1:
-#                     self.pl = 1
-#                     self.tout_ch = self.tin_ch - self.max_del_t * self.g_ch_d / self.g_ch
-#                 elif self.pl < 0.2:
-#                     self.pl = 0.2
+# 水-空気熱交換器
+class W2a_hex():
+    # HVACSIM+
+    # 宇田川光弘：パソコンによる空気調和計算法，オーム社，p.8-219，1986 年.
+    # 富樫 英介 : Popolo.2.2.0_熱環境計算戯法, 第8-9章, 2016 年.
+    def __init__(self, rated_g_air=2.5, rated_v_air=2.99, rated_tdbin_air=27.2, rated_twbin_air=20.1,
+                 rated_g_water=1.9833333, rated_v_water=1.25, rated_tin_water=7, rated_q=40.4, rated_rh_border=95):
+        # q_load    :負荷熱量[GJ/min]
+        # _d        :定格
+        # q         :熱交換能力[kw]
+        # g         :流量[kg/s]
+        # v         :速度[m/s]
+        # t         :温度[℃]
+        # in, out   :入口, 出口
+        # db, wb    :乾球, 湿球
+        # ntu       :移動単位数(熱容量流量に対する熱交換器の能力)[-]
+        # eff       :熱通過有効度[-]
+        # rh_border :境界湿度[%]
+        self.rated_v_water = rated_v_water
+        self.rated_v_air = rated_v_air
+        self.rated_g_air = rated_g_air
+        self.rated_g_water = rated_g_water
+        self.rated_tdbin_air = rated_tdbin_air
+        self.rated_twbin_air = rated_twbin_air
+        self.win_air = tdb_twb2w(self.rated_tdbin_air, self.rated_twbin_air)
+        self.rated_tin_water = rated_tin_water
+        self.rated_q = rated_q
+        self.rated_rh_border = rated_rh_border
 
-#                 if self.t_da >= self.coef[0][0]:
-#                     self.COP = (self.coef[0][1] * self.pl ** 4 + self.coef[0][2] * self.pl ** 3 +
-#                                 self.coef[0][3] * self.pl ** 2 - self.coef[0][4] * self.pl + self.coef[0][5])
-#                 elif self.t_da < self.coef[self.n - 1][0]:
-#                     self.COP = (self.coef[self.n - 1][1] * self.pl ** 4 + self.coef[self.n - 1][2] * self.pl ** 3 +
-#                                 self.coef[self.n - 1][3] * self.pl ** 2 + self.coef[self.n - 1][4] * self.pl ** 3 +
-#                                 self.coef[self.n - 1][5])
-#                 else:
-#                     for i in range(1, self.n):  # 線形補間の上限・下限となる曲線を探す
-#                         self.coef_a = self.coef[i - 1]
-#                         self.coef_b = self.coef[i]
-#                         if self.coef_b[0] <= self.t_da < self.coef_a[0]:
-#                             break
-#                     a = (self.coef_a[1] * self.pl ** 4 + self.coef_a[2] * self.pl ** 3 + self.coef_a[3] * self.pl ** 2 +
-#                              self.coef_a[4] * self.pl + self.coef_a[5])
-#                     b = (self.coef_b[1] * self.pl ** 4 + self.coef_b[2] * self.pl ** 3 + self.coef_b[3] * self.pl ** 2 +
-#                              self.coef_b[4] * self.pl + self.coef_b[5])
-#                     self.COP = (a - b) * (self.coef_a[0] - self.t_da) / (self.coef_a[0] - self.coef_b[0]) + b
-#                 # 消費電力の計算
-#                 self.pw = (self.tin_ch - self.tout_ch) * self.g_ch / 60 * pow(10, 3) * 4.186 / self.COP
-#                 if self.pw > 0:
-#                     pass
-#                 else:
-#                     self.pw = 0
-#             else:
-#                 self.tout_ch = self.tin_ch
-#                 self.COP = 0
-#                 self.pw = 0
-#                 self.pl = 0
+        # heat transfer coefficient dry - kW/(m^2*K) wet - kW/[m^2*(kJ/kg)]
+        self.rated_coef_dry = 1 / (4.72 + 4.91 * math.pow(self.rated_v_water, -0.8) + 26.7 * math.pow(self.rated_v_air, -0.64))
+        self.rated_coef_wet = 1 / (10.044 + 10.44 * math.pow(self.rated_v_water, -0.8) + 39.6 * math.pow(self.rated_v_air, -0.64))
 
-#         if self.signal_hp == 2:
-#             if (self.g_ch > 0) and (self.tin_ch < self.tout_ch_d):
-#                 self.tout_ch = self.tout_ch_d
-#                 self.pl = (self.tout_ch - self.tin_ch) * self.g_ch / (self.max_del_t * self.g_ch_d)
-#                 if self.pl > 1:
-#                     self.pl = 1
-#                     self.tout_ch = self.tin_ch + self.max_del_t * self.g_ch_d / self.g_ch
-#                 elif self.pl < 0.2:
-#                     self.pl = 0.2
+        # surface area
+        self.rated_cpma = w2cpair(self.win_air)
+        self.rated_cap_air = self.rated_g_air * self.rated_cpma
+        self.rated_cap_water = self.rated_g_water * 4.186
 
-#                 if self.t_da >= self.coef[0][0]:
-#                     self.COP = (self.coef[0][1] * self.pl ** 4 + self.coef[0][2] * self.pl ** 3 +
-#                                 self.coef[0][3] * self.pl ** 2 - self.coef[0][4] * self.pl + self.coef[0][5])
-#                 elif self.t_da < self.coef[self.n - 1][0]:
-#                     self.COP = (self.coef[self.n - 1][1] * self.pl ** 4 + self.coef[self.n - 1][2] * self.pl ** 3 +
-#                                 self.coef[self.n - 1][3] * self.pl ** 2 + self.coef[self.n - 1][4] * self.pl ** 3 +
-#                                 self.coef[self.n - 1][5])
-#                 else:
-#                     for i in range(1, self.n):  # 線形補間の上限・下限となる曲線を探す
-#                         self.coef_a = self.coef[i - 1]  # higher limit curve
-#                         self.coef_b = self.coef[i]  # lower limit curve
-#                         if self.coef_b[0] <= self.t_da < self.coef_a[0]:
-#                             break
-#                     a = (self.coef_a[1] * self.pl ** 4 + self.coef_a[2] * self.pl ** 3 + self.coef_a[3] * self.pl ** 2 +
-#                              self.coef_a[4] * self.pl + self.coef_a[5])
-#                     b = (self.coef_b[1] * self.pl ** 4 + self.coef_b[2] * self.pl ** 3 + self.coef_b[3] * self.pl ** 2 +
-#                              self.coef_b[4] * self.pl + self.coef_b[5])
-#                     self.COP = (a - b) * (self.coef_a[0] - self.t_da) / (self.coef_a[0] - self.coef_b[0]) + b
-#                 # 消費電力の計算
-#                 self.pw = (self.tout_ch - self.tin_ch) * self.g_ch / 60 * pow(10, 3) * 4.178 / self.COP
-#                 if self.pw > 0:
-#                     pass
-#                 else:
-#                     self.pw = 0
-#             else:
-#                 self.tout_ch = self.tin_ch
-#                 self.COP = 0
-#                 self.pw = 0
-#                 self.pl = 0
+        if self.rated_tdbin_air < self.rated_tin_water:
+            # heating coil
+            self.rated_cap_min = min(self.rated_cap_air, self.rated_cap_water)
+            self.rated_cap_max = max(self.rated_cap_air, self.rated_cap_water)
 
-#         return self.tout_ch, self.COP, self.pw, self.pl
+            self.rated_eff = self.rated_q / self.rated_cap_min / (self.rated_tin_water - self.rated_tdbin_air)
+            self.rated_ntu = hex_ntu(self.rated_eff, self.rated_cap_min, self.rated_cap_max, 'counterflow')
+            self.area_surface = self.rated_ntu * self.rated_cap_min / self.rated_coef_dry
+        else:
+            # cooling coil
+            self.rated_tout_water = self.rated_tin_water + self.rated_q / self.rated_cap_water
+            self.rated_hin_air = tdb_w2h(self.rated_tdbin_air, self.win_air)
+            self.rated_hout_air = self.rated_hin_air - self.rated_q / self.rated_g_air
+
+            # wet condition
+            self.rated_wout_air = h_rh2w(self.rated_hout_air, self.rated_rh_border)
+
+            if self.win_air < self.rated_wout_air:
+                # dry condition
+                self.rated_tout_air = self.rated_tdbin_air - self.rated_q / self.rated_cap_air
+                self.rated_d1 = self.rated_tdbin_air - self.rated_tout_water
+                self.rated_d2 = self.rated_tout_air - self.rated_tin_water
+                self.rated_lmtd = (self.rated_d1 - self.rated_d2) / math.log(self.rated_d1 / self.rated_d2)
+                self.area_surface = self.rated_q / self.rated_lmtd / self.rated_coef_dry
+            else:
+                # dry+wet condition
+                # air condtion in border
+                self.rated_t_border_air = w_rh2tdb(self.win_air, self.rated_rh_border)
+                self.rated_h_border_air = tdb_w2h(self.rated_t_border_air, self.win_air)
+
+                # water condition in border
+                self.rated_h_border_wet = (self.rated_h_border_air - self.rated_hout_air) * self.rated_g_air
+                self.rated_t_border_water = self.rated_tin_water + self.rated_h_border_wet / self.rated_cap_water
+
+                # air saturation enthalpy that temperature equal to water
+                self.rated_h_water_inlet = tdb2hsat(self.rated_tin_water)
+                self.rated_h_border_water = tdb2hsat(self.rated_t_border_water)
+
+                # dry surface
+                self.rated_dt1 = self.rated_tdbin_air - self.rated_tout_water
+                self.rated_dt2 = self.rated_t_border_air - self.rated_t_border_water
+                self.rated_lmtd = (self.rated_dt1 - self.rated_dt2) / math.log(self.rated_dt1 / self.rated_dt2)
+                self.rated_area_dry_sur = (self.rated_q - self.rated_h_border_wet) / self.rated_lmtd / self.rated_coef_dry
+
+                # wet surface
+                self.rated_dh1 = self.rated_h_border_air - self.rated_h_border_water
+                self.rated_dh2 =self.rated_hout_air - self.rated_h_water_inlet
+                self.rated_lmhd = (self.rated_dh1 - self.rated_dh2) / math.log(self.rated_dh1 / self.rated_dh2)
+                self.rated_area_wet_sur = self.rated_h_border_wet / self.rated_lmhd / self.rated_coef_wet
+
+                self.area_surface = self.rated_area_dry_sur + self.rated_area_wet_sur
+
+    def coil_cal(self, tdb_in_air, win_air, rh_border, tin_water, g_air, g_water, coolingcoil, heatingcoil):
+        # simulation input
+        self.tdb_in_air = tdb_in_air
+        self.w_air_inlet =win_air
+        self.rh_border = rh_border
+        self.tin_water = tin_water
+        self.g_air = g_air
+        self.g_water = g_water
+        # output
+        self.tout_air = 0
+        self.wout_air = 0
+        self.tout_water = 0
+        self.ratio_drywet = 0
+        self.coolingcoil = coolingcoil
+        self.heatingcoil = heatingcoil
+
+        self.t_border_water = self.t_border_air = 0
+        self.zd = self.wd = self.v1 = self.v2 = self.zw = self.ww = self.v3 = self.v4 = self.v5 = self.v6 = 0
+        if self.g_air <= 0 or self.g_water <= 0 or self.tdb_in_air == self.tin_water:
+            self.tout_air = self.tdb_in_air
+            self.tout_water = self.tin_water
+            self.wout_air = self.w_air_inlet
+            self.rhout_air = w_tdb2rh(self.wout_air, self.tout_air)
+            self.ratio_drywet = 1
+            q = 0
+            return self.tout_air, self.wout_air, self.rhout_air, self.tout_water, self.ratio_drywet, q, self.g_water
+
+        # capacity of water and wet air [kW/s]
+        self.cpma = w2cpair(self.w_air_inlet)
+        self.cap_air = self.g_air * self.cpma
+        self.cap_water = self.g_water * 4.186
+
+        # heat transfer coefficient dry - kW/(m^2*K) wet - kW/[m^2*(kJ/kg)]
+        # proportion with water/air speed
+        self.v_water = (self.g_water / self.rated_g_water) * self.rated_v_water
+        self.v_air = (self.g_air / self.rated_g_air) * self.rated_v_air
+        self.coef_dry = 1 / (4.72 + 4.91 * math.pow(self.v_water, -0.8) + 26.7 * math.pow(self.v_air, -0.64))
+        self.coef_wet = 1 / (10.044 + 10.44 * math.pow(self.v_water, -0.8) + 39.6 * math.pow(self.v_air, -0.64))
+
+        if self.tdb_in_air < self.tin_water:
+            self.heatingcoil = 1
+            ratio_drywet = 1
+
+            cap_min = min(self.cap_air, self.cap_water)
+            cap_max = max(self.cap_air, self.cap_water)
+            ntu = self.coef_dry * self.area_surface / cap_min
+            # efficient of heat gain
+            eff = hex_effectiveness(ntu, cap_min / cap_max, 'counterflow')
+            # outlet condition and heat change
+            q = eff * cap_min * (self.tin_water - self.tdb_in_air)
+            tout_air = self.tdb_in_air + q / self.cap_air
+            tout_water = self.tin_water - q / self.cap_water
+            wout_air = self.w_air_inlet
+            rhout_air = w_tdb2rh(wout_air, tout_air)
+
+        else:
+            # cooling
+            # consider as saturate temperature
+            self.coolingcoil = 1
+            t_border = w_rh2tdb(self.w_air_inlet, self.rh_border)
+            hin_air = tdb_w2h(self.tdb_in_air, self.w_air_inlet)
+
+            # saturation enthalpy based on Tdb
+            # p_a parameter of temperature
+            # p_b slice
+            [p_a, p_b] = getparameter_hex(self.tin_water)
+            xd = 1 / self.cap_air
+            yd = -1 / self.cap_water
+            xw = 1 / self.g_air
+            yw = -p_a / self.cap_water
+
+            def efunc(fdrate):
+
+                self.zd = math.exp(self.coef_dry * self.area_surface * fdrate * (xd + yd))
+                self.wd = self.zd * xd + yd
+                self.v1 = xd * (self.zd - 1) / self.wd
+                self.v2 = self.zd * (xd + yd) / self.wd
+
+                self.zw = math.exp(self.coef_wet * self.area_surface * (1 - fdrate) * (xw + yw))
+                self.ww = self.zw * xw + yw
+                self.v3 = (xw + yw) / self.ww
+                self.v4 = xw * (self.zw - 1) / self.ww
+                self.v5 = self.zw * (xw + yw) / self.ww
+                self.v6 = yw * (1 - self.zw) / self.ww / p_a
+
+                self.t_border_water = (self.v5 * self.tin_water + self.v6 * (
+                            hin_air - self.v1 * self.cpma * self.tdb_in_air - p_b)) \
+                                      / (1 - self.v1 * self.v6 * self.cpma)
+                self.t_border_air = self.tdb_in_air - self.v1 * (self.tdb_in_air - self.t_border_water)
+                if fdrate == 1 and self.t_border_air > t_border:
+                    return 1
+                return t_border - self.t_border_air
+
+            drate = 1
+
+            if 0 < efunc(drate):
+                try:
+                    drate = optimize.brentq(efunc, 0, 1, xtol=0.0001, maxiter=100)  # brack=(0, 1) tol=0.0001,
+                except ValueError:
+                    drate = 0
+                    efunc(drate)
+
+            # outlet condition
+            tout_water = self.tdb_in_air - self.v2 * (self.tdb_in_air - self.t_border_water)
+            h_border_air = self.cpma * (self.t_border_air - self.tdb_in_air) + hin_air
+            h_water_inlet = p_a * self.tin_water + p_b
+            hout_air = self.v3 * h_border_air + self.v4 * h_water_inlet
+            q = self.cap_air * (self.tdb_in_air - self.t_border_air) + self.g_air * (h_border_air - hout_air)
+            ratio_drywet = drate
+
+            if drate < 1:
+                wout_air = h_rh2w(hout_air, self.rh_border)
+            else:
+                wout_air = self.w_air_inlet
+
+            tout_air = w_h2tdb(wout_air, hout_air)
+            rhout_air = w_tdb2rh(wout_air, tout_air)
+
+        return tout_air, wout_air, rhout_air, tout_water, self.ratio_drywet, q, self.g_water, self.area_surface
 
     
 # ダンパ特性と圧力損失計算
