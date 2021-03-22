@@ -3,28 +3,94 @@ from scipy import optimize
 
 #########################
 # 空気調和・衛生工学会編：空気調和・衛生工学便覧14版，1基礎編，第3章, pp.39-56，2010.
+# 式の読み方↓
+# tdb_w2h   [input]tdb(dry-bulb temperature), w(absolute humidity) -> [output] h(enthalpy)
 #########################
 
-    # twb       湿球温度['C]
-    # tdb       乾球温度['C]
-    # tsat      露点温度['C]
-    # w         絶対湿度[kg/kg']
-    # pv        水蒸気分圧[kPa]            vapor pressure
-    # psat      飽和空気の水蒸気分圧[kPa]    saturated vapro pressure
-    # h         比エンタルピー[kJ/kg']
-    # rh        相対湿度[%]
-    # den       密度[kg/m^3]              density
-    # p_atm     標準大気圧[kPa]
-    # 式の意味
-    # tdb_w2h   input:tdb(dry-bulb temperature), w(absolute humidity) -> output: h(enthalpy)
+# psychrometric_functions.py←pyhvac.py
+# ・tdb_rh2tdp(tdb, rh)    ← dew_point_temperature(Tda, rh)
+# ・tdb_rh2h_x(tdb,rh)     ← enthalpy(Tda, rh)
+# ・tdb2psat(tdb)          ← tda2ps(tda)
+# ・tdb_rh2twb(tdb, rh)  　← tda_rh2twb(tda, rh)
+
+
+# twb       湿球温度['C]
+# tdb       乾球温度['C]
+# tdp       露点温度['C]
+# w         絶対湿度[kg/kg']
+# pv        水蒸気分圧[kPa]            vapor pressure
+# psat      飽和空気の水蒸気分圧[kPa]    saturated vapor pressure
+# h         比エンタルピー[kJ/kg']
+# rh        相対湿度[%]
+# den       密度[kg/m^3]              density
+# p_atm     標準大気圧[kPa]
+
+
+CA = 1.006  # 乾き空気の定圧比熱 [kJ/kg・K]
+CV = 1.86  # 水蒸気の定圧比熱 [kJ/kg・K]
+R0 = 2.501 * 10 ** 3  # 0'Cの水の蒸発潜熱 [kJ/kg]
+
+
+# 乾球温度と相対湿度から露点温度['C]
+def tdb_rh2tdp(tdb, rh):
+    # 飽和水蒸気圧psat[mmHg]の計算
+    c = 373.16 / (273.16 + tdb)
+    b = c - 1
+    a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10 ** (-7) * (10 ** (11.344 * b / c) - 1) + 8.1328 * 10 ** (
+        -3) * (10 ** (-3.49149 * b) - 1)
+    psat = 760 * 10 ** a
+    # 入力した絶対湿度
+    x = 0.622 * (rh * psat) / 100 / (760 - rh * psat / 100)
+
+    # この絶対湿度で相対湿度100%となる飽和水蒸気圧psat
+    psat = 100 * 760 * x / (100 * (0.622 + x))
+    psat0 = 0
+    tdp_max = tdb
+    tdp_min = -20
+    tdp = 0
+    cnt = 0
+    # 飽和水蒸気圧が上のpsatの値となる温度twb
+    while (psat - psat0 < -0.01) or (psat - psat0 > 0.01):
+
+        tdp = (tdp_max + tdp_min) / 2
+
+        c = 373.16 / (273.16 + tdp)
+        b = c - 1
+        a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10 ** (-7) * (
+                    10 ** (11.344 * b / c) - 1) + 8.1328 * 10 ** (-3) * (10 ** (-3.49149 * b) - 1)
+        psat0 = 760 * 10 ** a
+
+        if psat - psat0 > 0:
+            tdp_min = tdp
+        else:
+            tdp_max = tdp
+
+        cnt += 1
+        if cnt > 30:
+            break
+
+    return tdp
+
+
+# 乾球温度tdbと相対湿度rhから比エンタルピーh[kJ/kg']と絶対湿度x[kg/kg']
+def tdb_rh2h_x(tdb, rh):
+    # 飽和水蒸気圧Ps[mmHg]の計算
+    c = 373.16 / (273.16 + tdb)
+    b = c - 1
+    a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10 ** (-7) * (10 ** (11.344 * b / c) - 1) + 8.1328 * 10 ** (
+        -3) * (10 ** (-3.49149 * b) - 1)
+    psat = 760 * 10 ** a
+    w = 0.622 * (rh * psat) / 100 / (760 - rh * psat / 100)
+    h = CA * tdb + (R0 + CV * tdb) * w
+
+    return [h, w]
 
 
 # 乾球温度から飽和水蒸気圧[kPa]
 def tdb2psat(tdb):
     # Wagner equation
     x = (1 - (tdb + 273.15) / 647.3)
-    psat = 221200 * \
-           math.exp((-7.76451 * x + 1.45838 * x ** 1.5 + -2.7758 * x ** 3 - 1.23303 * x ** 6) / (1 - x))  # [hPa]
+    psat = 221200 * math.exp((-7.76451 * x + 1.45838 * x ** 1.5 + -2.7758 * x ** 3 - 1.23303 * x ** 6) / (1-x))  # [hPa]
     return psat / 10  # [hPa] -> [kPa]
 
 
@@ -34,18 +100,18 @@ def tdb_rh2twb(tdb, rh):
     pv_1 = rh / 100 * psat
     pv_2 = -99999
     twb = 0
-    twbmax = 50
-    twbmin = -50
+    twb_max = 50
+    twb_min = -50
     cnt = 0
-    while abs(pv_1-pv_2) > 0.01:
-        twb = (twbmax + twbmin) / 2
+    while abs(pv_1 - pv_2) > 0.01:
+        twb = (twb_max + twb_min) / 2
         # Sprung equation
-        pv_2 = tdb2psat(twb)-0.000662*1013.25*(tdb-twb)
+        pv_2 = tdb2psat(twb) - 0.000662 * 1013.25 * (tdb - twb)
 
-        if pv_1-pv_2 > 0:
-            twbmin = twb
+        if pv_1 - pv_2 > 0:
+            twb_min = twb
         else:
-            twbmax = twb
+            twb_max = twb
 
         cnt += 1
         if cnt > 20:
@@ -54,58 +120,14 @@ def tdb_rh2twb(tdb, rh):
     return twb
 
 
-# 乾球温度と相対湿度から露点温度['C]
-def tdb_rh2tsat(tdb, rh):
-    # 飽和水蒸気圧Ps[mmHg]の計算
-    c = 373.16 / (273.16 + tdb)
-    b = c - 1
-    a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10 ** (-7) * (10 ** (11.344 * b / c) - 1) + 8.1328 * 10 ** (
-        -3) * (10 ** (-3.49149 * b) - 1)
-    Ps = 760 * 10 ** a
-    # 入力した絶対湿度
-    x = 0.622 * (rh * Ps) / 100 / (760 - rh * Ps / 100)
-
-    # この絶対湿度で相対湿度100%となる飽和水蒸気圧Ps
-    Ps = 100 * 760 * x / (100 * (0.622 + x))
-    Ps0 = 0
-    Tdpmax = tdb
-    Tdpmin = -20
-    tsat = 0
-    cnt = 0
-    # 飽和水蒸気圧が上のPsの値となる温度Twb
-    while (Ps - Ps0 < -0.01) or (Ps - Ps0 > 0.01):
-
-        tsat = (Tdpmax + Tdpmin) / 2
-
-        c = 373.16 / (273.16 + tsat)
-        b = c - 1
-        a = -7.90298 * b + 5.02808 * math.log10(c) - 1.3816 * 10 ** (-7) * (
-                    10 ** (11.344 * b / c) - 1) + 8.1328 * 10 ** (-3) * (10 ** (-3.49149 * b) - 1)
-        Ps0 = 760 * 10 ** a
-
-        if Ps - Ps0 > 0:
-            Tdpmin = tsat
-        else:
-            Tdpmax = tsat
-
-        cnt += 1
-        if cnt > 30:
-            break
-
-    return tsat
-
-
 # 乾球温度と絶対湿度から比エンタルピー[kJ/kg']
 def tdb_w2h(tdb, w):
-    CA = 1.006              # 乾き空気の定圧比熱 [kJ/kg・K]
-    CV = 1.86              # 水蒸気の定圧比熱 [kJ/kg・K]
-    R0 = 2.501 * 10 ** 3    # 0'Cの水の蒸発潜熱 [kJ/kg]
     return CA * tdb + (CV * tdb + R0) * w
 
 
 # 乾球温度から飽和水蒸気圧の比エンタルピー[kJ/kg']
 def tdb2hsat(tdb):
-    psat = tsat2psat(tdb)
+    psat = tdp2psat(tdb)
     wsat = pv2w(psat)
     hsat = tdb_w2h(tdb, wsat)
     return hsat
@@ -116,14 +138,14 @@ def w2pv(w, p_atm=101.325):
     return p_atm * w / (0.622 + w)
 
 
-#　蒸気圧から絶対湿度['C]
+# 蒸気圧から絶対湿度['C]
 def pv2w(pv, p_atm=101.325):
     w = 0.622 * pv / (p_atm - pv)
     return w
 
 
-#　露点温度から飽和水蒸気圧[単位不明、おそらくkPaだが…]
-def tsat2psat(tsat):
+# 露点温度から飽和水蒸気圧[単位不明、おそらくkPaだが…]
+def tdp2psat(tdp):
     p_convert = 0.001
 
     c1 = -5.6745359e3
@@ -145,12 +167,12 @@ def tsat2psat(tsat):
     n9 = -0.23855557567849e0
     n10 = 0.65017534844798e3
 
-    T = tsat + 273.15
-    if tsat < 0.01:
-        psat = math.exp(c1 / T + c2 + c3 * T + c4 * T ** 2 + c5 * T ** 3 + c6 * T ** 4 + c7 * math.log(T)) * p_convert
+    t = tdp + 273.15
+    if tdp < 0.01:
+        psat = math.exp(c1 / t + c2 + c3 * t + c4 * t ** 2 + c5 * t ** 3 + c6 * t ** 4 + c7 * math.log(t)) * p_convert
 
     else:
-        alpha = T + n9 / (T - n10)
+        alpha = t + n9 / (t - n10)
         a2 = alpha ** 2
         a = a2 + n1 * alpha + n2
         b = n3 * a2 + n4 * alpha + n5
@@ -160,42 +182,42 @@ def tsat2psat(tsat):
     return psat
 
 
-#　比エンタルピーと相対湿度から絶対湿度[kg/kg']
+# 比エンタルピーと相対湿度から絶対湿度[kg/kg']
 def h_rh2w(h, rh):
     tdb = h_rh2tdb(h, rh)
     w = tdb_rh2w(tdb, rh)
     return w
 
 
-#　乾球温度から密度[kg/m^3]
+# 乾球温度から密度[kg/m^3]
 def tdb2den(tdb):
     return 1.293 * 273.3 / (273.2 + tdb)
 
 
-#　比エンタルピーと相対湿度から乾球温度['C]
+# 比エンタルピーと相対湿度から乾球温度['C]
 def h_rh2tdb(h, rh):
     def h_rh2tdb_fun(tdb):
         return h - tdb_rh2h(tdb, rh)
     return optimize.newton(h_rh2tdb_fun, x0=1e-5, tol=1e-4, maxiter=20)
 
 
-#　乾球温度と相対湿度から比エンタルピー[kJ/kg']
+# 乾球温度と相対湿度から比エンタルピー[kJ/kg']
 def tdb_rh2h(tdb, rh):
     w = tdb_rh2w(tdb, rh)
     h = tdb_w2h(tdb, w)
     return h
 
 
-#　乾球温度と相対湿度から絶対湿度[kg/kg']
+# 乾球温度と相対湿度から絶対湿度[kg/kg']
 def tdb_rh2w(tdb, rh):
-    psat = tsat2psat(tdb)
+    psat = tdp2psat(tdb)
     pv = 0.01 * rh * psat
     w = pv2w(pv)
     return w
 
 
-#　飽和水蒸気圧から露点温度['C]
-def psat2tsat(psat):
+# 飽和水蒸気圧から露点温度['C]
+def psat2tdp(psat):
     p_convert = 0.001
 
     d1 = -6.0662e1
@@ -216,7 +238,7 @@ def psat2tsat(psat):
 
     if psat < 0.611213:
         y = math.log(psat / p_convert)
-        tsat = d1 + y * (d2 + y * (d3 + y * d4))
+        tdp = d1 + y * (d2 + y * (d3 + y * d4))
     else:
         ps = psat * p_convert
         beta = pow(ps, 0.25)
@@ -225,8 +247,8 @@ def psat2tsat(psat):
         f = n1 * b2 + n4 * beta + n7
         g = n2 * b2 + n5 * beta + n8
         d = 2 * g / (-f - pow(f ** 2 - 4 * e * g, 0.5))
-        tsat = (n10 + d - pow((n10 + d) ** 2 - 4 * (n9 + n10 * d), 0.5)) / 2 - 273.15
-    return tsat
+        tdp = (n10 + d - pow((n10 + d) ** 2 - 4 * (n9 + n10 * d), 0.5)) / 2 - 273.15
+    return tdp
 
 
 # 絶対湿度と比エンタルピーから乾球温度['C]
@@ -238,7 +260,7 @@ def w_h2tdb(w, h):
 # 絶対湿度と相対湿度から乾球温度['C]
 def w_rh2tdb(w, rh):
     psat = w2pv(w)
-    tdb = psat2tsat(psat / rh * 100)
+    tdb = psat2tdp(psat / rh * 100)
     return tdb
 
 
@@ -251,7 +273,7 @@ def w2cpair(w):
 # 絶対湿度と乾球温度から相対湿度['C]
 def w_tdb2rh(w, tdb):
     pv = w2pv(w)
-    psat = tsat2psat(tdb)
+    psat = tdp2psat(tdb)
     if psat <= 0:
         return 0
     else:
@@ -260,7 +282,7 @@ def w_tdb2rh(w, tdb):
 
 # 乾球温度と湿球湿度から絶対湿度[kg/kg']
 def tdb_twb2w(tdb, twb):
-    psat = tsat2psat(twb)
+    psat = tdp2psat(twb)
     wsat = pv2w(psat)
     a = wsat * (2501 + (1.86 - 4.186) * twb) + 1.006 * (twb - tdb)  # 4.186[kJ/kg･K] 水の比熱
     b = 2501 + 1.86 * tdb - 4.186 * twb
