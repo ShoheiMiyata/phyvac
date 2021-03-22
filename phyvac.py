@@ -25,9 +25,9 @@ class Valve:
         # g         ：流量 単位要確認!!
         self.cv_max = cv_max
         self.r = r
-        self.dp = 0
-        self.vlv = 0
-        self.g = 0
+        self.dp = 0.0
+        self.vlv = 0.0
+        self.g = 0.0
         
     def f2p(self, g): # flow to pressure
         self.g = g
@@ -36,7 +36,7 @@ class Valve:
         if (self.cv_max * self.r**(self.vlv - 1))**2 > 0:
             self.dp = (- 1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2) * self.g**2
         else:
-            self.dp = 0
+            self.dp = 0.0
             
         return self.dp
     
@@ -69,11 +69,11 @@ class Pump:
         self.pg = pg
         self.eg = eg
         self.r_ef = r_ef
-        self.inv = 0
-        self.dp = 0
-        self.g = 0
-        self.ef = 0
-        self.pw = 0
+        self.inv = 0.0
+        self.dp = 0.0
+        self.g = 0.0
+        self.ef = 0.0
+        self.pw = 0.0
         self.flag = 0
         self.num = 1
     
@@ -83,10 +83,10 @@ class Pump:
         if self.g > 0 and self.inv > 0:
             self.dp = (self.pg[0] + self.pg[1] *  (self.g / self.inv) + self.pg[2] *  (self.g / self.inv)**2) * self.inv**2
         else:
-            self.dp = 0
+            self.dp = 0.0
             
         if self.dp < 0:
-            self.dp = 0
+            self.dp = 0.0
             self.flag = 1
         else:
             self.flag = 0
@@ -110,7 +110,7 @@ class Pump:
             
             self.dp = (self.pg[0] + self.pg[1] *  (self.g / self.inv) + self.pg[2] *  (self.g / self.inv)**2) * self.inv**2
             if self.dp < 0:
-                self.dp = 0
+                self.dp = 0.0
                 self.flag = 1
             # print(Nm)
         
@@ -119,13 +119,13 @@ class Pump:
                 self.pw = 1.0 * self.g * self.dp / (60 * self.ef)
                 self.flag = 0
             else:
-                self.pw = 0
+                self.pw = 0.0
                 self.flag = 2
             # print(self.flag)
         
         else:
             self.pw = 0.0
-            self.ef = 0
+            self.ef = 0.0
             self.flag = 0
         
         
@@ -1123,8 +1123,8 @@ class Branch00:
         # head_act  :実揚程[kPa]
         self.kr_eq = kr_eq
         self.kr_pipe = kr_pipe
-        self.dp = 0
-        self.g = 0
+        self.dp = 0.0
+        self.g = 0.0
         self.flag = 0
         self.head_act = head_act
         
@@ -1142,19 +1142,19 @@ class Branch00:
             g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
             g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
             if max(g1, g2) < 0:
-                self.g = 0
+                self.g = 0.0
                 self.flag = 1
             else:
                 self.g = max(g1, g2)
         else:
-            self.g = 0
+            self.g = 0.0
             self.flag = 1  
         return self.g     
 
 # 機器、バルブを有する枝
 class Branch01: # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
-    def __init__(self, valve, kr_eq=0.5, kr_pipe=0.5):
+    def __init__(self, valve, kr_eq=0.8, kr_pipe=0.5):
         # g         :枝の出入口流量[m3/min]
         # dp        :枝の出入口圧力差[kPa]加圧：+, 減圧：-
         # kr_pipe      :管の圧損係数[kPa/(m3/min)^2]
@@ -1164,8 +1164,8 @@ class Branch01: # コンポジションというpython文法を使う
         self.valve = valve
         self.kr_eq = kr_eq
         self.kr_pipe = kr_pipe
-        self.dp = 0
-        self.g = 0
+        self.dp = 0.0
+        self.g = 0.0
         self.flag = 0
         
     def f2p(self, g): # 流量から圧力損失を求める
@@ -1184,12 +1184,12 @@ class Branch01: # コンポジションというpython文法を使う
             g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
             g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
             if max(g1, g2) < 0:
-                self.g = 0
+                self.g = 0.0
                 self.flag = 1
             else:
                 self.g = max(g1, g2)
         else:
-            self.g = 0
+            self.g = 0.0
             self.flag = 1
         self.valve.g = self.g   
         return self.g
