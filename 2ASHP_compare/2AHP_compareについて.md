@@ -1,1 +1,0 @@
-### 2ASHP_compareについて
