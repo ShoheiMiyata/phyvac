@@ -9,6 +9,8 @@
 
 ### 制御変更：
 ASHPの台数制御を追加してください
+効果待ち時間の例：
+ASHP1台運転時、負荷流量が0.12を上回ってから30分後に2台へ増段する  
 
 ![image](https://user-images.githubusercontent.com/27459538/112437753-9df4c700-8d8a-11eb-8a7b-b3432c4689c5.png)
 
