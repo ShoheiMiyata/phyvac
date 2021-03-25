@@ -1,7 +1,7 @@
 ## 2ASHP_compareについて
 
 ### 1ASHP_simpleAHU.pyのシステム構成のうち、ASHPを2台に変更した場合の結果を比較します
-結果は[Upload]()へアップロードしてください。
+結果は[Upload](https://github.com/ShoheiMiyata/phyvac/tree/main/2ASHP_compare/Upload)へアップロードしてください。
 <img src="https://user-images.githubusercontent.com/27459538/112437496-5cfcb280-8d8a-11eb-8b7a-826fe1b40f2b.png" width=30%>
 ### 条件変更：
 負荷流量・負荷熱量・流量が1ASHP_simpleAHU.pyの2倍になっています。
