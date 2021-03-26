@@ -1,7 +1,7 @@
 ## pv.Branch11(valve, pump, kr_eq=0.8, kr_pipe=0.5)
 並列ポンプ複数台とバイパス弁を有する枝
   
-<img src="https://user-images.githubusercontent.com/27459538/112594363-27200280-8e4c-11eb-9461-54e6677b7a6a.png" width=30%>
+<img src="https://user-images.githubusercontent.com/27459538/112594363-27200280-8e4c-11eb-9461-54e6677b7a6a.png" width=20%>
 
   
 ### Parameters:
@@ -32,23 +32,22 @@
 import phyvac as pv
 
 CP1 = pv.Pump()
-Branch_aPEb = pv.Branch10(pump = CP1, kr_eq=1.3)
-print(Branch_aPEb.pump.inv, Branch_aPEb.kr_pipe, Branch_aPEb.g, Branch_aPEb.dp)
+Vlv_CP1 = pv.Valve()
+CP1.num = 2 # ポンプ運転台数の指定
+
+Branch_aPVb = pv.Branch11(valve=Vlv_CP1, pump=CP1)
+print(Branch_aPVb.pump.inv, Branch_aPVb.kr_pipe_pump, Branch_aPVb.g, Branch_aPVb.dp)
 ```
 > 0.0 0.5 0.0 0.0
 ```
-CP1.inv = 0.8
-dp1 = Branch_aPEb.f2p(2.1) # 流量2.1 m3/minの時の枝の出入口圧力差を算出
-print(dp1, Branch_aPEb.dp, Branch_aPEb.g)
+CP1.inv = 0.3
+Vlv_CP1.vlv = 0.4
+dp1 = Branch_aPVb.f2p(2.1)
+print(dp1, Branch_aPVb.dp, Branch_aPVb.g, CP1.g, Vlv_CP1.g)
 ```
-> 129.361604 129.361604 2.1
+> 15.357309082033566 15.357309082033566 2.1 1.191954610229136 0.28390922045827205
 ```
-g1 = Branch_aPEb.p2f(120.0) # 枝の出入口圧力差が120.0 kPaの時の流量を算出
-print(g1, Branch_aPEb.dp, Branch_aPEb.g)
+Branch_aPVb.f2p(2.1) #　返り値を指定しなくても実行は可能
+print(dp1, Branch_aPVb.dp, Branch_aPVb.g, CP1.g, Vlv_CP1.g)
 ```
-> 2.4598822345001583 120.0 2.4598822345001583
-```
-Branch_aPEb.f2p(2.1) #　返り値を指定しなくても関数の実行は可能
-print(Branch_aPEb.dp, Branch_aPEb.g)
-```
-> 129.361604 2.1
+> 15.357309082033566 15.357309082033566 2.1 1.191954610229136 0.28390922045827205
