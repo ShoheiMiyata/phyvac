@@ -28,9 +28,9 @@
 ```
 import phyvac as pv
 
-CP1 = pv.Valve()
-Branch_aEVb = pv.Branch01(pump = CP1, kr_eq=1.3)
-print(Branch_aEVb.valve.vlv, Branch_aEVb.kr_pipe, Branch_aEVb.g, Branch_aEVb.dp)
+CP1 = pv.Pump()
+Branch_aPEb = pv.Branch10(pump = CP1, kr_eq=1.3)
+print(Branch_aPEb.pump.inv, Branch_aPEb.kr_pipe, Branch_aPEb.g, Branch_aPEb.dp)
 ```
 > 0.0 0.5 0.0 0.0
 ```
