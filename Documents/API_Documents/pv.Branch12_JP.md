@@ -15,7 +15,6 @@
 |g|float|流量 \[m<sup>3</sup>/min] |
 |dp|float|枝の出入口圧力差 \[kPa] 流れの向きに対して加圧：+, 減圧：- |
   
-※ポンプの台数はポンプオブジェクトの変数pump.numで指定する
 ## pv.Branch12.f2p(g) To Be Developed!
 流量から圧力差を求める
   
@@ -32,22 +31,21 @@
 import phyvac as pv
 
 CP1 = pv.Pump()
-Vlv_CP1 = pv.Valve()
-CP1.num = 2 # ポンプ運転台数の指定
+Vlv_Bypass = pv.Valve()
 
-Branch_aPVb = pv.Branch11(valve=Vlv_CP1, pump=CP1)
-print(Branch_aPVb.pump.inv, Branch_aPVb.kr_pipe_pump, Branch_aPVb.g, Branch_aPVb.dp)
+Branch_aPEVb = pv.Branch11(valve=Vlv_Bypass, pump=CP1)
+print(Branch_aPEVb.pump.inv, Branch_aPEVb.kr_pipe_pump, Branch_aPEVb.g, Branch_aPEVb.dp)
 ```
 > 0.0 0.5 0.0 0.0
 ```
-CP1.inv = 0.3
-Vlv_CP1.vlv = 0.4
-dp1 = Branch_aPVb.f2p(2.1)
-print(dp1, Branch_aPVb.dp, Branch_aPVb.g, CP1.g, Vlv_CP1.g)
+CP1.inv = 0.4
+Vlv_Bypass.vlv = 0.2
+dp1 = Branch_aPEVb.f2p(2.1) # 2.1 m3/min時の枝の出入口温度差
+print(dp1, Branch_aPEVb.dp, Branch_aPEVb.g, CP1.g, Vlv_Bypass.g)
 ```
-> 15.357309082033566 15.357309082033566 2.1 1.191954610229136 0.28390922045827205
+> 15.822870003374664 15.822870003374664 2.1 2.214853606868385 0.11485360686838497
 ```
-Branch_aPVb.f2p(2.1) #　返り値を指定しなくても実行は可能
-print(dp1, Branch_aPVb.dp, Branch_aPVb.g, CP1.g, Vlv_CP1.g)
+Branch_aPEVb.f2p(2.1) #　返り値を指定しなくても実行は可能
+print(Branch_aPEVb.dp, Branch_aPEVb.g, CP1.g, Vlv_Bypass.g)
 ```
-> 15.357309082033566 15.357309082033566 2.1 1.191954610229136 0.28390922045827205
+> 15.822870003374664 2.1 2.214853606868385 0.11485360686838497
