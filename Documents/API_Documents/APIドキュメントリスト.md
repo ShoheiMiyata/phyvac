@@ -1,4 +1,4 @@
 ### APIドキュメントリスト
 
-- [Branch00](https://github.com/ShoheiMiyata/phyvac/blob/main/Doxuments/API_Documents/pv.Branch00_JP.md)
+- [Branch00](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch00_JP.md)
 - [Branch01](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch01_JP.md)
