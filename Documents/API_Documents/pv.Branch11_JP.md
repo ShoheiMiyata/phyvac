@@ -1,18 +1,21 @@
 ## pv.Branch11(valve, pump, kr_eq=0.8, kr_pipe=0.5)
-ポンプ、機器を有する枝
+並列ポンプ複数台とバイパス弁を有する枝
   
-<img src="https://user-images.githubusercontent.com/27459538/112588155-41ed7980-8e42-11eb-8508-249b09dc15c1.png" width=30%>
+<img src="https://user-images.githubusercontent.com/27459538/112594363-27200280-8e4c-11eb-9461-54e6677b7a6a.png" width=30%>
 
   
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
+|valve|object|バイパス弁のオブジェクト|
 |pump|object|この枝上のポンプのオブジェクト|
 |kr_eq|float|機器の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
-|kr_pipe|float|管の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
+|kr_pipe_pump|float|ポンプのある菅の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
+|kr_pipe_valve|float|バイパス弁の管の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
 |g|float|流量 \[m<sup>3</sup>/min] |
 |dp|float|枝の出入口圧力差 \[kPa] 流れの向きに対して加圧：+, 減圧：- |
   
+※ポンプの台数はポンプオブジェクトの変数pump.numで指定する
 ## pv.Branch10.f2p(g)
 流量から圧力差を求める
   
