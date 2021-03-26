@@ -1,4 +1,4 @@
-## pv.Branch10(valve, pump, kr_eq=0.8, kr_pipe=0.5)
+## pv.Branch11(valve, pump, kr_eq=0.8, kr_pipe=0.5)
 ポンプ、機器を有する枝
   
 <img src="https://user-images.githubusercontent.com/27459538/112588155-41ed7980-8e42-11eb-8508-249b09dc15c1.png" width=30%>
