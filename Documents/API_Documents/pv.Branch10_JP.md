@@ -34,17 +34,18 @@ print(Branch_aPEb.pump.inv, Branch_aPEb.kr_pipe, Branch_aPEb.g, Branch_aPEb.dp)
 ```
 > 0.0 0.5 0.0 0.0
 ```
-dp1 = Branch_aEb.f2p(2.1) # 流量2.1 m3/minの時の圧力損失を算出
-print(dp1, Branch_aEb.dp, Branch_aEb.g)
+CP1.inv = 0.8
+dp1 = Branch_aPEb.f2p(2.1) # 流量2.1 m3/minの時の枝の出入口圧力差を算出
+print(dp1, Branch_aPEb.dp, Branch_aPEb.g)
 ```
-> -7.938000000000001 -7.938000000000001 2.1
+> 129.361604 129.361604 2.1
 ```
-g1 = Branch_aEb.p2f(-8.0) # 圧力差が-8.0 kPaの時の流量を算出
-print(g1, Branch_aEb.g, Branch_aEb.dp)
+g1 = Branch_aPEb.p2f(120.0) # 枝の出入口圧力差が120.0 kPaの時の流量を算出
+print(g1, Branch_aPEb.dp, Branch_aPEb.g)
 ```
-> 2.1081851067789192 2.1081851067789192 -8.0
+> 2.4598822345001583 120.0 2.4598822345001583
 ```
-Branch_aEb.f2p(2.1) # 返り値を指定しなくても関数の実行は可能
-print(Branch_aEb.dp, Branch_aEb.g)
+Branch_aPEb.f2p(2.1) #　返り値を指定しなくても関数の実行は可能
+print(Branch_aPEb.dp, Branch_aPEb.g)
 ```
-> -7.938000000000001 2.1
+> 129.361604 2.1
