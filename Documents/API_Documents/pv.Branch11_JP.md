@@ -1,7 +1,7 @@
 ## pv.Branch11(valve, pump, kr_eq=0.8, kr_pipe=0.5)
 並列ポンプ複数台とバイパス弁を有する枝
   
-<img src="https://user-images.githubusercontent.com/27459538/112594363-27200280-8e4c-11eb-9461-54e6677b7a6a.png" width=20%>
+<img src="https://user-images.githubusercontent.com/27459538/112598678-49b51a00-8e52-11eb-994b-e51f8654c666.png" width=20%>
 
   
 ### Parameters:
