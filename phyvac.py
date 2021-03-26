@@ -497,7 +497,7 @@ class Pump:
 # 負荷率-COP曲線に基づく冷凍機COP計算。表は左から右、上から下に負荷率や冷却水入口温度が上昇しなければならない。
 class Chiller:
     # 定格値の入力
-    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='Chiller',header=None)):
+    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='Chiller',encoding="SHIFT-JIS",header=None)):
         # tin   :入口温度[℃]
         # tout  :出口温度[℃]
         # g     :流量[m3/min]
@@ -614,7 +614,7 @@ class Chiller:
 # https://salamann.com/python-multi-dimension-data-interpolation
 class AirSourceHeatPump:
     # 定格値の入力
-    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='AirSourceHeatPump',header=None)):
+    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='AirSourceHeatPump',encoding="SHIFT-JIS",header=None)):
         # tin   :入口温度[℃]
         # tout  :出口温度[℃]
         # g     :流量[m3/min]
@@ -1514,13 +1514,13 @@ class Branch10: # コンポジションというpython文法を使う
         self.pump = pump
         self.kr_eq = kr_eq
         self.kr_pipe = kr_pipe
-        self.dp = 0
-        self.g = 0
+        self.dp = 0.0
+        self.g = 0.0
         self.flag = 0
     
     def f2p(self, g):        
         if self.pump.inv == 0: #　ポンプ停止時の対応
-            self.dp = 0
+            self.dp = 0.0
         else:
             self.g = g
             # 枝の出入口差圧=ポンプ加圧-配管圧損-機器圧損
@@ -1531,7 +1531,7 @@ class Branch10: # コンポジションというpython文法を使う
     def p2f(self, dp): # 圧力差から流量を求める
         
         if self.pump.inv == 0: #　ポンプ停止時の対応
-            self.g = 0
+            self.g = 0.0
         else:
             self.dp = dp
             self.flag = 0
@@ -1540,12 +1540,12 @@ class Branch10: # コンポジションというpython文法を使う
                 g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
                 g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
                 if max(g1, g2) < 0:
-                    self.g = 0
+                    self.g = 0.0
                     self.flag = 1
                 else:
                     self.g = max(g1, g2)
             else:
-                self.g = 0
+                self.g = 0.0
                 self.flag = 1
             self.pump.g = self.g
             
@@ -1565,8 +1565,8 @@ class Branch11: # コンポジションというpython文法を使う
         self.valve = valve
         self.kr_pipe_pump = kr_pipe_pump
         self.kr_pipe_valve = kr_pipe_valve
-        self.g = 0
-        self.dp = 0
+        self.g = 0.0
+        self.dp = 0.0
         self.flag = 0
         
     def f2p(self, g): # 流量から圧力損失を求める
@@ -1574,11 +1574,11 @@ class Branch11: # コンポジションというpython文法を使う
         self.flag = 0
         
         if self.valve.vlv == 0:
-            self.valve.g = 0
+            self.valve.g = 0.0
             self.pump.g = self.g / self.pump.num
             self.dp = - self.kr_pipe_pump * self.pump.g**2 + self.pump.f2p(self.pump.g)
         if self.pump.inv == 0 and self.valve.vlv > 0:
-            self.pump.g = 0
+            self.pump.g = 0.0
             self.valve.g = self.g
             self.dp = - self.kr_pipe_valve * self.valve.g**2 + self.valve.f2p(self.valve.g)
         else:
@@ -1593,12 +1593,12 @@ class Branch11: # コンポジションというpython文法を使う
                 g1 = (-co_1c + (co_1c**2 - 4*co_2c*co_0c)**0.5)/(2 * co_2c)
                 g2 = (-co_1c - (co_1c**2 - 4*co_2c*co_0c)**0.5)/(2 * co_2c)
                 if max(g1, g2) < 0:
-                    self.pump.g = 0
+                    self.pump.g = 0.0
                     self.flag = 1
                 else:
                     self.pump.g = max(g1, g2)
             else:
-                self.pump.g = 0
+                self.pump.g = 0.0
                 self.flag = 1
             
             self.valve.g = self.pump.num*self.pump.g - self.g
@@ -1618,16 +1618,16 @@ class Branch12: # コンポジションというpython文法を使う
         self.kr_eq = kr_eq
         self.kr_pipe = kr_pipe
         self.kr_pipe_bypass = kr_pipe_bypass
-        self.g = 0
-        self.dp = 0
+        self.g = 0.0
+        self.dp = 0.0
         self.flag = 0
         
     def p2f(self, dp): # 圧力から流量を求める dp=0でも流れる？？
         self.dp = dp
         self.flag = 0
         if self.valve.vlv == 0 and self.pump.inv == 0:
-            self.valve.g = 0
-            self.pump.g = 0
+            self.valve.g = 0.0
+            self.pump.g = 0.0
             
         elif self.valve.vlv == 0:
             self.valve.g = 0
@@ -1636,7 +1636,7 @@ class Branch12: # コンポジションというpython文法を使う
                 g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
                 g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
                 if max(g1, g2) < 0:
-                    self.pump.g = 0
+                    self.pump.g = 0.0
                     self.flag = 1
                 else:
                     self.pump.g = max(g1, g2)
@@ -1645,7 +1645,7 @@ class Branch12: # コンポジションというpython文法を使う
                 self.flag = 1
                 
         elif self.pump.inv == 0:
-            self.pump.g = 0
+            self.pump.g = 0.0
             [co_0, co_1, co_2] = self.valve.f2p_co() + np.array([self.dp, 0, -self.kr_pipe_bypass])
             
             if co_2 < 0 and self.dp < 0:
@@ -1653,7 +1653,7 @@ class Branch12: # コンポジションというpython文法を使う
             elif co_2 < 0 and self.dp > 0:
                 self.valve.g = -(self.dp / -co_2)**0.5 # 逆流する
             else:
-                self.valve.g = 0
+                self.valve.g = 0.0
                 self.flag = 2
             
         else:
@@ -1663,12 +1663,12 @@ class Branch12: # コンポジションというpython文法を使う
                 g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
                 g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
                 if max(g1, g2) < 0:
-                    self.pump.g = 0
+                    self.pump.g = 0.0
                     self.flag = 3
                 else:
                     self.pump.g = max(g1, g2)
             else:
-                self.pump.g = 0
+                self.pump.g = 0.0
                 self.flag = 4
                 
             # バイパス弁流量
@@ -1679,7 +1679,7 @@ class Branch12: # コンポジションというpython文法を使う
             elif co_2 < 0 and self.dp < 0:
                 self.valve.g = -(self.dp / co_2)**0.5 # 逆流する
             else:
-                self.valve.g = 0
+                self.valve.g = 0.0
                 self.flag = 5
             
         self.g = self.pump.g - self.valve.g
