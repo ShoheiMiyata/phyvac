@@ -21,7 +21,7 @@
   
 ### returns:
 枝の圧力差（変数dpにも値は格納される）
-## pv.Branch10.p2f(dp)
+## <span style="color: red; ">pv.Branch10.p2f(dp) To Be Developed</span>
 圧力差から流量を求める
   
 ### returns:
