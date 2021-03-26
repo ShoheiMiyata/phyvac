@@ -497,7 +497,7 @@ class Pump:
 # 負荷率-COP曲線に基づく冷凍機COP計算。表は左から右、上から下に負荷率や冷却水入口温度が上昇しなければならない。
 class Chiller:
     # 定格値の入力
-    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='Chiller',encoding="SHIFT-JIS",header=None)):
+    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='Chiller',header=None)):
         # tin   :入口温度[℃]
         # tout  :出口温度[℃]
         # g     :流量[m3/min]
@@ -614,7 +614,7 @@ class Chiller:
 # https://salamann.com/python-multi-dimension-data-interpolation
 class AirSourceHeatPump:
     # 定格値の入力
-    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='AirSourceHeatPump',encoding="SHIFT-JIS",header=None)):
+    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='AirSourceHeatPump',header=None)):
         # tin   :入口温度[℃]
         # tout  :出口温度[℃]
         # g     :流量[m3/min]
