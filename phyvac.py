@@ -1108,6 +1108,80 @@ class Damper():
             dp_l = (self.ll[1] * self.g ** 3 + self.ll[2] * self.g ** 2 + self.ll[3] * self.g + self.ll[4])
             self.dp = (dp_h - dp_l) / (self.hl[0]-self.ll[0]) * (self.damp - self.ll[0]) + dp_l
         return self.dp
+
+    
+# ファン特性と消費電力計算
+class Fan:
+    # 定格値の入力
+    def __init__(self, pg=[0.6467, 0.0082, -0.0004], eg=[-0.0166, 0.0399, -0.0008], r_ef=0.8, inv=1.0):
+        # pg    :圧力-流量(pg)曲線の係数（切片、一次、二次）
+        # eg    :効率-流量(eg)曲線の係数（切片、一次、二次）
+        # r_ef  :定格時の最高効率(本来は計算によって求める？)rated efficiency
+        # inv   :回転数比(0.0~1.0)
+        # dp_f  :ファン揚程[kPa]
+        # g     :流量[m3/min]
+        # pw    :消費電力[kW]
+        # flag  :計算に問題があったら1、なかったら0
+        # ef    :効率(0.0~1.0)
+        self.pg = pg
+        self.eg = eg
+        self.r_ef = r_ef
+        self.inv = inv
+        self.dp = 0
+        self.g = 0
+        self.ef = 0
+        self.pw = 0
+        self.flag = 0
+        self.num = 1
+
+    def f2p(self, g):  # flow to pressure for fan
+        self.g = g
+        # 流量がある場合のみ揚程を計算する
+        if self.g > 0:
+            self.dp = (self.pg[0] + self.pg[1] * (self.g / self.inv) + self.pg[2] * (
+                    self.g / self.inv) ** 2) * self.inv ** 2
+        else:
+            self.dp = 0
+
+        if self.dp < 0:
+            self.dp = 0
+            self.flag = 1
+        else:
+            self.flag = 0
+
+        return self.dp
+
+    def f2p_co(self):  # coefficient for f2p
+        return [self.pg[0] * self.inv ** 2, self.pg[1] * self.inv, self.pg[2]]
+
+    def cal(self):
+        # 流量がある場合のみ消費電力を計算する
+        if self.g > 0 and self.inv > 0:
+
+            # G: INV=1.0時（定格）の流量
+            G = self.g / self.inv
+            # K: 効率換算係数
+            K = 1.0 - (1.0 - self.r_ef) / (self.inv ** 0.2) / self.r_ef
+            # ef: 効率
+            self.ef = K * (self.eg[0] + self.eg[1] * G + self.eg[2] * G ** 2)
+
+            self.dp = (self.pg[0] + self.pg[1] * (self.g / self.inv) + self.pg[2] * (
+                    self.g / self.inv) ** 2) * self.inv ** 2
+            if self.dp < 0:
+                self.dp = 0
+                self.flag = 1
+
+            #  軸動力を求める
+            if self.ef > 0:
+                self.pw = 1.0 * self.g * self.dp / (60 * self.ef)
+                self.flag = 0
+            else:
+                self.pw = 0
+                self.flag = 2
+
+        else:
+            self.pw = 0.0
+            self.flag = 0
     
 
 # 制御関係モデル ###############################################################
