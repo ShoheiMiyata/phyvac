@@ -23,7 +23,8 @@ PI制御（D成分は省略されている）
 制御値a
   
 ## サンプルコード
-<img src="https://user-images.githubusercontent.com/27459538/112744349-5c5a5b00-8fda-11eb-85d3-a02e118e1684.png" width=30%>
+<img src="https://user-images.githubusercontent.com/27459538/112744451-1e116b80-8fdb-11eb-8a7b-259e715efa2c.png" width=30%>
+
   
 ```
 import phyvac as pv # phyvacモジュールのインポート
