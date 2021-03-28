@@ -1189,7 +1189,7 @@ class Fan:
 # pid制御（プログラムの中身はd成分を無視したpi制御）
 class PID:
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
-    def __init__(self, mode=1, a_max=1, a_min=0, kp=0.8, ti=10, t_reset=30, kg=1, sig=0, t_step=1):
+    def __init__(self, mode=1, a_max=1, a_min=0, kp=0.8, ti=10, sig=0, t_reset=30, kg=1, t_step=1):
         # mode          :運転時1, 非運転時0
         # a_max,a_min   :制御値の最大・最小範囲
         # kp            :比例ゲイン
