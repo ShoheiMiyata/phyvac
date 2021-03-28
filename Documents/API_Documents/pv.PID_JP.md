@@ -11,16 +11,16 @@ PI制御（D成分は省略されている）
 |ti|float|積分時間|
 |sv|float|設定値|
 |mv|float|設定値に対する計測値（制御目標値）。流量や温度など。|
-|t_reset|float|積分リセット(sv-mvの正負がt_reset時間ステップの間常に同一である場合に積分値を0とする)|
+|t_reset|float|積分リセット(sv-mvの正負がt_resetの間常に同一である場合に積分値を0とする)|
 |kg|float|aの増減とmvの増減の方向が一致する場合は1、逆の場合は-1|
 |sig|float|sv-mvの積分値|
 |t_step|integer|制御ステップ。1だと毎時刻制御出力し、2だと2時刻ごとに制御出力する。|
   
 ## pv.PID.control(sv, mv)
-設定値、計測値に基づきPI制御値を出力する
+設定値sv、計測値mvに基づくPI制御値を出力する
   
 ### returns:
-a
+制御値a
   
 ## サンプルコード
 ```
