@@ -1,4 +1,4 @@
-## pv.PID(mode=1, a_max=1, a_min=0, kp=0.8, ti=10, t_reset=30, kg=1, sig=0, t_step=1)
+## pv.PID(mode=1, a_max=1, a_min=0, kp=0.8, ti=10, sig=0, t_reset=30, kg=1, t_step=1)
 PI制御（D成分は省略されている）
   
 ### Parameters:
@@ -11,9 +11,9 @@ PI制御（D成分は省略されている）
 |ti|float|積分時間|
 |sv|float|設定値|
 |mv|float|設定値に対する計測値（制御目標値）。流量や温度など。|
-|t_reset|float|積分リセット(sv-mvの正負がt_resetの間常に同一である場合に積分値を0とする)|
-|kg|float|aの増減とmvの増減の方向が一致する場合は1、逆の場合は-1|
 |sig|float|sv-mvの積分値|
+|t_reset|float|積分リセット(sv-mvの正負がt_resetの間常に同一である場合にsigを0とする)|
+|kg|float|aの増減とmvの増減の方向が一致する場合は1、逆の場合は-1|
 |t_step|integer|制御ステップ。1だと毎時刻制御出力し、2だと2時刻ごとに制御出力する。|
   
 ## pv.PID.control(sv, mv)
@@ -23,6 +23,8 @@ PI制御（D成分は省略されている）
 制御値a
   
 ## サンプルコード
+<img src="https://user-images.githubusercontent.com/27459538/112744349-5c5a5b00-8fda-11eb-85d3-a02e118e1684.png" width=30%>
+  
 ```
 import phyvac as pv # phyvacモジュールのインポート
 
@@ -45,4 +47,4 @@ Branch_aEb.f2p(2.1) # 返り値を指定しなくても関数の実行は可能
 print(Branch_aEb.dp, Branch_aEb.g)
 ```
 > -7.938000000000001 2.1
-<img src="https://user-images.githubusercontent.com/27459538/111773622-be87d180-88f1-11eb-928c-eae0ba653c3a.png" width=30%>
+
