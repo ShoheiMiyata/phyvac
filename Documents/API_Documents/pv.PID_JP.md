@@ -48,9 +48,12 @@ plt.xlabel("calstep") # x軸のラベル
 plt.ylabel("flow") # y軸のラベル
 plt.show()  
 ```
-> 結果
+> 結果  
 > <img src="https://user-images.githubusercontent.com/27459538/112745087-bf4ef080-8fe0-11eb-93c3-b0092d55cb1f.png" width=40%>
   
-> kp=0.02, ti=30とした場合（比例ゲインが小さくなるため、設定値に達するまでに要する時間が長くなる）
+> kp=0.02, ti=30とした場合（比例ゲインが小さくなるため、設定値に達するまでに要する時間が長くなる）  
 > <img src="https://user-images.githubusercontent.com/27459538/112745137-371d1b00-8fe1-11eb-97cb-c3ce5f81ba8a.png" width=40%>
+  
+> kp=0.02, ti=3とした場合（積分時間を小さくすると、直前の計測値と設定値とのずれの影響が大きくなるため振動する）
+> <img src="https://user-images.githubusercontent.com/27459538/112745258-0093d000-8fe2-11eb-90e9-2da8ccc8d93a.png" width=40%>
 
