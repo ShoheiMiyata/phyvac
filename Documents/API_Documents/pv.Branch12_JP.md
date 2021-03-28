@@ -1,7 +1,7 @@
 ## pv.Branch12(valve, pump, kr_eq=0.8, kr_pipe=0.5)
 ポンプ、機器、バイパス弁を有する枝
   
-<img src="https://user-images.githubusercontent.com/27459538/112600540-afa2a100-8e54-11eb-875d-6598bfbb7713.png" width=30%>
+<img src="https://user-images.githubusercontent.com/27459538/112748089-86b91200-8ff4-11eb-8a36-dcc765ff2361.png" width=30%>
 
   
 ### Parameters:
