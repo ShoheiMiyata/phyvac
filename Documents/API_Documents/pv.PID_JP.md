@@ -23,29 +23,31 @@ PI制御（D成分は省略されている）
 制御値a
   
 ## サンプルコード
-<img src="https://user-images.githubusercontent.com/27459538/112744451-1e116b80-8fdb-11eb-8a7b-259e715efa2c.png" width=30%>
+<img src="https://user-images.githubusercontent.com/27459538/112744451-1e116b80-8fdb-11eb-8a7b-259e715efa2c.png" width=40%>
 
   
 ```
-import phyvac as pv # phyvacモジュールのインポート
+import phyvac as pv # 必要なモジュールのインポート
+import matplotlib.pyplot as plt
+import numpy as np
 
-Branch_aEb = pv.Branch00(kr_eq=1.3) # 点aからEquipmentを通って点bまでの枝を定義
-print(Branch_aEb.kr_eq, Branch_aEb.kr_pipe, Branch_aEb.g, Branch_aEb.dp)
+result = np.zeros((60,2))
+CP1 = pv.Pump() # CP1の定義(特性はデフォルト値を利用)
+Branch = pv.Branch10(pump=CP1, kr_eq=1.3, kr_pipe=0.8) # ループ(枝)の定義
+PID_CP1 = pv.PID(kp=0.1, ti=30, a_min=0.0,t_reset=60) # CP1のPID制御の定義
+
+for calstep in range(60):
+    CP1_g_sv = 1.5 # 流量設定値と1.5 m3/minとする
+    CP1.inv = PID_CP1.control(sv=CP1_g_sv,mv=CP1.g) # PI制御の実行
+    Branch.p2f(dp=0) # Branchの出入口圧力差=0として単一閉ループの流量計算を行う
+    result[calstep,0] = calstep
+    result[calstep,1] = CP1.g
+    
+plt.plot(result[:,0], result[:,1]) # 結果の描画
+plt.xlabel("calstep") # x軸のラベル
+plt.ylabel("flow") # y軸のラベル
+plt.show()  
 ```
-> 1.3 0.5 0.0 0.0
-```
-dp1 = Branch_aEb.f2p(2.1) # 流量2.1 m3/minの時の圧力損失を算出
-print(dp1, Branch_aEb.dp, Branch_aEb.g)
-```
-> -7.938000000000001 -7.938000000000001 2.1
-```
-g1 = Branch_aEb.p2f(-8.0) # 圧力差が-8.0 kPaの時の流量を算出
-print(g1, Branch_aEb.g, Branch_aEb.dp)
-```
-> 2.1081851067789192 2.1081851067789192 -8.0
-```
-Branch_aEb.f2p(2.1) # 返り値を指定しなくても関数の実行は可能
-print(Branch_aEb.dp, Branch_aEb.g)
-```
-> -7.938000000000001 2.1
+> <img src="https://user-images.githubusercontent.com/27459538/112745087-bf4ef080-8fe0-11eb-93c3-b0092d55cb1f.png" width=40%>
+
 
