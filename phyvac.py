@@ -1375,19 +1375,18 @@ class BypassValve: # コンポジションというpython文法を使う
 
 # 増減段閾値と効果待ち時間を有する台数制御   
 class UnitNum:
-    def __init__(self, thre_up=[0.5,1.0], thre_down=[0.4,0.9], t_wait=15):
-        # thre_up_g     :増段閾値(1->2, 2->3といった時の値。型は配列またはリストとする) thre: threshold, g: 流量, q: 熱量
-        # thre_down_q   :減段閾値(2->1, 3->2といった時の値。型は配列またはリストとする)
+    def __init__(self, thre_up=[0.5,1.0], thre_down=[0.4,0.9], t_wait=15, num=1):
+        # thre_up       :増段閾値(1->2, 2->3といった時の値。型は配列またはリストとする) thre: threshold, g: 流量, q: 熱量
+        # thre_down     :減段閾値(2->1, 3->2といった時の値。型は配列またはリストとする)
         # t_wait        :効果待ち時間(ex: 15分)
         # num           :運転台数 num: number
-        # g             :流量[m3/min]
-        # q             :熱量[kW]
+        # g             :流量[m3/min] ここでは流量gに基づき台数制御するとしているが、他の変数でも適用可能
         self.thre_up = thre_up
         self.thre_down = thre_down
         self.t_wait = t_wait
-        self.num = 1
-        self.flag_switch = np.zeros(t_wait)
-        self.g = 0      
+        self.num = num
+        self.flag_switch = np.ones(t_wait)*num
+        self.g = 0
             
     def control(self, g):
         self.g = g
