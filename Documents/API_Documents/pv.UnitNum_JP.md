@@ -1,5 +1,5 @@
 ## pv.UnitNum(thre_up=[0.5,1.0], thre_down=[0.4,0.9], t_wait=15, num=1)
-台数制御  
+台数制御(流量gに基づいてポンプや冷凍機の台数を制御する。ただし、gはかならずしも流量である必要はない)  
 <img src="https://user-images.githubusercontent.com/27459538/112745838-43f03d80-8fe6-11eb-8d2b-7ba1e58a3cae.png" width=40%>
   
 ### Parameters:
@@ -9,6 +9,7 @@
 |thre_down|list|減段閾値(2台->1台, 3台->2台といった減段閾値) thre: threshold|
 |t_wait|integer|効果待ち時間(増減段閾値をt_wait時間連続で上回る・下回った場合に増減段する)|
 |num|integer|運転台数|
+|g|float|流量(台数制御する際の参照値)|
   
 ## pv.UnitNum.control(g)
 gに基づいて台数制御する
