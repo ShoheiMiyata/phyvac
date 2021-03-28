@@ -6,10 +6,10 @@ PI制御（D成分は省略されている）
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
-|kr_eq|float|機器の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
-|kr_pipe|float|管の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
-|heat_act|float|実揚程 \[kPa] 開放系での実揚程|
-|g|float|流量 \[m<sup>3</sup>/min] |
+|mode|integer|運転モード：運転時1, 非運転時0|
+|a_max,a_min|float|制御値の最大・最小範囲(0~1)|
+|kp|float|比例ゲイン|
+|ti|float|積分時間|
 |dp|float|枝の出入口圧力差 \[kPa] 流れの向きに対して加圧：+, 減圧：- |
   
 ## pv.Branch00.f2p(g)
