@@ -26,26 +26,36 @@ import phyvac as pv # 必要なモジュールのインポート
 import matplotlib.pyplot as plt
 import numpy as np
 
-result = np.zeros((60,2))
+result = np.zeros((60,3))
 CP1 = pv.Pump() # CP1の定義(特性はデフォルト値を利用)
-Branch = pv.Branch10(pump=CP1, kr_eq=1.3, kr_pipe=0.8) # ループ(枝)の定義
-PID_CP1 = pv.PID(kp=0.1, ti=30, a_min=0.0,t_reset=60) # CP1のPID制御の定義
+UnitNum_CP1 = pv.UnitNum(thre_up=[0.3], thre_down=[0.2], t_wait=15) # CP1の台数制御の定義
 
 for calstep in range(60):
-    CP1_g_sv = 1.5 # 流量設定値を1.5 m3/minとする
-    CP1.inv = PID_CP1.control(sv=CP1_g_sv,mv=CP1.g) # PI制御の実行
-    Branch.p2f(dp=0) # Branchの出入口圧力差=0として単一閉ループの流量計算を行う
+    branch_g = calstep*0.01 # 流量が毎時刻0.01増加するものとする
+    CP1.num = UnitNum_CP1.control(g=branch_g) # 台数制御の実行
     result[calstep,0] = calstep
-    result[calstep,1] = CP1.g
+    result[calstep,1] = CP1.num
+    result[calstep,2] = branch_g
     
-plt.plot(result[:,0], result[:,1]) # 結果の描画
-plt.xlabel("calstep") # x軸のラベル
-plt.ylabel("flow") # y軸のラベル
-plt.show()  
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+ax.plot(result[:,0], result[:,1], c="r", label="num")
+ax.plot(result[:,0], result[:,2], c="b", label="flow")
+ax.grid(axis='both')
+ax.legend() # 凡例の表示
+ax.set_xlabel('calstep') # x軸のラベル
+ax.set_ylabel("num,flow") # y軸のラベル
 ```
-> 結果（kp=0.1, ti=30の場合）  
-> <img src="https://user-images.githubusercontent.com/27459538/112745087-bf4ef080-8fe0-11eb-93c3-b0092d55cb1f.png" width=40%>
+> 結果  
+> <img src="https://user-images.githubusercontent.com/27459538/112747216-cda40900-8fee-11eb-839b-52a34299483a.png" width=40%>
   
+システム図  
+<img src="https://user-images.githubusercontent.com/27459538/112747245-00e69800-8fef-11eb-86c7-ad7a30870d61.png" width=40%>
+  
+```
+
+
 > kp=0.02, ti=30とした場合（比例ゲインが小さくなるため、設定値に達するまでに要する時間が長くなる）  
 > <img src="https://user-images.githubusercontent.com/27459538/112745137-371d1b00-8fe1-11eb-97cb-c3ce5f81ba8a.png" width=40%>
   
