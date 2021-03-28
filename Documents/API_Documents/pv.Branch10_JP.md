@@ -1,8 +1,7 @@
 ## pv.Branch10(pump, kr_eq=0.8, kr_pipe=0.5)
 ポンプ、機器を有する枝
   
-<img src="https://user-images.githubusercontent.com/27459538/112588155-41ed7980-8e42-11eb-8508-249b09dc15c1.png" width=30%>
-
+<img src="https://user-images.githubusercontent.com/27459538/112747837-ddbde780-8ff2-11eb-8097-1a3c03d77391.png" width=30%>
   
 ### Parameters:
 |  name  |  type  | description |
