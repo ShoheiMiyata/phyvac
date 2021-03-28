@@ -17,7 +17,7 @@ gに基づいて台数制御する
 台数num
   
 ## サンプルコード
-システム図(ポンプ2台、初期値1台)  
+対象システム：ポンプ2台、初期値1台、増段のサンプル  
 <img src="https://user-images.githubusercontent.com/27459538/112746375-55871480-8fe9-11eb-8b22-dee30ced54fb.png" width=40%>
 
   
@@ -50,7 +50,7 @@ ax.set_ylabel("num,flow") # y軸のラベル
 > 結果  
 > <img src="https://user-images.githubusercontent.com/27459538/112747216-cda40900-8fee-11eb-839b-52a34299483a.png" width=40%>
   
-システム図（ポンプ3台、初期値3台）  
+対象システム：ポンプ3台、初期値3台、減台のサンプル  
 <img src="https://user-images.githubusercontent.com/27459538/112747245-00e69800-8fef-11eb-86c7-ad7a30870d61.png" width=40%>
   
 ```
