@@ -49,7 +49,7 @@ plt.xlabel("calstep") # x軸のラベル
 plt.ylabel("flow") # y軸のラベル
 plt.show()  
 ```
-> 結果  
+> 結果(kp=0.1, ti=30の場合)  
 > <img src="https://user-images.githubusercontent.com/27459538/112745087-bf4ef080-8fe0-11eb-93c3-b0092d55cb1f.png" width=40%>
   
 > kp=0.02, ti=30とした場合（比例ゲインが小さくなるため、設定値に達するまでに要する時間が長くなる）  
@@ -58,5 +58,5 @@ plt.show()
 > kp=0.02, ti=3とした場合（積分時間を小さくすると、直前の計測値と設定値とのずれの影響が大きくなるため振動する）
 > <img src="https://user-images.githubusercontent.com/27459538/112745258-0093d000-8fe2-11eb-90e9-2da8ccc8d93a.png" width=40%>
   
-> kp=0.3, ti=30, t_step=3とした場合。3時間ステップごとに制御を実行する。
+> kp=0., ti=30, t_step=3とした場合。3時間ステップごとに制御を実行する。
 > <img src="https://user-images.githubusercontent.com/27459538/112745407-27063b00-8fe3-11eb-98bd-527d565f8ca8.png" width=40%>
