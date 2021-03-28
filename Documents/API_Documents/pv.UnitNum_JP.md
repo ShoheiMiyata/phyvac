@@ -50,7 +50,7 @@ ax.set_ylabel("num,flow") # y軸のラベル
 > 結果  
 > <img src="https://user-images.githubusercontent.com/27459538/112747216-cda40900-8fee-11eb-839b-52a34299483a.png" width=40%>
   
-対象システム：ポンプ3台、初期値3台、減台のサンプル  
+対象システム：ポンプ3台、初期値3台、減段のサンプル  
 <img src="https://user-images.githubusercontent.com/27459538/112747245-00e69800-8fef-11eb-86c7-ad7a30870d61.png" width=40%>
   
 ```
