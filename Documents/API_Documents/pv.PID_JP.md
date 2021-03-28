@@ -37,7 +37,7 @@ Branch = pv.Branch10(pump=CP1, kr_eq=1.3, kr_pipe=0.8) # ループ(枝)の定義
 PID_CP1 = pv.PID(kp=0.1, ti=30, a_min=0.0,t_reset=60) # CP1のPID制御の定義
 
 for calstep in range(60):
-    CP1_g_sv = 1.5 # 流量設定値と1.5 m3/minとする
+    CP1_g_sv = 1.5 # 流量設定値を1.5 m3/minとする
     CP1.inv = PID_CP1.control(sv=CP1_g_sv,mv=CP1.g) # PI制御の実行
     Branch.p2f(dp=0) # Branchの出入口圧力差=0として単一閉ループの流量計算を行う
     result[calstep,0] = calstep
@@ -48,6 +48,9 @@ plt.xlabel("calstep") # x軸のラベル
 plt.ylabel("flow") # y軸のラベル
 plt.show()  
 ```
+> 結果
 > <img src="https://user-images.githubusercontent.com/27459538/112745087-bf4ef080-8fe0-11eb-93c3-b0092d55cb1f.png" width=40%>
-
+  
+> kp=0.02, ti=30とした場合（比例ゲインが小さくなるため、設定値に達するまでに要する時間が長くなる）
+> <img src="https://user-images.githubusercontent.com/27459538/112745137-371d1b00-8fe1-11eb-97cb-c3ce5f81ba8a.png" width=40%>
 
