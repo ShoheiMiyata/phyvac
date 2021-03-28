@@ -1,5 +1,5 @@
 ## pv.PID(mode=1, a_max=1, a_min=0, kp=0.8, ti=10, sig=0, t_reset=30, kg=1, t_step=1)
-PI制御（D成分は省略されている）
+PI制御（本モジュールにおいてD成分は省略されている）
   
 ### Parameters:
 |  name  |  type  | description |
