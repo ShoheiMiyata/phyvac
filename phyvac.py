@@ -398,7 +398,9 @@ class Valve:
         self.g = g
         # cv = self.cv_max * self.r**(self.vlv - 1)
         # self.dp = - 1743 * (self.g * 1000 / 60)**2 / cv**2 イコールパーセント特性
-        if (self.cv_max * self.r**(self.vlv - 1))**2 > 0:
+        if self.vlv == 0.0:
+            self.dp = -99999999
+        elif (self.cv_max * self.r**(self.vlv - 1))**2 > 0:
             self.dp = (- 1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2) * self.g**2
         else:
             self.dp = 0.0
@@ -407,7 +409,9 @@ class Valve:
     
     def p2f(self,dp):
         self.dp = dp
-        if self.dp < 0:
+        if self.vlv == 0.0:
+            self.g = 0
+        elif self.dp < 0:
             self.g = (self.dp/((- 1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2)))**0.5
         else:
             self.g = - (self.dp/((1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2)))**0.5 # 逆流
@@ -415,7 +419,10 @@ class Valve:
         return self.g
     
     def f2p_co(self): # coefficient for f2p
-        return np.array([0,0,(- 1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2)])
+        if self.vlv == 0.0:
+            return np.array([0,0,-99999999])
+        else:
+            return np.array([0,0,(- 1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2)])
         
 
 # ポンプ特性と消費電力計算
