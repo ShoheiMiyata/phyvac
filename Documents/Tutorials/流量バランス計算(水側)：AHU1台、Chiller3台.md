@@ -3,7 +3,7 @@
 <img src="https://user-images.githubusercontent.com/27459538/112782739-aef25080-9088-11eb-89ad-ffb3055c8ca2.png" width=80%>
 
   
-## コード例 - FlowBalance1AHU_3Chillers.py
+## コード例 - FlowBalance_1AHU_3Chillers.py
 コード全体は[こちら](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/FlowBalance_1AHU_3Chillers.py)にアップロードされています。  
   
 まず最初に、phyvacをインポートします。
