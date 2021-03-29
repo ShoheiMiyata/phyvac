@@ -46,7 +46,7 @@ while文では、まず最初に`Branch_aAHUb`用の流量を仮定します(`g 
 ```
 g_min = 0.0
 g_max = 20.0
-g_eva = 10.-0
+g_eva = 10.0
 cnt = 0
 while(g_eva > 0.01)or(g_eva < -0.01):
     cnt += 1
