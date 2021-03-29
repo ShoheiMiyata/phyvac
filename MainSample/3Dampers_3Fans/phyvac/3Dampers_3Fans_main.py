@@ -9,7 +9,7 @@
 # DAMP2     DAMP_ef
 # DAMP3     DAMP_eb
 
-import phyvac_secandary_隙間風_0329 as pv
+import 3Dampers_3Fans_phyvac as pv
 
 # 機器の定義
 AHU1 = pv.AHU_simple(kr=1.0)
