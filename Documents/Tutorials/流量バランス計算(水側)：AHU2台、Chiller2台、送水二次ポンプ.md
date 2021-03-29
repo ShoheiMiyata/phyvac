@@ -99,27 +99,18 @@ while(g1_eva > 0.01)or(g1_eva < -0.01):
 print(cnt1, cnt2, BranchaCP3b.g, Branch_bAHU1c.g, Branch_bAHU2c.g, Branch_cChiller1a.g, Branch_cChiller2a.g)
 ```
 > 結果
-> 13 2.46826171875 0.8230025426795617 0.8230025426795617 0.8230025426795617
-  
-```
-Vlv_AHU.vlv = 0.8
-CP1.inv = 0.8
-CP2.inv = 0.7
-CP3.inv = 0.65
-...
-print(cnt, Branch_aAHUb.g, Branch_bChiller1a.g, Branch_bChiller2a.g, Branch_bChiller3a.g)
-```
 > 11 7 3.583984375 1.2389662697778567 2.3485503638523513 1.791632257411038 1.791632257411038
   
 ```
-Vlv_AHU.vlv = 0.8
-CP1.inv = 0.8
-CP2.inv = 0.7
+Vlv_AHU1.vlv = 0.6
+Vlv_AHU2.vlv = 0.8
+CP1.inv = 0.7
+CP2.inv = 0.6
 CP3.inv = 0.6
+Vlv_CP3.vlv = 0.0
 ...
-print(cnt, Branch_aAHUb.g, Branch_bChiller1a.g, Branch_bChiller2a.g, Branch_bChiller3a.g)
+print(cnt1, cnt2, BranchaCP3b.g, Branch_bAHU1c.g, Branch_bAHU2c.g, Branch_cChiller1a.g, Branch_cChiller2a.g)
 ```
-> 9 3.0078125 1.804502107933294 1.2062172022095325 0.0  
-> 並列ポンプのinvが大きく異なると、invの小さいポンプの圧力が不足し、流量が生じないという計算結果となる。
+> 11 7 3.427734375 1.1838732630941686 2.244117576577283 1.9404601616171797 1.4898093740325233
 
 
