@@ -1,6 +1,6 @@
 ## 流量バランス計算：AHU2台、Chiller2台、送水二次ポンプ  
 システム図（左：元の構成→右：流量バランス計算のために枝の数が少なくなるようBranchを定義）  
-<img src="https://user-images.githubusercontent.com/27459538/112785027-06df8600-908e-11eb-8a1c-1905e1d8e43b.png" width=80%>
+<img src="https://user-images.githubusercontent.com/27459538/112785994-3e4f3200-9090-11eb-8604-f77e7ce6c840.png" width=80%>
 
   
 ## コード例 - FlowBalance_2AHU_2Chillers_SecondaryPump.py
