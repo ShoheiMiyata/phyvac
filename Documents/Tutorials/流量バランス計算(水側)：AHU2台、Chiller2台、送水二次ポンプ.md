@@ -5,8 +5,7 @@
   
 ## コード例 - FlowBalance_2AHU_2Chillers_SecondaryPump.py
 コード全体は[こちら](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/FlowBalance_2AHU_2Chillers_SecondaryPump.py)にアップロードされています。  
-利用するモジュール：  
-[Branch01](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch01_JP.md), [Branch10](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch10_JP.md), [Branch11](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch11_JP.md)
+利用するモジュール：[Branch01](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch01_JP.md), [Branch10](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch10_JP.md), [Branch11](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch11_JP.md)
   
 まず最初に、phyvacをインポートします。
 ```
@@ -60,28 +59,46 @@ while(g1_eva > 0.01)or(g1_eva < -0.01):
     cnt1 += 1
     g1 = (g1_max + g1_min) / 2
 ```
-今回はg1の仮定のみではまださらに次に、点aと点bの差圧を算出します(`dp1 = Branch_aAHUb.f2p(g)`)。そして、`Branch_bchiller1a`の流量を先ほど得られた`dp1`から算出します(`Branch_bChiller1a.p2f(-dp1)`)。  
-この時、`Branch_bChiller1a.p2f()`の入力値には、dp1ではなく-dp1とする点に注意してください。これは、`Branch_aAHUb`での圧力損失(`dp1`)と、`Branch_bChiller1a`での加圧分(`-dp1`)がつり合い、a-AHU-b-Chiller1-aのループにおいて圧力的にバランスすることを意味します。
-収束判定用の変数`g_eva`は、`Branch_aAHUb`と、`Branch_bChiller1a`, `Branch_bChiller2a`, `Branch_bChiller3a`の合計流量との差です。このが0に近づく（収束する）ことは、点aまたは点bにおいて、流量的に流出入がバランスすることを意味します。  
-`g_eva`が0より大きい場合、`g_max`を再設定し、そうでない場合は`g_min`を再設定します。  
+今回はg1の仮定のみではAHUとChillerの分岐の流量バランスを解くことができません。そのため、さらにもう一回仮定を与える必要があります。そこで、`Branch_bAHU1c`または`Branch_bAHU2c`の圧力差を`dp2`として仮定します。    
+`BranchaCP3b`の圧力差`dp1`は仮定した`g1`から求められます。次に、`dp1`、`dp2`から、`Branch_bChiller1a`または`Branch_bChiller2a`の圧力差は`-dp1-dp2`と分かります。  
+そこで、点cにおける流出入の流量が等しくなるよう収束計算を行います（評価関数`dp2_eva = Branch_bAHU1c.g + Branch_bAHU2c.g - Branch_cChiller1a.g - Branch_cChiller2a.g`）。  
 ```
-    dp1 = Branch_aAHUb.f2p(g)
-    Branch_bChiller1a.p2f(-dp1)
-    Branch_bChiller2a.p2f(-dp1)
-    Branch_bChiller3a.p2f(-dp1)
-    g_eva = Branch_aAHUb.g - Branch_bChiller1a.g - Branch_bChiller2a.g - Branch_bChiller3a.g
-    if g_eva > 0:
-        g_max = g
-    else:
-        g_min = g
-    if cnt > 30:
-        break
+    dp1 = BranchaCP3b.f2p(g1)
+    dp2_min = -300.0
+    dp2_max = 0.0
+    dp2_eva = 100.0
+    cnt2 = 0
+    while(dp2_eva > 0.01)or(dp2_eva < -0.01):
+        cnt2 += 1
+        dp2 = (dp2_max + dp2_min) / 2
+        Branch_bAHU1c.p2f(dp2)
+        Branch_bAHU2c.p2f(dp2)
+        Branch_cChiller1a.p2f(-dp1-dp2)
+        Branch_cChiller2a.p2f(-dp1-dp2)
+        dp2_eva = Branch_bAHU1c.g + Branch_bAHU2c.g - Branch_cChiller1a.g - Branch_cChiller2a.g
+        if dp2_eva > 0:
+            dp2_min = dp2
+        else:
+            dp2_max = dp2
+        if cnt2 > 30:
+            break
 ```
-なお、cntは収束計算が適切に行われているか判定する変数です。cnt=31となっている場合、`g_max = g`と`g_min = g`を入れ替えるなど対処が必要です。  
+なお、cnt2は収束計算が適切に行われているか判定する変数です。cnt2=31となっている場合、`dp2_max = dp2`と`dp2_min = dp2`を入れ替えるなど対処が必要です。  
+この段階で、点bから点cを通り、点aまでのネットワークにおいて、出入口圧力差が-dp1であり、かつ点cにおける出入流量のバランスがとれている各枝の流量が得られています。  
+最後に、点bでの出入流量がバランスするように収束計算をおこないます（評価関数`g1_eva = BranchaCP3b.g - Branch_cChiller1a.g - Branch_cChiller2a.g`）。
   
 ```
-print(cnt, Branch_aAHUb.g, Branch_bChiller1a.g, Branch_bChiller2a.g, Branch_bChiller3a.g)
+    g1_eva = BranchaCP3b.g - Branch_cChiller1a.g - Branch_cChiller2a.g
+    if g1_eva > 0:
+        g1_max = g1
+    else:
+        g1_min = g1
+    if cnt1 > 30:
+        break
+    
+print(cnt1, cnt2, BranchaCP3b.g, Branch_bAHU1c.g, Branch_bAHU2c.g, Branch_cChiller1a.g, Branch_cChiller2a.g)
 ```
+> 結果
 > 13 2.46826171875 0.8230025426795617 0.8230025426795617 0.8230025426795617
   
 ```
@@ -92,7 +109,7 @@ CP3.inv = 0.65
 ...
 print(cnt, Branch_aAHUb.g, Branch_bChiller1a.g, Branch_bChiller2a.g, Branch_bChiller3a.g)
 ```
-> 13 3.14208984375 1.68956191325158 1.021240362268994 0.43213803391962036
+> 11 7 3.583984375 1.2389662697778567 2.3485503638523513 1.791632257411038 1.791632257411038
   
 ```
 Vlv_AHU.vlv = 0.8
