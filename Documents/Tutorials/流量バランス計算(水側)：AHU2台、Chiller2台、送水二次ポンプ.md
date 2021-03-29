@@ -11,7 +11,7 @@
 import phyvac as pv
 ``` 
 ### 機器の定義
-`AHU`:air handling units, `Vlv_AHU`: AHU用の弁, `CP1`: Chiller1用の冷水ポンプ  
+`AHU`: air handling units, `Vlv_AHU`: AHU用の弁, `CP`: 冷水ポンプ  
 モジュールの初期値が対象機器において不適切な場合、特性パラメータを適宜入力します。ここでは簡略のためChillerモジュールは使いません。
 ```
 # 機器の定義
