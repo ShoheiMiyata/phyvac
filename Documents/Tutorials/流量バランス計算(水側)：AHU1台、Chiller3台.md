@@ -1,6 +1,6 @@
 ## 流量バランス計算：AHU1台、Chiller3台  
 システム図（左：元の構成→右：流量バランス計算のために枝の数が少なくなるようBranchを定義）  
-<img src="https://user-images.githubusercontent.com/27459538/112782739-aef25080-9088-11eb-89ad-ffb3055c8ca2.png" width=80%>
+<img src="https://user-images.githubusercontent.com/27459538/112785753-b2d5a100-908f-11eb-8c4f-27d558c70790.png" width=80%>
 
   
 ## コード例 - FlowBalance_1AHU_3Chillers.py
@@ -15,7 +15,7 @@ import phyvac as pv
 モジュールの初期値が対象機器において不適切な場合、特性パラメータを適宜入力します。ここでは簡略のためChillerモジュールは使いません。
 ```
 # 機器の定義
-AHU1 = pv.AHU_simple(kr=2.0)
+AHU = pv.AHU_simple(kr=2.0)
 Vlv_AHU = pv.Valve(cv_max=800,r=100)
 CP1 = pv.Pump(pg=[233.9,5.9578,-4.460], eg=[0.009964,0.4174,-0.0508])
 CP2 = pv.Pump(pg=[233.9,5.9578,-4.460], eg=[0.009964,0.4174,-0.0508])
@@ -26,7 +26,7 @@ CP3 = pv.Pump(pg=[233.9,5.9578,-4.460], eg=[0.009964,0.4174,-0.0508])
 流量バランス計算を行うためには、運転時に常に流量が生じる枝(`Branch_aAHUb`)を設定する必要があります。これは配管網が複雑になっても同様です。 
 ```
 # 枝の定義
-Branch_aAHUb = pv.Branch01(Vlv_AHU, kr_eq=AHU1.kr, kr_pipe=3.0)
+Branch_aAHUb = pv.Branch01(Vlv_AHU, kr_eq=AHU.kr, kr_pipe=3.0)
 Branch_bChiller1a = pv.Branch10(pump=CP1, kr_eq=10.0, kr_pipe=7.0)
 Branch_bChiller2a = pv.Branch10(pump=CP2, kr_eq=10.0, kr_pipe=7.0)
 Branch_bChiller3a = pv.Branch10(pump=CP3, kr_eq=10.0, kr_pipe=7.0)
