@@ -4,7 +4,7 @@
 
   
 ## コード例 - FlowBalance1AHU_3Chillers.py
-コード全体は[こちら](https://github.com/ShoheiMiyata/phyvac/tree/main/MainSample/1AHP_simpleAHU/miyata)にアップロードされています。  
+コード全体は[こちら](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/FlowBalance_1AHU_3Chillers.py)にアップロードされています。  
   
 まず最初に、phyvacをインポートします。
 ```
