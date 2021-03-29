@@ -1,5 +1,5 @@
 ## pv.Pump(pg=[233,5.9578,-4.95], eg=[0.0099,0.4174,-0.0508], r_ef=0.8)
-ポンプ特性と消費電力の計算
+ポンプ特性と消費電力の計算  
 <img src="https://user-images.githubusercontent.com/27459538/112745838-43f03d80-8fe6-11eb-8d2b-7ba1e58a3cae.png" width=40%>
   
 ### Parameters:
@@ -19,6 +19,19 @@ gに基づいて揚程を算出する
   
 ### returns:
 揚程dp
+  
+## pv.Pump.f2p_co()
+揚程を表す流量の関数の係数を出力する
+  
+### returns:
+リスト[切片, 1次, 2次]
+  
+## pv.Pump.cal()
+消費電力を算出する
+  
+### returns:
+消費電力pw
+  
   
 ## サンプルコード
 対象システム：ポンプ2台、初期値1台、増段のサンプル  
