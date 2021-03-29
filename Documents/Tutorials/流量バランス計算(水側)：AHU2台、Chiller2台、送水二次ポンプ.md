@@ -4,7 +4,7 @@
 
   
 ## コード例 - FlowBalance_2AHU_2Chillers_SecondaryPump.py
-コード全体は[こちら](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/FlowBalance_1AHU_3Chillers.py)にアップロードされています。  
+コード全体は[こちら](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/FlowBalance_2AHU_2Chillers_SecondaryPump.py)にアップロードされています。  
   
 まず最初に、phyvacをインポートします。
 ```
@@ -16,43 +16,49 @@ import phyvac as pv
 ```
 # 機器の定義
 AHU1 = pv.AHU_simple(kr=2.0)
-Vlv_AHU = pv.Valve(cv_max=800,r=100)
+Vlv_AHU1 = pv.Valve(cv_max=800,r=100)
+AHU2 = pv.AHU_simple(kr=2.0)
+Vlv_AHU2 = pv.Valve(cv_max=800,r=100)
 CP1 = pv.Pump(pg=[233.9,5.9578,-4.460], eg=[0.009964,0.4174,-0.0508])
 CP2 = pv.Pump(pg=[233.9,5.9578,-4.460], eg=[0.009964,0.4174,-0.0508])
 CP3 = pv.Pump(pg=[233.9,5.9578,-4.460], eg=[0.009964,0.4174,-0.0508])
+Vlv_CP3 = pv.Valve(cv_max=800,r=100)
 ```
 ### 枝の定義  
-下図の配管ループは2つの枝（branch）とみなすことができます。 `Branch_aAHUb`が点aからAHUを通り点bまで（[Branch01](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch01_JP.md)）、`Branch_bChiller1a`が点bからChiller1を通り点aまで（[Branch10](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch10_JP.md)）の枝に分けられます。  
-流量バランス計算を行うためには、運転時に常に流量が生じる枝(`Branch_aAHUb`)を設定する必要があります。これは配管網が複雑になっても同様です。 
+下図の配管ループは2つの枝（branch）とみなすことができます。 `Branch_aCP3b`が点aからCP3を通り点bまで（[Branch11](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch11_JP.md)）、`Branch_bAHU1c`が点bからAHU1を通り点cまで（[Branch01](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch01_JP.md)）、`Branch_cChiller1a`が点cからChiller1を通り点aまで（[Branch10](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch10_JP.md)）の枝に大別できます。  
+流量バランス計算を行うためには、運転時に常に流量が生じる枝(`Branch_aCP3b`)を設定する必要があります。これは配管網が複雑になっても同様です。 
 ```
 # 枝の定義
-Branch_aAHUb = pv.Branch01(Vlv_AHU, kr_eq=AHU1.kr, kr_pipe=3.0)
-Branch_bChiller1a = pv.Branch10(pump=CP1, kr_eq=10.0, kr_pipe=7.0)
-Branch_bChiller2a = pv.Branch10(pump=CP2, kr_eq=10.0, kr_pipe=7.0)
-Branch_bChiller3a = pv.Branch10(pump=CP3, kr_eq=10.0, kr_pipe=7.0)
+BranchaCP3b = pv.Branch11(valve=Vlv_CP3, pump=CP3, kr_pipe_pump=3.0, kr_pipe_valve=4.0)
+Branch_bAHU1c = pv.Branch01(Vlv_AHU1, kr_eq=AHU1.kr, kr_pipe=3.0)
+Branch_bAHU2c = pv.Branch01(Vlv_AHU2, kr_eq=AHU2.kr, kr_pipe=3.0)
+Branch_cChiller1a = pv.Branch10(pump=CP1, kr_eq=10.0, kr_pipe=7.0)
+Branch_cChiller2a = pv.Branch10(pump=CP2, kr_eq=10.0, kr_pipe=7.0)
 ```
 ### 弁開度・ポンプinvの入力
 ここでは制御を省いているため、手動で弁開度とポンプinvを入力します。制御機器の状態から、流量が全て算出される点が流量バランス計算の特徴です。  
-`Vlv_AHU.vlv`: Vlv_AHUの弁開度。0が全閉、1が全開, `CP1.inv`: CP1のinv周波数比。0が停止、1が定格値（関東だと50Hz）  
+`Vlv_AHU1.vlv`: Vlv_AHU1の弁開度。0が全閉、1が全開, `CP1.inv`: CP1のinv周波数比。0が停止、1が定格値（関東だと50Hz）  
 ```
-Vlv_AHU.vlv = 0.7
+Vlv_AHU1.vlv = 0.6
+Vlv_AHU2.vlv = 0.8
 CP1.inv = 0.7
 CP2.inv = 0.7
-CP3.inv = 0.7
+CP3.inv = 0.6
+Vlv_CP3.vlv = 0.0
 ```
 ### 流量バランス計算  
-まず、運転時に流量が常に生じる枝(`Branch_aAHUb`)の最小流量(`g_min = 0.0`)と最大流量(`g_max = 20.0`)を設定します。また、収束判定用の変数に適当な値を与えます(`g_eva = 10.0`)。  
-while文では、まず最初に`Branch_aAHUb`用の流量を仮定します(`g = (g_max + g_min) / 2`, 平均をとるゆえに二分法と呼ばれます)。
+まず、運転時に流量が常に生じる枝(`Branch_aCP3b`)の最小流量(`g1_min = 0.0`)と最大流量(`g1_max = 20.0`)を設定します。また、収束判定用の変数に適当な値を与えます(`g1_eva = 10.0`)。  
+while文では、まず最初に`Branch_aCP3b`用の流量を仮定します(`g1 = (g1_max + g1_min) / 2`, 平均をとるゆえに二分法と呼ばれます)。
 ```
-g_min = 0.0
-g_max = 20.0
-g_eva = 10.-0
-cnt = 0
-while(g_eva > 0.01)or(g_eva < -0.01):
-    cnt += 1
-    g = (g_max + g_min) / 2
+g1_min = 0.0
+g1_max = 20.0
+g1_eva = 10.0
+cnt1 = 0
+while(g1_eva > 0.01)or(g1_eva < -0.01):
+    cnt1 += 1
+    g1 = (g1_max + g1_min) / 2
 ```
-次に、点aと点bの差圧を算出します(`dp1 = Branch_aAHUb.f2p(g)`)。そして、`Branch_bchiller1a`の流量を先ほど得られた`dp1`から算出します(`Branch_bChiller1a.p2f(-dp1)`)。  
+今回はg1の仮定のみではまださらに次に、点aと点bの差圧を算出します(`dp1 = Branch_aAHUb.f2p(g)`)。そして、`Branch_bchiller1a`の流量を先ほど得られた`dp1`から算出します(`Branch_bChiller1a.p2f(-dp1)`)。  
 この時、`Branch_bChiller1a.p2f()`の入力値には、dp1ではなく-dp1とする点に注意してください。これは、`Branch_aAHUb`での圧力損失(`dp1`)と、`Branch_bChiller1a`での加圧分(`-dp1`)がつり合い、a-AHU-b-Chiller1-aのループにおいて圧力的にバランスすることを意味します。
 収束判定用の変数`g_eva`は、`Branch_aAHUb`と、`Branch_bChiller1a`, `Branch_bChiller2a`, `Branch_bChiller3a`の合計流量との差です。このが0に近づく（収束する）ことは、点aまたは点bにおいて、流量的に流出入がバランスすることを意味します。  
 `g_eva`が0より大きい場合、`g_max`を再設定し、そうでない場合は`g_min`を再設定します。  
