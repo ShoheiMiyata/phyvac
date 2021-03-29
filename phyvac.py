@@ -398,7 +398,9 @@ class Valve:
         self.g = g
         # cv = self.cv_max * self.r**(self.vlv - 1)
         # self.dp = - 1743 * (self.g * 1000 / 60)**2 / cv**2 イコールパーセント特性
-        if (self.cv_max * self.r**(self.vlv - 1))**2 > 0:
+        if self.vlv == 0.0:
+            self.dp = -99999999
+        elif (self.cv_max * self.r**(self.vlv - 1))**2 > 0:
             self.dp = (- 1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2) * self.g**2
         else:
             self.dp = 0.0
@@ -407,7 +409,9 @@ class Valve:
     
     def p2f(self,dp):
         self.dp = dp
-        if self.dp < 0:
+        if self.vlv == 0.0:
+            self.g = 0
+        elif self.dp < 0:
             self.g = (self.dp/((- 1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2)))**0.5
         else:
             self.g = - (self.dp/((1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2)))**0.5 # 逆流
@@ -415,7 +419,10 @@ class Valve:
         return self.g
     
     def f2p_co(self): # coefficient for f2p
-        return np.array([0,0,(- 1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2)])
+        if self.vlv == 0.0:
+            return np.array([0,0,-99999999])
+        else:
+            return np.array([0,0,(- 1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2)])
         
 
 # ポンプ特性と消費電力計算
@@ -1108,80 +1115,6 @@ class Damper():
             dp_l = (self.ll[1] * self.g ** 3 + self.ll[2] * self.g ** 2 + self.ll[3] * self.g + self.ll[4])
             self.dp = (dp_h - dp_l) / (self.hl[0]-self.ll[0]) * (self.damp - self.ll[0]) + dp_l
         return self.dp
-
-    
-# ファン特性と消費電力計算
-class Fan:
-    # 定格値の入力
-    def __init__(self, pg=[0.6467, 0.0082, -0.0004], eg=[-0.0166, 0.0399, -0.0008], r_ef=0.8, inv=1.0):
-        # pg    :圧力-流量(pg)曲線の係数（切片、一次、二次）
-        # eg    :効率-流量(eg)曲線の係数（切片、一次、二次）
-        # r_ef  :定格時の最高効率(本来は計算によって求める？)rated efficiency
-        # inv   :回転数比(0.0~1.0)
-        # dp_f  :ファン揚程[kPa]
-        # g     :流量[m3/min]
-        # pw    :消費電力[kW]
-        # flag  :計算に問題があったら1、なかったら0
-        # ef    :効率(0.0~1.0)
-        self.pg = pg
-        self.eg = eg
-        self.r_ef = r_ef
-        self.inv = inv
-        self.dp = 0
-        self.g = 0
-        self.ef = 0
-        self.pw = 0
-        self.flag = 0
-        self.num = 1
-
-    def f2p(self, g):  # flow to pressure for fan
-        self.g = g
-        # 流量がある場合のみ揚程を計算する
-        if self.g > 0:
-            self.dp = (self.pg[0] + self.pg[1] * (self.g / self.inv) + self.pg[2] * (
-                    self.g / self.inv) ** 2) * self.inv ** 2
-        else:
-            self.dp = 0
-
-        if self.dp < 0:
-            self.dp = 0
-            self.flag = 1
-        else:
-            self.flag = 0
-
-        return self.dp
-
-    def f2p_co(self):  # coefficient for f2p
-        return [self.pg[0] * self.inv ** 2, self.pg[1] * self.inv, self.pg[2]]
-
-    def cal(self):
-        # 流量がある場合のみ消費電力を計算する
-        if self.g > 0 and self.inv > 0:
-
-            # G: INV=1.0時（定格）の流量
-            G = self.g / self.inv
-            # K: 効率換算係数
-            K = 1.0 - (1.0 - self.r_ef) / (self.inv ** 0.2) / self.r_ef
-            # ef: 効率
-            self.ef = K * (self.eg[0] + self.eg[1] * G + self.eg[2] * G ** 2)
-
-            self.dp = (self.pg[0] + self.pg[1] * (self.g / self.inv) + self.pg[2] * (
-                    self.g / self.inv) ** 2) * self.inv ** 2
-            if self.dp < 0:
-                self.dp = 0
-                self.flag = 1
-
-            #  軸動力を求める
-            if self.ef > 0:
-                self.pw = 1.0 * self.g * self.dp / (60 * self.ef)
-                self.flag = 0
-            else:
-                self.pw = 0
-                self.flag = 2
-
-        else:
-            self.pw = 0.0
-            self.flag = 0
     
 
 # 制御関係モデル ###############################################################
@@ -1189,7 +1122,7 @@ class Fan:
 # pid制御（プログラムの中身はd成分を無視したpi制御）
 class PID:
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
-    def __init__(self, mode=1, a_max=1, a_min=0, kp=0.8, ti=10, sig=0, t_reset=30, kg=1, t_step=1):
+    def __init__(self, mode=1, a_max=1, a_min=0, kp=0.8, ti=10, t_reset=30, kg=1, sig=0, t_step=1):
         # mode          :運転時1, 非運転時0
         # a_max,a_min   :制御値の最大・最小範囲
         # kp            :比例ゲイン
@@ -1642,7 +1575,7 @@ class Branch11: # コンポジションというpython文法を使う
         self.dp = 0.0
         self.flag = 0
         
-    def f2p(self, g): # 流量から圧力損失を求める
+    def f2p(self, g): # 流量から出入口圧力差を求める
         self.g = g
         self.flag = 0
         
@@ -1678,6 +1611,14 @@ class Branch11: # コンポジションというpython文法を使う
             self.dp = - self.kr_pipe_pump * self.pump.g**2 + self.pump.f2p(self.pump.g)
         
         return self.dp
+    
+    # def p2f(self, dp): # 出入口圧力差から流量を求める
+    #     self.dp = dp
+    #     self.flag = 0
+        
+        
+    #     return self.g
+
         
 # ポンプ、機器、バイパス弁を有する枝
 class Branch12: # コンポジションというpython文法を使う
