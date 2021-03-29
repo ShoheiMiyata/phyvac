@@ -38,9 +38,9 @@ gに基づいて揚程を算出する
 import phyvac as pv # 必要なモジュールのインポート
 
 CP1 = pv.Pump() # CP1の定義(特性はデフォルト値を利用)
-CP1.inv = 0.8
-CP1.f2p(g=1.5)
-CP1.cal()
+CP1.inv = 0.8 # invの入力
+CP1.f2p(g=1.5) # invが0.8, 流量1.5 m3/min時の揚程を算出
+CP1.cal() # 上記条件下での消費電力を算出
 
 print(CP1.g, CP1.dp, CP1.pw)
 ```
