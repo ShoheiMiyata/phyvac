@@ -21,7 +21,7 @@ CP1 = pv.Pump(pg=[233.9,5.9578,-4.460], eg=[0.009964,0.4174,-0.0508])
 CP2 = pv.Pump(pg=[233.9,5.9578,-4.460], eg=[0.009964,0.4174,-0.0508])
 CP3 = pv.Pump(pg=[233.9,5.9578,-4.460], eg=[0.009964,0.4174,-0.0508])
 ```
-### 枝の定義  
+### 枝の定義[Branch01](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch01_JP.md), [Branch10](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch10_JP.md)  
 下図の配管ループは2つの枝（branch）とみなすことができます。 `Branch_aAHUb`が点aからAHUを通り点bまで、`Branch_bChiller1a`が点bからChiller1を通り点aまでの枝に分けられます。  
 流量バランス計算を行うためには、運転時に常に流量が生じる枝(`Branch_aAHUb`)を設定する必要があります。これは配管網が複雑になっても同様です。 
 ```
