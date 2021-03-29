@@ -1,4 +1,4 @@
-## 流量バランス計算：AHU1台、Chiller3台  
+## 流量バランス計算：AHU2台、Chiller2台、送水二次ポンプ  
 システム図（左：元の構成→右：流量バランス計算のために枝の数が少なくなるようBranchを定義）  
 <img src="https://user-images.githubusercontent.com/27459538/112785027-06df8600-908e-11eb-8a1c-1905e1d8e43b.png" width=80%>
 
