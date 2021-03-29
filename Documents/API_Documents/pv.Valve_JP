@@ -1,0 +1,45 @@
+## pv.Valve(cv_max=800, r=100)
+弁特性  
+<img src="https://user-images.githubusercontent.com/27459538/112825297-8db05500-90c6-11eb-996e-51355f95a5f7.png" width=40%>
+  
+### Parameters:
+|  name  |  type  | description |
+| ---- | ---- | ---- |
+|cv_max|float|流量係数|
+|r|float|レンジアビリティ。最も弁を閉じたときの流量比の逆数|
+|vlv|float|弁開度(0.0~1.0)|
+|dp|float|圧力損失 [kPa]|
+|g|float|流量[m3/min]|
+  
+## pv.Pump.f2p(g)
+gに基づいて揚程を算出する
+  
+### returns:
+圧力損失dp
+  
+## pv.Pump.p2f(dp)
+dpに基づいて流量を算出する
+  
+### returns:
+流量g
+  
+## pv.Pump.f2p_co()
+圧力損失を表す流量の関数の係数を出力する
+  
+### returns:
+リスト[切片, 1次, 2次]
+  
+## サンプルコード  
+```
+import phyvac as pv # 必要なモジュールのインポート
+
+CP1 = pv.Pump() # CP1の定義(特性はデフォルト値を利用)
+CP1.inv = 0.8 # invの入力
+CP1.f2p(g=1.5) # invが0.8, 流量1.5 m3/min時の揚程を算出
+CP1.cal() # 上記条件下での消費電力を算出
+
+print(CP1.g, CP1.dp, CP1.pw)
+```
+> 結果  
+> 1.5 145.13186000000002 8.001649808763627
+  
