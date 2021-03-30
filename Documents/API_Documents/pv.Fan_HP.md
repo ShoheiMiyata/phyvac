@@ -12,7 +12,7 @@
 |g|float|流量[m3/min]|
 |pw|float|消費電力[kW]|
 |ef|float|効率(0.0~1.0)|
-|flag|float|計算に問題があったら1、なかったら0
+|flag|float|計算に問題があったら1、なかったら0|
   
 ## pv.Fan.f2p(g)
 gに基づいて揚程を算出する
