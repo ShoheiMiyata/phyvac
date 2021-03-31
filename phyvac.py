@@ -1119,11 +1119,17 @@ class Damper():
             a = coef_a[1] * self.g ** 2
             b = coef_b[1] * self.g ** 2
             self.dp = (a - b) / (coef_a[0] - coef_b[0]) * (self.damp - coef_b[0]) + b
+        
+        if g >= 0:
+            self.dp = self.dp
+        else:
+            self.dp = -self.dp
+            
         return self.dp
 
     def p2f(self, damp, dp):
         n = len(self.coef)
-        self.dp = dp
+        self.dp = abs(dp)
         self.damp = damp
         if damp >= self.coef[0][0]:
             self.g = pow(self.dp/self.coef[0][1], 0.5)
@@ -1138,6 +1144,12 @@ class Damper():
             a = pow(self.dp/coef_a[1], 0.5)
             b = pow(self.dp/coef_b[1], 0.5)
             self.g = (a - b) / (coef_a[0] - coef_b[0]) * (self.damp - coef_a[0]) + a
+        
+        if dp >= 0:
+            self.g = self.g
+        else:
+            self.g = -self.g
+            
         return self.g
 
     
