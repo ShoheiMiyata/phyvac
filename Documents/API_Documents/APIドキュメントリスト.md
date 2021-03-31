@@ -8,3 +8,4 @@
 - [Branch10 (ポンプ、機器を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch10_JP.md)
 - [Branch11 (並列ポンプ複数台とバイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch11_JP.md)
 - [Branch12 (ポンプ、機器、バイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch12_JP.md)
+- [Fan (ファン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Fan_JP.md)
