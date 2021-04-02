@@ -25,7 +25,7 @@
 エアバランスを下図（VAV空調システムFPT1手順書付属書　図4-0参照）のように調整することを試みる。  
 <img src="https://user-images.githubusercontent.com/27459538/113411222-2fe67a80-93f0-11eb-928d-2066b77694a2.png" width=40%>  
   
-その場合、各種ファンのみを調整すると、`Fan_SA.inv = 0.84, Fan_RA.inv = 0.74, Fan_EA.inv = 0.08`の時に以下のようになる。
+各種ファンのみを調整すると、`Fan_SA.inv = 0.84, Fan_RA.inv = 0.74, Fan_EA.inv = 0.08`の時に以下のようになる。
 ```
 室圧:  -0.0 Pa
 各ダクトの風量(m3/min, 矢印の向きが正)
