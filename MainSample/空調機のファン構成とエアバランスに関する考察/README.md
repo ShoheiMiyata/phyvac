@@ -11,7 +11,7 @@
 すき間あり、各ファンのP-Q曲線が以下で同一、圧力損失係数は全て0.5 Pa/(m<sup>3</sup>/min)<sup>2</sup>とした場合、  
 <img src="https://user-images.githubusercontent.com/27459538/113414238-860aec00-93f7-11eb-8d3e-32d4adf9698a.png" width=40%>  
 
-`Fan_SA.inv = 1.0, Fan_RA.inv = 1.0, Fan_EA.inv = 1.0`で（inv=1.0は周波数比100%（50Hz or 60Hz）を意味する）
+`Fan_SA.inv = 1.0, Fan_RA.inv = 1.0, Fan_EA.inv = 1.0`（inv=1.0は周波数比100%（50Hz or 60Hz）を意味する）の時、
 ```
 室内外差圧:  -29.48 Pa
 各ダクトの風量(m3/min, 矢印の向きが正)
