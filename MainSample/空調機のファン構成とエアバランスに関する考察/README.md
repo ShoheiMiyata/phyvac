@@ -5,7 +5,7 @@
 ひとまずダンパはモデル化の対象外（ダクトの圧力損失で模擬する）とし、ファン構成とエアバランスを考える。  
 [FlowBalance_1Room_SAFan_RAFan_EAFan.py](https://github.com/ShoheiMiyata/phyvac/blob/main/MainSample/%E7%A9%BA%E8%AA%BF%E6%A9%9F%E3%81%AE%E3%83%95%E3%82%A1%E3%83%B3%E6%A7%8B%E6%88%90%E3%81%A8%E3%82%A8%E3%82%A2%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E8%80%83%E5%AF%9F/FlowBalance_1Room_SAFan_RAFan_EAFan.py) は1室にSA・RA・EAファンが接続された場合  
 [FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration.py](https://github.com/ShoheiMiyata/phyvac/blob/main/MainSample/%E7%A9%BA%E8%AA%BF%E6%A9%9F%E3%81%AE%E3%83%95%E3%82%A1%E3%83%B3%E6%A7%8B%E6%88%90%E3%81%A8%E3%82%A8%E3%82%A2%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E8%80%83%E5%AF%9F/FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration.py) はすき間（上図ij）のある1室にSA・RA・EAファンが接続された場合  
-の流量バランス計算を表し、
+の流量バランス計算を表し、  
 [FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration_PIDbalaning.py](https://github.com/ShoheiMiyata/phyvac/blob/main/MainSample/%E7%A9%BA%E8%AA%BF%E6%A9%9F%E3%81%AE%E3%83%95%E3%82%A1%E3%83%B3%E6%A7%8B%E6%88%90%E3%81%A8%E3%82%A8%E3%82%A2%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E8%80%83%E5%AF%9F/FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration_PIDbalancing.py)はファンinvやダクト圧力損失係数をPID制御によって仮想的に調整するプログラムである。  
     
 すき間あり、各ファンのP-Q曲線が以下で同一、圧力損失係数は全て0.5 Pa/(m3/min)^2とした場合、  
