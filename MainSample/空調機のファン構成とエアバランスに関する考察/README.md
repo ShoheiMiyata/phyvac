@@ -8,7 +8,7 @@
 の流量バランス計算を表す。
   
 すき間あり、各ファンのP-Q曲線が同一とした場合、  
-"Fan_SA.inv = 1.0, Fan_RA.inv = 1.0, Fan_EA.inv = 1.0"で
+`Fan_SA.inv = 1.0, Fan_RA.inv = 1.0, Fan_EA.inv = 1.0`で
 ```
 室圧:  -29.48 Pa
 各ダクトの風量(m3/min,矢印の向きが正)
