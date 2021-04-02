@@ -1804,13 +1804,14 @@ class Branch12: # コンポジションというpython文法を使う
 
 # 空気系
 # ファン・ダンパ・機器が直列に1台以下の枝。デフォルトではファン・ダンパ・機器はなし。  
-class Branch100: # コンポジションというpython文法を使う
+class Branch000: # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
     def __init__(self, fan=None, damper=None, kr_eq=0.0, kr_duct=0.5):
-        # pump      :ポンプのオブジェクト
-        # kr_pipe   :管の圧損係数[kPa/(m3/min)^2]
-        # kr_eq     :機器の圧損係数[kPa/(m3/min)^2]
-        # dp        :枝の出入口差圧[kPa]加圧：+, 減圧：-
+        # fan       :ファンのオブジェクト
+        # damper    :ダンパのオブジェクト
+        # kr_eq     :機器の圧損係数[Pa/(m3/min)^2]
+        # kr_duct   :ダクトの圧損係数[Pa/(m3/min)^2]
+        # dp        :枝の出入口差圧[Pa]加圧：+, 減圧：-
         # flag      :計算の順当性確認のためのフラグ
         self.fan = fan
         self.damper = damper
