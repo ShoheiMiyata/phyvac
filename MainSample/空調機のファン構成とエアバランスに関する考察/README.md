@@ -8,7 +8,7 @@
 の流量バランス計算を表し、  
 [FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration_PIDbalaning.py](https://github.com/ShoheiMiyata/phyvac/blob/main/MainSample/%E7%A9%BA%E8%AA%BF%E6%A9%9F%E3%81%AE%E3%83%95%E3%82%A1%E3%83%B3%E6%A7%8B%E6%88%90%E3%81%A8%E3%82%A8%E3%82%A2%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E8%80%83%E5%AF%9F/FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration_PIDbalancing.py)はファンinvやダクト圧力損失係数をPID制御によって仮想的に調整するプログラムである。  
     
-すき間あり、各ファンのP-Q曲線が以下で同一、圧力損失係数は全て0.5 Pa/(m3/min)^2とした場合、  
+すき間あり、各ファンのP-Q曲線が以下で同一、圧力損失係数は全て0.5 Pa/(m<sup>3</sup>/min)<sup>2</sup>とした場合、  
 <img src="https://user-images.githubusercontent.com/27459538/113414238-860aec00-93f7-11eb-8d3e-32d4adf9698a.png" width=40%>  
 
 `Fan_SA.inv = 1.0, Fan_RA.inv = 1.0, Fan_EA.inv = 1.0`で（inv=1.0は周波数比100%（50Hz or 60Hz）を意味する）
