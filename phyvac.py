@@ -1819,7 +1819,7 @@ def quadratic_formula(co_0, co_1, co_2):
         flag = 2
     return [g, flag]
 
-class Branch000: # コンポジションというpython文法を使う
+class Branch100: # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
     def __init__(self, fan=None, damper=None, kr_eq=0.0, kr_duct=0.5):
         # fan       :ファンのオブジェクト
