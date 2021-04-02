@@ -8,7 +8,7 @@
 の流量バランス計算を表す。
   
 すき間あり、各ファンのP-Q曲線が以下で同一、圧力損失係数は全て0.5 Pa/(m3/min)^2とした場合、  
-<img src="https://user-images.githubusercontent.com/27459538/113414238-860aec00-93f7-11eb-8d3e-32d4adf9698a.png" width=30%>  
+<img src="https://user-images.githubusercontent.com/27459538/113414238-860aec00-93f7-11eb-8d3e-32d4adf9698a.png" width=40%>  
 
 `Fan_SA.inv = 1.0, Fan_RA.inv = 1.0, Fan_EA.inv = 1.0`で（inv=1.0で100%(50Hz or 60Hz)）
 ```
@@ -23,7 +23,7 @@
 ```
 となる。EAファンの引っ張りが強く、室圧が負圧に、流入すきま風が大きい。  
 エアバランスを下図のように調整することも可能。  
-<img src="https://user-images.githubusercontent.com/27459538/113411222-2fe67a80-93f0-11eb-928d-2066b77694a2.png" width=30%>  
+<img src="https://user-images.githubusercontent.com/27459538/113411222-2fe67a80-93f0-11eb-928d-2066b77694a2.png" width=40%>  
   
 その場合、各種ファンのみを調整すると、`Fan_SA.inv = 0.84, Fan_RA.inv = 0.74, Fan_EA.inv = 0.08`の時に以下のようになる。
 ```
