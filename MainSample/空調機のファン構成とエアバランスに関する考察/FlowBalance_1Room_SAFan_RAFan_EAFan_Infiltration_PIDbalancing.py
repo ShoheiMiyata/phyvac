@@ -55,9 +55,9 @@ Branch_eb.kr_duct = 0.5
 Branch_ef.kr_duct = 0.5
 Branch_ij.kr_duct = 0.5
 
-PID_Fan_SA=pv.PID(kp=0.01,t_step=10)
-PID_Fan_RA=pv.PID(kp=0.01,t_step=10)
-PID_Fan_EA=pv.PID(kp=0.01,t_step=10)
+PID_Fan_SA=pv.PID(kp=0.01,t_step=1)
+PID_Fan_RA=pv.PID(kp=0.01,t_step=1)
+PID_Fan_EA=pv.PID(kp=0.01,t_step=1)
 PID_duct_ab=pv.PID(kp=0.02,a_max=3,a_min=0.1,kg=-1)
 PID_duct_ef=pv.PID(kp=0.02,a_max=3,a_min=0.1,kg=-1)
 
@@ -66,8 +66,8 @@ for i in range(1000):
     Fan_SA.inv=PID_Fan_SA.control(sv=10, mv=Fan_SA.g)
     Fan_RA.inv=PID_Fan_RA.control(sv=9, mv=Fan_RA.g)
     Fan_EA.inv=PID_Fan_EA.control(sv=1, mv=Fan_EA.g)
-    Branch_ab.kr_duct=PID_duct_ab.control(sv=3, mv=Branch_ab.g)
-    Branch_ef.kr_duct=PID_duct_ef.control(sv=2, mv=Branch_ef.g)
+    # Branch_ab.kr_duct=PID_duct_ab.control(sv=3, mv=Branch_ab.g)
+    # Branch_ef.kr_duct=PID_duct_ef.control(sv=2, mv=Branch_ef.g)
     
 
     # 流量計算
@@ -120,9 +120,9 @@ for i in range(1000):
     # print(Branch_ab.kr_duct, Branch_ab.g)
    
 print("収束判定(30以下なら問題なし):", cnt1, cnt2)
-print("室圧: ", round(dp_ab+dp_bc,3),"Pa")
+print("室内外差圧: ", round(dp_ab+dp_bc,3),"Pa")
 print("各ダクトの風量(m3/min, 矢印の向きが正)")
-print("←", round(Branch_ef.g,2), "－－－",  round(Branch_de.g,2), ":RAファン←－－",)
+print("←", round(Branch_ef.g,2), "－－－RAファン:",  round(Branch_de.g,2), "←－－",)
 print("          ↓                   ｜")
 print("        ",round(Branch_eb.g,2), "    　　　   　　  　 室 →EAファン:", round(Branch_gh.g,2))
 print("          ｜                     →すき間:", round(Branch_ij.g,2))
