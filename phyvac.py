@@ -1803,7 +1803,22 @@ class Branch12: # コンポジションというpython文法を使う
         return self.g
 
 # 空気系
-# ファン・ダンパ・機器が直列に1台以下の枝。デフォルトではファン・ダンパ・機器はなし。  
+# ファン・ダンパ・機器が直列に1台以下の枝。デフォルトではファン・ダンパ・機器はなし。
+def quadratic_formula(co_0, co_1, co_2):
+    flag = 0
+    if co_1**2 - 4*co_2*co_0 > 0:
+        g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
+        g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
+        if max(g1, g2) < 0:
+            g = 0.0
+            flag = 1
+        else:
+            g = max(g1, g2)
+    else:
+        g = 0.0
+        flag = 2
+    return [g, flag]
+
 class Branch000: # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
     def __init__(self, fan=None, damper=None, kr_eq=0.0, kr_duct=0.5):
@@ -1825,22 +1840,34 @@ class Branch000: # コンポジションというpython文法を使う
         self.g = g
         
         if self.fan == None and self.damper == None: # ファンもダンパもない場合
-            self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2
+            if self.g > 0:
+                self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2
+            else: # 逆流する場合
+                self.dp = self.kr_duct*self.g**2 + self.kr_eq*self.g**2
         
         elif self.fan == None: # ダンパがある場合
-            self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.damper.f2p(self.g)
+            if self.g > 0:
+                self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.damper.f2p(self.g)
+            else: # 逆流する場合
+                self.dp = self.kr_duct*self.g**2 + self.kr_eq*self.g**2 - self.damper.f2p(self.g)
         
         elif self.damper == None: # ファンがある場合
             if self.fan.inv == 0.0: #　ファン停止時の対応
                 self.dp = 0.0
             else:
-                self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.fan.f2p(self.g)
+                if self.g > 0:
+                    self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.fan.f2p(self.g)
+                else: # 逆流する場合
+                    self.dp = 0.0
         
         else: # ファンもダンパもある場合
             if self.fan.inv == 0.0: #　ファン停止時の対応
                 self.dp = 0.0
             else:
-                self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.fan.f2p(self.g)
+                if self.g > 0:
+                    self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.fan.f2p(self.g)
+                else: # 逆流する場合
+                    self.dp = 0.0
         
         return self.dp
         
@@ -1848,38 +1875,43 @@ class Branch000: # コンポジションというpython文法を使う
         self.dp = dp
         self.flag = 0
         if self.fan == None and self.damper == None: # ファンもダンパもない場合
-            [co_0, co_1, co_2] = np.array([-self.dp, 0, -self.kr_duct-self.kr_eq]) # 二次関数の係数の算出
+            if -self.dp > 0:
+                [co_0, co_1, co_2] = np.array([-self.dp, 0, -self.kr_duct-self.kr_eq]) # 二次関数の係数の算出
+                [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+            else:
+                [co_0, co_1, co_2] = np.array([-self.dp, 0, self.kr_duct+self.kr_eq]) # 二次関数の係数の算出
+                [g, flag] = quadratic_formula(co_0, co_1, co_2)
+                self.g = -g
+                self.flag = 3
             
         elif self.fan == None: # ダンパがある場合
-            [co_0, co_1, co_2] = self.damper.f2p_co() + np.array([-self.dp, 0, -self.kr_duct-self.kr_eq])
+            if -self.dp > 0:
+                [co_0, co_1, co_2] = self.damper.f2p_co() + np.array([-self.dp, 0, -self.kr_duct-self.kr_eq])
+                [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+            else:
+                [co_0, co_1, co_2] = self.damper.f2p_co() + np.array([-self.dp, 0, self.kr_duct+self.kr_eq])
+                [g, flag] = quadratic_formula(co_0, co_1, co_2)
+                self.g = -g
+                self.flag = 3
         
         elif self.damper == None: # ファンがある場合
             [co_0, co_1, co_2] = self.fan.f2p_co() + np.array([-self.dp, 0, -self.kr_duct-self.kr_eq])
-            if self.fan.inv == 0: #　ポンプ停止時の対応
+            if self.fan.inv == 0: #　ファン停止時の対応
                 self.g = 0.0
-                self.flag = 1
+                self.flag = 4
+            else:
+                [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
                 
         else: # ファンもダンパもある場合
             [co_0, co_1, co_2] = self.fan.f2p_co() + self.damper.f2p_co() + np.array([-self.dp, 0, -self.kr_duct-self.kr_eq])
-            if self.fan.inv == 0: #　ポンプ停止時の対応
+            if self.fan.inv == 0: #　ファン停止時の対応
                 self.g = 0.0
-                self.flag = 1
-            
-        if self.flag == 0:
-            if co_1**2 - 4*co_2*co_0 > 0:
-                g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-                g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-                if max(g1, g2) < 0:
-                    self.g = 0.0
-                    self.flag = 2
-                else:
-                    self.g = max(g1, g2)
+                self.flag = 4
             else:
-                self.g = 0.0
-                self.flag = 3
+                [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
             
-            if self.fan != None:
-                self.fan.g = self.g
+        if self.fan != None:
+            self.fan.g = self.g
             
         return self.g
 
