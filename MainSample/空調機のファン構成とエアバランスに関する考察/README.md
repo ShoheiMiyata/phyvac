@@ -7,4 +7,14 @@
 [FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration.py](https://github.com/ShoheiMiyata/phyvac/blob/main/MainSample/%E7%A9%BA%E8%AA%BF%E6%A9%9F%E3%81%AE%E3%83%95%E3%82%A1%E3%83%B3%E6%A7%8B%E6%88%90%E3%81%A8%E3%82%A8%E3%82%A2%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E8%80%83%E5%AF%9F/FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration.py) はすき間（上図ij）のある1室にSA・RA・EAファンが接続された場合  
 の流量バランス計算を表す。
   
-すき間ありの場合、各ファンのP-Q曲線が同一
+すき間あり、各ファンのP-Q曲線が同一とした場合、
+```
+室圧:  -29.48 Pa
+各ダクトの風量(m3/min,矢印の向きが正)
+← 3.24 －－－ 10.35 :RAファン←－－
+          ↓                  ｜
+         7.1     　　　   　　　 室 →EAファン: 10.76
+          ｜                    →すき間: -7.68
+          ｜                 　↑
+→ 6.32 －－－→SAファン: 13.43 －－
+```
