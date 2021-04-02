@@ -101,12 +101,12 @@ while(g_ab_eva > 0.001)or(g_ab_eva < -0.001):
 print("収束判定(30以下なら問題なし):", cnt1, cnt2)
 print("室圧: ", round(dp_ab+dp_bc,3),"Pa")
 print("各ダクトの風量(m3/min,矢印の向きが正)")
-print("←", round(Branch_ef.g,2), "－－－",  round(Branch_de.g,2), "－",)
-print("          ↓        ｜")
-print("        ",round(Branch_eb.g,2), "     室 →EAファン:", round(Branch_gh.g,2))
-print("          ｜          →すき間:", round(Branch_ij.g,2))
-print("          ｜        ↑")
-print("→",round(Branch_ab.g,2), "－－－", round(Branch_bc.g,2), "－",)
+print("←", round(Branch_ef.g,2), "－－－",  round(Branch_de.g,2), ":RAファン←－－",)
+print("          ↓                  ｜")
+print("        ",round(Branch_eb.g,2), "    　　　   　　　 室 →EAファン:", round(Branch_gh.g,2))
+print("          ｜                     →すき間:", round(Branch_ij.g,2))
+print("          ｜                 　↑")
+print("→",round(Branch_ab.g,2), "－－－→SAファン:", round(Branch_bc.g,2), "－－",)
 
 
 
