@@ -2,13 +2,13 @@
   
 <img src="https://user-images.githubusercontent.com/27459538/113416271-ed2a9f80-93fb-11eb-9f89-d06136d71e81.png" width=60%>  
   
-ひとまずダンパはモデル化の対象外（ダクトの圧力損失で模擬する）とし、ファン構成とエアバランスを考える。  
+ひとまずダンパはモデル化の対象外（ダクト抵抗で模擬する）とし、ファン構成とエアバランスを考える。  
 [FlowBalance_1Room_SAFan_RAFan_EAFan.py](https://github.com/ShoheiMiyata/phyvac/blob/main/MainSample/%E7%A9%BA%E8%AA%BF%E6%A9%9F%E3%81%AE%E3%83%95%E3%82%A1%E3%83%B3%E6%A7%8B%E6%88%90%E3%81%A8%E3%82%A8%E3%82%A2%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E8%80%83%E5%AF%9F/FlowBalance_1Room_SAFan_RAFan_EAFan.py) は1室にSA・RA・EAファンが接続された場合  
 [FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration.py](https://github.com/ShoheiMiyata/phyvac/blob/main/MainSample/%E7%A9%BA%E8%AA%BF%E6%A9%9F%E3%81%AE%E3%83%95%E3%82%A1%E3%83%B3%E6%A7%8B%E6%88%90%E3%81%A8%E3%82%A8%E3%82%A2%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E8%80%83%E5%AF%9F/FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration.py) はすき間（上図ij）のある1室にSA・RA・EAファンが接続された場合  
 の流量バランス計算を表し、  
-[FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration_PIDbalaning.py](https://github.com/ShoheiMiyata/phyvac/blob/main/MainSample/%E7%A9%BA%E8%AA%BF%E6%A9%9F%E3%81%AE%E3%83%95%E3%82%A1%E3%83%B3%E6%A7%8B%E6%88%90%E3%81%A8%E3%82%A8%E3%82%A2%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E8%80%83%E5%AF%9F/FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration_PIDbalancing.py)はファンinvやダクト圧力損失係数をPID制御によって仮想的に調整するプログラムである。流量はファンによる加圧（invに応じてP-Q曲線は変形する）と、ダクトによる圧力損失（風量の2乗に比例）とが釣り合う点が本プログラムでは算出される。  
+[FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration_PIDbalaning.py](https://github.com/ShoheiMiyata/phyvac/blob/main/MainSample/%E7%A9%BA%E8%AA%BF%E6%A9%9F%E3%81%AE%E3%83%95%E3%82%A1%E3%83%B3%E6%A7%8B%E6%88%90%E3%81%A8%E3%82%A8%E3%82%A2%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E8%80%83%E5%AF%9F/FlowBalance_1Room_SAFan_RAFan_EAFan_Infiltration_PIDbalancing.py)はファンinvやダクト抵抗をPID制御によって仮想的に調整するプログラムである。流量はファンによる加圧（invに応じてP-Q曲線は変形する）と、ダクトによる圧力損失（風量の2乗に比例）とが釣り合う点が本プログラムでは算出される。  
     
-すき間あり、各ファンのP-Q曲線が以下で同一、圧力損失係数は全て0.5 Pa/(m<sup>3</sup>/min)<sup>2</sup>とした場合、  
+すき間あり、各ファンのP-Q曲線が以下で同一、ダクト抵抗係数は全て0.5 Pa/(m<sup>3</sup>/min)<sup>2</sup>とした場合、  
 <img src="https://user-images.githubusercontent.com/27459538/113414238-860aec00-93f7-11eb-8d3e-32d4adf9698a.png" width=40%>  
 
 `Fan_SA.inv = 1.0, Fan_RA.inv = 1.0, Fan_EA.inv = 1.0`（inv=1.0は周波数比100%（50Hz or 60Hz）を意味する）の時、
@@ -52,10 +52,10 @@ SAファン風量-EAファン風量=RAファン風量となり、すき間風量
           ｜                  　↑
 → 3.01 －－－→SAファン: 10.0 －－
 ```
-このとき、`Fan_SA.inv = 0.87, Fan_RA.inv = 0.77, Fan_EA.inv = 0.08, abの圧力損失係数:1.67, efの圧力損失係数:2.37`であった。。  
-なお、調整は各ファンのinvとab・efの圧力損失係数を仮想的にPI制御しておこなった。  
-同様にして、ダクトの圧力損失係数の調整による風量のバランシングも可能である。  
-各ファンinvを1.0に固定し、各ダクト(ab, bc, gh, de, ef)の圧力損失係数をPI制御で模擬的に調整した結果、それぞれのの圧力損失係数を0.82, 0.82, 99.7, 0.91, 4.29となり、風量は以下のようになった。
+このとき、`Fan_SA.inv = 0.87, Fan_RA.inv = 0.77, Fan_EA.inv = 0.08, abの抵抗係数:1.67, efの抵抗係数:2.37`であった。。  
+なお、調整は各ファンのinvとab・efの抵抗係数を仮想的にPI制御しておこなった。  
+同様にして、ダクトの抵抗係数の調整による風量のバランシングも可能である。  
+各ファンinvを1.0に固定し、各ダクト(ab, bc, gh, de, ef)の抵抗係数をPI制御で模擬的に調整した結果、それぞれの抵抗係数は0.82, 0.82, 99.7, 0.91, 4.29となり、風量は以下のようになった。
 ```
 室内外差圧:  0.0 Pa
 各ダクトの風量(m3/min, 矢印の向きが正)
@@ -79,7 +79,7 @@ SAファン風量-EAファン風量=RAファン風量となり、すき間風量
   
   
 1.1  状態Aから、SAファンinvのみ変化させる  
-`Fan_SA.inv=0.77, Fan_RA.inv=0.77 Fan_EA.inv=0.078, abの圧力損失係数:1.66, efの圧力損失係数:2.38`
+`Fan_SA.inv=0.77, Fan_RA.inv=0.77 Fan_EA.inv=0.078, ab抵抗係数:1.66, ef抵抗係数:2.38`
 ```
 室内外差圧:  -0.188 Pa
 各ダクトの風量(m3/min, 矢印の向きが正)
@@ -92,7 +92,7 @@ SAファン風量-EAファン風量=RAファン風量となり、すき間風量
 ```
 > SAファンの圧力低下により、EA+RAファンの引っ張りが相対的に大きくなり、流入するすきま風が生じる。  
   
-`Fan_SA.inv=0.61, Fan_RA.inv=0.77 Fan_EA.inv=0.078, abの圧力損失係数:1.66, efの圧力損失係数:2.38`
+`Fan_SA.inv=0.61, Fan_RA.inv=0.77 Fan_EA.inv=0.078, ab抵抗係数:1.66, ef抵抗係数:2.38`
 ```
 室内外差圧:  -0.497 Pa
 各ダクトの風量(m3/min, 矢印の向きが正)
@@ -107,7 +107,7 @@ SAファン風量-EAファン風量=RAファン風量となり、すき間風量
 > `OA・RA・EAダンパ開度が同じなら、RA・OAはあるところまで同じ割合で減る`ことも確認された。SAファン風量減：RAファン風量減、SAファン風量減：OA風量減は一定である。
   
 1.2 状態Aから、SAファンinvとEAファンinvのみ変化させる  
-`Fan_SA.inv=0.77, Fan_RA.inv=0.77 Fan_EA.inv=0.095, abの圧力損失係数:1.66, efの圧力損失係数:2.38`
+`Fan_SA.inv=0.77, Fan_RA.inv=0.77 Fan_EA.inv=0.095, ab抵抗係数:1.66, ef抵抗係数:2.38`
 ```
 室内外差圧:  -0.302 Pa
 各ダクトの風量(m3/min, 矢印の向きが正)
@@ -118,4 +118,28 @@ SAファン風量-EAファン風量=RAファン風量となり、すき間風量
           ｜                  　↑
 → 2.43 －－－→SAファン: 9.0 －－
 ```
-> 1.1に対して、EAファンの風量増加分はそのまますき間風になっている。
+> 1.1に対して、EAファンの風量増加分はそのまますき間風になっている。  
+`Fan_SA.inv=0.66, Fan_RA.inv=0.77 Fan_EA.inv=0.13, ab抵抗係数:1.66, ef抵抗係数:2.38`
+```
+室内外差圧:  -1.168 Pa
+各ダクトの風量(m3/min, 矢印の向きが正)
+← 2.37 －－－RAファン: 8.53 ←－－
+          ↓                     ｜
+         6.16     　　　   　　  室 →EAファン: 1.0
+          ｜                       →すき間: -1.53
+          ｜                  　↑
+→ 1.84 －－－→SAファン: 8.0 －－
+```
+> 1.1に対して、EAファンの風量増加分はそのまますき間風になっている。 
+2. OA系ダクト抵抗係数も制御
+0.723304223001003 0.7669184840517083 0.08535480100494616 0.3538671146246987 2.3815015460084754
+```
+室内外差圧:  -0.12 Pa
+各ダクトの風量(m3/min, 矢印の向きが正)
+← 2.49 －－－RAファン: 8.49 ←－－
+          ↓                   ｜
+         6.0     　　　   　　  　 室 →EAファン: 1.0
+          ｜                     →すき間: -0.49
+          ｜                  　↑
+→ 3.0 －－－→SAファン: 9.0 －－
+```
