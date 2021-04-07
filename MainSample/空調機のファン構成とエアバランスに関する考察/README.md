@@ -1,6 +1,6 @@
 ### 空調機のファン構成とエアバランスに関するケーススタディ
   
-<img src="https://user-images.githubusercontent.com/27459538/113416271-ed2a9f80-93fb-11eb-9f89-d06136d71e81.png" width=60%>  
+<img src="https://user-images.githubusercontent.com/27459538/113809880-076dd000-97a4-11eb-94dc-24da9b961b19.png" width=60%>  
   
 ひとまずダンパはモデル化の対象外（ダクト抵抗で模擬する）とし、ファン構成とエアバランスを考える。  
 [FlowBalance_1Room_SAFan_RAFan_EAFan.py](https://github.com/ShoheiMiyata/phyvac/blob/main/MainSample/%E7%A9%BA%E8%AA%BF%E6%A9%9F%E3%81%AE%E3%83%95%E3%82%A1%E3%83%B3%E6%A7%8B%E6%88%90%E3%81%A8%E3%82%A8%E3%82%A2%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E8%80%83%E5%AF%9F/FlowBalance_1Room_SAFan_RAFan_EAFan.py) は1室にSA・RA・EAファンが接続された場合  
