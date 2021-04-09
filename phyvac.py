@@ -1838,7 +1838,7 @@ class Branch100: # コンポジションというpython文法を使う
     
     def f2p(self, g): # 流量から圧力差を求める
         self.g = g
-        
+
         if self.fan == None and self.damper == None: # ファンもダンパもない場合
             if self.g > 0:
                 self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2
@@ -1854,20 +1854,31 @@ class Branch100: # コンポジションというpython文法を使う
         elif self.damper == None: # ファンがある場合
             if self.fan.inv == 0.0: #　ファン停止時の対応
                 self.dp = 0.0
+                self.g = 0.0
+                self.fan.f2p(self.g)
             else:
                 if self.g > 0:
+
                     self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.fan.f2p(self.g)
                 else: # 逆流する場合
-                    self.dp = 0.0
+                    self.g = 0.0
+                    [co_0, co_1, co_2] = self.fan.f2p_co()
+                    self.dp = co_0
+                    self.fan.dp = co_0
         
         else: # ファンもダンパもある場合
             if self.fan.inv == 0.0: #　ファン停止時の対応
                 self.dp = 0.0
+                self.g = 0.0
+                self.fan.f2p(self.g)
             else:
                 if self.g > 0:
                     self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.fan.f2p(self.g)
                 else: # 逆流する場合
-                    self.dp = 0.0
+                    self.g = 0.0
+                    [co_0, co_1, co_2] = self.fan.f2p_co()
+                    self.dp = co_0
+                    self.fan.dp = co_0
         
         return self.dp
         
@@ -1898,6 +1909,7 @@ class Branch100: # コンポジションというpython文法を使う
             [co_0, co_1, co_2] = self.fan.f2p_co() + np.array([-self.dp, 0, -self.kr_duct-self.kr_eq])
             if self.fan.inv == 0: #　ファン停止時の対応
                 self.g = 0.0
+                self.fan.f2p(self.g)
                 self.flag = 4
             else:
                 [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
@@ -1906,6 +1918,8 @@ class Branch100: # コンポジションというpython文法を使う
             [co_0, co_1, co_2] = self.fan.f2p_co() + self.damper.f2p_co() + np.array([-self.dp, 0, -self.kr_duct-self.kr_eq])
             if self.fan.inv == 0: #　ファン停止時の対応
                 self.g = 0.0
+                self.fan.f2p(self.g)
+                self.damper.f2p(self.g)
                 self.flag = 4
             else:
                 [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
