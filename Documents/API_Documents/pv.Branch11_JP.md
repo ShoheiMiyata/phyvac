@@ -1,4 +1,4 @@
-## pv.Branch11(valve, pump, kr_pipe_pump=0.8, kr_pipe_valve=0.5)
+## pv.Pump_para(pump, num=2, valve=None, kr_pipe_pump=0.0, kr_pipe_valve=0.0)
 並列ポンプ複数台とバイパス弁を有する枝
   
 <img src="https://user-images.githubusercontent.com/27459538/112747938-8409ed00-8ff3-11eb-8d76-121f99063dd5.png" width=30%>
@@ -7,13 +7,13 @@
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
+|pump|object|ポンプオブジェクト。ポンプは1種類のみ指定可能|
+|num|int|ポンプ台数。1台以上。|
 |valve|object|バイパス弁のオブジェクト|
-|pump|object|この枝上のポンプのオブジェクト|
-|kr_eq|float|機器の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
 |kr_pipe_pump|float|ポンプのある菅の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
 |kr_pipe_valve|float|バイパス弁の管の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
-|g|float|流量 \[m<sup>3</sup>/min] |
 |dp|float|枝の出入口圧力差 \[kPa] 流れの向きに対して加圧：+, 減圧：- |
+|g|float|流量 \[m<sup>3</sup>/min] |
   
 ※ポンプの台数はポンプオブジェクトの変数pump.numで指定する
 ## pv.Branch11.f2p(g)
