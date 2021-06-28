@@ -15,13 +15,13 @@
 |dp|float|枝の出入口圧力差 \[kPa] 流れの向きに対して加圧：+, 減圧：- |
 |g|float|流量 \[m<sup>3</sup>/min] |
   
-## pv.Branch11.f2p(g)
-流量から圧力差を求める
+## pv.Pump_para.f2p(g)
+流量からユニットの出入口圧力差を求める
   
 ### returns:
 枝の圧力差（変数dpにも値は格納される）
-## pv.Branch11.p2f(dp) To Be Developed!
-圧力差から流量を求める
+## pv.Pump_para.p2f(dp)
+圧力差からユニットの出入口流量を求める
   
 ### returns:
 流量（変数gにも値は格納される）
