@@ -1,5 +1,5 @@
 ## pv.Pump_para(pump, num=2, valve=None, kr_pipe_pump=0.0, kr_pipe_valve=0.0)
-並列ポンプ複数台とバイパス弁を有する枝
+並列ポンプ複数台とバイパス弁のユニット（Pumpと同様に取扱可能、バイパス弁はなくてもよい）
   
 <img src="https://user-images.githubusercontent.com/27459538/112747938-8409ed00-8ff3-11eb-8d76-121f99063dd5.png" width=30%>
 
