@@ -31,13 +31,17 @@
 import phyvac as pv
 
 CP1 = pv.Pump()
-Vlv_CP1 = pv.Valve()
-CP1.num = 2 # ポンプ運転台数の指定
-
-Branch_aPVb = pv.Branch11(valve=Vlv_CP1, pump=CP1)
-print(Branch_aPVb.pump.inv, Branch_aPVb.kr_pipe_pump, Branch_aPVb.g, Branch_aPVb.dp)
+Valve1 = pv.Valve()
+CP1s = pv.Pump_para(pump=CP1, num=3, valve=Valve1, kr_pipe_pump=0.2, kr_pipe_valve=0.2)
+CP1.inv=0.4
+Valve1.vlv = 0.3
+print(CP1s.pump.inv,CP1s.valve.vlv)
 ```
-> 0.0 0.5 0.0 0.0
+> 0.4 0.3
+```
+print(CP1s.f2p(2.0), CP1s.p2f(36.1))
+```
+> 36.1255047938035 2.014131371912282
 ```
 CP1.inv = 0.3
 Vlv_CP1.vlv = 0.4
