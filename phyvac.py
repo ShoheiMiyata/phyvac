@@ -3,9 +3,8 @@
 @author: shhmy
 """
 # phyvacモジュール。hvav + python ->phyvac
-# 空調システムの計算を極力物理原理・詳細な制御ロジックに基づいて行う。現在は熱源システムが中心（2021.01.21）
-# ver0.1 20210128
-# branch_miyataテスト
+# 空調システムの計算を極力物理原理・詳細な制御ロジックに基づいて行う。
+# ver0.2 20210628
 
 import numpy as np
 import math
@@ -404,7 +403,9 @@ class Valve:
             self.dp = (- 1743 * (1000 / 60)**2 / (self.cv_max * self.r**(self.vlv - 1))**2) * self.g**2
         else:
             self.dp = 0.0
-            
+         
+        if self.g < 0:
+            self.dp = -self.dp
         return self.dp
     
     def p2f(self,dp):
@@ -438,6 +439,7 @@ class Pump:
         # pw_p  :消費電力[kW]
         # flag   :計算に問題があったら1、なかったら0
         # ef    :効率(0.0~1.0)
+        # para  :並列ポンプか否かのフラグ
         self.pg = pg
         self.eg = eg
         self.r_ef = r_ef
@@ -447,7 +449,7 @@ class Pump:
         self.ef = 0.0
         self.pw = 0.0
         self.flag = 0
-        self.num = 1
+        self.para = 0
     
     def f2p(self, g): # flow to pressure for pump
         self.g = g
@@ -538,7 +540,7 @@ class Chiller:
         self.tout_cd = 37
         self.pw = 0
         self.q_ch = 0
-        self.lf = 0 # 負荷率(0.0~1.0)
+        self.pl = 0 # 負荷率(0.0~1.0)
         self.cop = 0
         self.flag = 0 #問題があったら1,なかったら0
         self.dp_ch = 0
@@ -1533,197 +1535,344 @@ class UnitNumChiller:
         return self.num
                 
 # 流量計算関係モデル ###########################################################
+# 二次方程式の解の公式
+def quadratic_formula(co_0, co_1, co_2):
+    flag = 0
+    if co_1**2 - 4*co_2*co_0 > 0:
+        g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
+        g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
+        if max(g1, g2) < 0:
+            g = 0.0
+            flag = 1
+        else:
+            g = max(g1, g2)
+    else:
+        g = 0.0
+        flag = 2
+    return [g, flag]
 
-# 機器のみを有する枝
-class Branch00:
+# 並列ポンプ複数台とバイパス弁のユニット（Pumpと同様に取扱可能）
+class Pump_para:
+    # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
-    def __init__(self, kr_eq=0.8, kr_pipe=0.5, head_act=0):
-        # g         :流量[m3/min]
-        # dp        :枝の出入口圧力差[kPa]加圧：+, 減圧：-
-        # kr_pipe   :管の圧損係数[kPa/(m3/min)^2]
-        # kr_eq     :機器の圧損係数[kPa/(m3/min)^2]
-        # vlv       :バルブ開度(1:全開,0:全閉)
-        # head_act  :実揚程[kPa]
-        self.kr_eq = kr_eq
-        self.kr_pipe = kr_pipe
-        self.dp = 0.0
-        self.g = 0.0
-        self.flag = 0
-        self.head_act = head_act
-        
-    def f2p(self,g): # 流量から圧力損失を求める flow to pressure for branch
-        self.g = g
-        # (枝の圧損) = (管圧損) + (機器圧損)
-        self.dp = -self.kr_pipe * self.g**2 - self.kr_eq * self.g**2 - self.head_act
-        return self.dp
-    
-    def p2f(self, dp): # 圧力損失から流量を求める
-        self.dp = dp
-        self.flag = 0
-        [co_0, co_1, co_2] = [- self.head_act - self.dp, 0, -self.kr_pipe - self.kr_eq]
-        if co_1**2 - 4*co_2*co_0 > 0:
-            g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-            g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-            if max(g1, g2) < 0:
-                self.g = 0.0
-                self.flag = 1
-            else:
-                self.g = max(g1, g2)
-        else:
-            self.g = 0.0
-            self.flag = 1  
-        return self.g     
-
-# 機器、バルブを有する枝
-class Branch01: # コンポジションというpython文法を使う
-    # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
-    def __init__(self, valve, kr_eq=0.8, kr_pipe=0.5):
-        # g         :枝の出入口流量[m3/min]
-        # dp        :枝の出入口圧力差[kPa]加圧：+, 減圧：-
-        # kr_pipe      :管の圧損係数[kPa/(m3/min)^2]
-        # kr_eq      :機器の圧損係数[kPa/(m3/min)^2]
-        # valve     :バルブのオブジェクト
-        # vlv       :バルブ開度(1:全開,0:全閉)
-        self.valve = valve
-        self.kr_eq = kr_eq
-        self.kr_pipe = kr_pipe
-        self.dp = 0.0
-        self.g = 0.0
-        self.flag = 0
-        
-    def f2p(self, g): # 流量から圧力損失を求める
-        # (枝の圧損) = (管圧損) + (機器圧損) + (バルブ圧損) 
-        self.g = g
-        self.dp = - self.kr_pipe * self.g**2 - self.kr_eq * self.g**2 + self.valve.f2p(self.g)
-        return self.dp
-    
-    def p2f(self, dp): # 圧力差から流量を求める
-        self.dp = dp
-        self.flag = 0
-        
-        [co_0, co_1, co_2] = self.valve.f2p_co() + np.array([-self.dp, 0, -self.kr_pipe-self.kr_eq]) # 二次関数の係数の算出
-        
-        if co_1**2 - 4*co_2*co_0 > 0:
-            g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-            g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-            if max(g1, g2) < 0:
-                self.g = 0.0
-                self.flag = 1
-            else:
-                self.g = max(g1, g2)
-        else:
-            self.g = 0.0
-            self.flag = 1
-        self.valve.g = self.g   
-        return self.g
-        
-    
-# ポンプ・機器を有する枝   
-class Branch10: # コンポジションというpython文法を使う
-    # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
-    def __init__(self, pump, kr_eq=0.8, kr_pipe=0.5):
-        # pump      :ポンプのオブジェクト
-        # kr_pipe   :管の圧損係数[kPa/(m3/min)^2]
-        # kr_eq     :機器の圧損係数[kPa/(m3/min)^2]
-        # dp        :枝の出入口差圧[kPa]加圧：+, 減圧：-
-        # flag      :計算の順当性確認のためのフラグ
-        self.pump = pump
-        self.kr_eq = kr_eq
-        self.kr_pipe = kr_pipe
-        self.dp = 0.0
-        self.g = 0.0
-        self.flag = 0
-    
-    def f2p(self, g):        
-        if self.pump.inv == 0: #　ポンプ停止時の対応
-            self.dp = 0.0
-        else:
-            self.g = g
-            # 枝の出入口差圧=ポンプ加圧-配管圧損-機器圧損
-            self.dp = self.pump.f2p(self.g) - self.kr_pipe*self.g**2 - self.kr_eq*self.g**2
-        
-        return self.dp
-        
-    def p2f(self, dp): # 圧力差から流量を求める
-        
-        if self.pump.inv == 0: #　ポンプ停止時の対応
-            self.g = 0.0
-        else:
-            self.dp = dp
-            self.flag = 0
-            [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp, 0, -self.kr_pipe-self.kr_eq]) # 二次関数の係数の算出
-            if co_1**2 - 4*co_2*co_0 > 0:
-                g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-                g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-                if max(g1, g2) < 0:
-                    self.g = 0.0
-                    self.flag = 1
-                else:
-                    self.g = max(g1, g2)
-            else:
-                self.g = 0.0
-                self.flag = 1
-            self.pump.g = self.g
-            
-        return self.g
-            
-
-# 並列ポンプ複数台とバイパス弁を有する枝
-class Branch11: # コンポジションというpython文法を使う
-    def __init__(self, valve, pump, kr_pipe_pump=0.5, kr_pipe_valve=0.5):
-        # pg            :ポンプ流量-圧損曲線係数
+    def __init__(self, pump, num=1, valve=None, kr_pipe_pump=0.0, kr_pipe_valve=0.0):
+        # pump          :ポンプオブジェクト。ポンプは1種類のみ指定可能
+        # num           :ポンプ台数。1台以上。
+        # valve         :弁オブジェクト。バイパス弁。
         # kr_pipe_pump  :ポンプ用管の圧損係数[kPa/(m3/min)^2]
-        # dp            :枝の出入口差圧[kPa]加圧：+, 減圧：-
-        # vlv           :バルブ開度(1:全開,0:全閉)
-        # g             :枝の出入り流量
-        # dp            :枝の出入り圧力差
+        # kr_pipe_valve :バイパス弁用管の圧損係数[kPa/(m3/min)^2]
+        # dp            :ユニットの出入口差圧[kPa]加圧：+, 減圧：-
+        # g             :ユニットの出入り流量[m3/min]
+        # para          :並列ポンプか否かのフラグ
         self.pump = pump
+        self.num = num
         self.valve = valve
         self.kr_pipe_pump = kr_pipe_pump
         self.kr_pipe_valve = kr_pipe_valve
         self.g = 0.0
         self.dp = 0.0
         self.flag = 0
-        
-    def f2p(self, g): # 流量から圧力損失を求める
+        self.para = 1
+        if num < 1:
+            print("define at least one pump")
+
+    def f2p(self, g): # 出入口流量からポンプ・弁流量と出入口差圧を求める
         self.g = g
         self.flag = 0
-        
-        if self.valve.vlv == 0:
-            self.valve.g = 0.0
-            self.pump.g = self.g / self.pump.num
-            self.dp = - self.kr_pipe_pump * self.pump.g**2 + self.pump.f2p(self.pump.g)
-        if self.pump.inv == 0 and self.valve.vlv > 0:
-            self.pump.g = 0.0
-            self.valve.g = self.g
-            self.dp = - self.kr_pipe_valve * self.valve.g**2 + self.valve.f2p(self.valve.g)
-        else:
-            [co_0a, co_1a, co_2a] = self.pump.f2p_co() + np.array([0, 0, -self.kr_pipe_pump]) # 二次関数の係数の算出
-            [co_0b, co_1b, co_2b] = self.valve.f2p_co() + np.array([0, 0, -self.kr_pipe_valve])
-            # co_0a + co_1a*self.pump.g + co_2a*self.pump.g**2 = - co_2b*self.valve.g**2
-            # self.pump.num*self.pump.g - self.valve.g = self.g
-            # 上記二式を変形した二次方程式の係数は以下のようになる
-            [co_0c, co_1c, co_2c] = [co_0a + co_2b*self.g**2, co_1a - co_2b*2*self.pump.num*self.g, co_2a + co_2b*self.pump.num**2]
-
-            if co_1c**2 - 4*co_2c*co_0c > 0:
-                g1 = (-co_1c + (co_1c**2 - 4*co_2c*co_0c)**0.5)/(2 * co_2c)
-                g2 = (-co_1c - (co_1c**2 - 4*co_2c*co_0c)**0.5)/(2 * co_2c)
-                if max(g1, g2) < 0:
-                    self.pump.g = 0.0
-                    self.flag = 1
-                else:
-                    self.pump.g = max(g1, g2)
-            else:
+        if self.valve == None: # バイパス弁がない場合
+            if self.pump.inv == 0: # ポンプ停止時
                 self.pump.g = 0.0
-                self.flag = 1
+                self.dp = 0
+            else:
+                self.pump.g = self.g / self.num
+                self.dp = - self.kr_pipe_pump * self.pump.g**2 + self.pump.f2p(self.pump.g)
+        else: # バイパス弁もポンプもある場合            
+            if self.valve.vlv == 0: # バイパス弁全閉時
+                self.valve.g = 0.0
+                self.pump.g = self.g / self.num
+                self.dp = - self.kr_pipe_pump * self.pump.g**2 + self.pump.f2p(self.pump.g)
+            elif self.pump.inv == 0: # ポンプ停止時、バイパス弁が開いている時
+                self.pump.g = 0.0
+                self.valve.g = self.g
+                self.dp = - self.kr_pipe_valve * self.valve.g**2 + self.valve.f2p(self.valve.g)
+            else:
+                [co_0a, co_1a, co_2a] = self.pump.f2p_co() + np.array([0, 0, -self.kr_pipe_pump]) # 二次関数の係数の算出
+                [co_0b, co_1b, co_2b] = self.valve.f2p_co() + np.array([0, 0, -self.kr_pipe_valve])
+                # co_0a + co_1a*self.pump.g + co_2a*self.pump.g**2 = - co_2b*self.valve.g**2
+                # self.num*self.pump.g - self.valve.g = self.g
+                # 上記二式をポンプ流量の式に変形した二次方程式の係数は以下のようになる
+                [co_0c, co_1c, co_2c] = [co_0a + co_2b*self.g**2, co_1a - co_2b*2*self.num*self.g, co_2a + co_2b*self.num**2]
+                
+                [self.pump.g, flag] = quadratic_formula(co_0c, co_1c, co_2c)
+                
+                self.valve.g = self.num*self.pump.g - self.g
+                self.dp = - self.kr_pipe_pump * self.pump.g**2 + self.pump.f2p(self.pump.g)
+        
+        return self.dp
+    
+    def p2f(self, dp): # 圧力差から流量を求める
+        self.dp = dp
+        self.flag = 0
+        if self.valve == None: # バイパス弁がない場合 
+            if self.dp > 0:
+                if self.pump.inv == 0: #　ポンプ停止時の対応
+                    self.g = 0.0
+                    self.pump.f2p(self.g)
+                    self.flag = 4
+                else:
+                    [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp, 0, -self.kr_pipe_pump])
+                    [self.pump.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+                    self.g = self.pump.g*self.num
+            else:
+                self.g = 0.0
+                self.pump.f2p(self.g)
+                self.flag = 5
+                
+        else: # ポンプも二方弁もある場合
+            self.dp = dp
+            self.flag = 0
+            if self.valve.vlv == 0 and self.pump.inv == 0:
+                self.valve.g = 0.0
+                self.pump.g = 0.0
+                
+            elif self.valve.vlv == 0:
+                self.valve.g = 0
+                # [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp, 0, -self.kr_pipe_pump])
+                
+                [co_p0, co_p1, co_p2] = self.pump.f2p_co()
+                [co_p0, co_p1, co_p2] = [co_p0, co_p1/self.num, co_p2/self.num**2]
+                [co_0, co_1, co_2] = [co_p0, co_p1, co_p2] + np.array([0, 0, -self.kr_pipe_pump])# 二次関数の係数の算出
+                
+                
+                [self.pump.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+                self.g = self.pump.g*self.num
+                    
+            elif self.pump.inv == 0:
+                self.pump.g = 0.0
+                [co_0, co_1, co_2] = self.valve.f2p_co() + np.array([self.dp, 0, -self.kr_pipe_valve])
+                [self.valve.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+                if co_2 < 0 and self.dp > 0:
+                    self.valve.g = (-self.dp / co_2)**0.5
+                elif co_2 < 0 and self.dp < 0:
+                    self.valve.g = -(self.dp / co_2)**0.5 # 逆流する
+                else:
+                    self.valve.g = 0.0
+                    self.flag = 5
+                self.g = self.valve.g
+                
+            else:
+                # ポンプの流量
+                [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp, 0, -self.kr_pipe_pump])
+                if co_1**2 - 4*co_2*co_0 > 0:
+                    g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
+                    g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
+                    if max(g1, g2) < 0:
+                        self.pump.g = 0.0
+                        self.flag = 3
+                    else:
+                        self.pump.g = max(g1, g2)
+                else:
+                    self.pump.g = 0.0
+                    self.flag = 4
+                    
+                # バイパス弁流量
+                [co_0, co_1, co_2] = self.valve.f2p_co() + np.array([self.dp, 0, -self.kr_pipe_valve])
+                
+                if co_2 < 0 and self.dp > 0:
+                    self.valve.g = (-self.dp / co_2)**0.5
+                elif co_2 < 0 and self.dp < 0:
+                    self.valve.g = -(self.dp / co_2)**0.5 # 逆流する
+                else:
+                    self.valve.g = 0.0
+                    self.flag = 5
+                
+            self.g = self.pump.g*self.num - self.valve.g
             
-            self.valve.g = self.pump.num*self.pump.g - self.g
-            self.dp = - self.kr_pipe_pump * self.pump.g**2 + self.pump.f2p(self.pump.g)
+            return self.g
+    
+    def f2p_co(self): # coefficient for f2p
+        # バイパス弁の有無で場合分け
+        if self.valve == None:
+            [co_p0, co_p1, co_p2] = self.pump.f2p_co()
+            [co_p0, co_p1, co_p2] = [co_p0, co_p1/self.num, co_p2/self.num**2]
+            [co_0, co_1, co_2] = [co_p0, co_p1, co_p2] + np.array([0, 0, -self.kr_pipe_pump])# 二次関数の係数の算出
+        elif self.valve.vlv == 0:
+            [co_p0, co_p1, co_p2] = self.pump.f2p_co()
+            [co_p0, co_p1, co_p2] = [co_p0, co_p1/self.num, co_p2/self.num**2]
+            [co_0, co_1, co_2] = [co_p0, co_p1, co_p2] + np.array([0, 0, -self.kr_pipe_pump])# 二次関数の係数の算出
+            
+        else:
+            [co_p0, co_p1, co_p2] = self.pump.f2p_co()
+            [co_p0, co_p1, co_p2] = [co_p0, co_p1/self.num, co_p2/self.num**2]
+            [co_0, co_1, co_2] = [co_p0, co_p1, co_p2] + np.array([0, 0, -self.kr_pipe_pump]) + self.valve.f2p_co() + np.array([0, 0, -self.kr_pipe_valve])# 二次関数の係数の算出
+            
+        return [co_0, co_1, co_2]
+
+
+# 水系
+class Branch000: # ポンプ（並列ポンプ（バイパス弁付き）ユニットも可）、弁、機器が直列に並んだ基本的な枝
+    # コンポジションというpython文法を使う
+    # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
+    def __init__(self, pump=None, valve=None, kr_eq=0.0, kr_pipe=0.0):
+        # pump      :ポンプのオブジェクト。並列ポンプ（バイパス弁付き）のオブジェクトも挿入可能
+        # valve     :二方弁のオブジェクト
+        # kr_eq     :機器の圧損係数[Pa/(m3/min)^2]
+        # kr_pipe   :配管の圧損係数[Pa/(m3/min)^2]
+        # dp        :枝の出入口差圧[Pa]加圧：+, 減圧：-
+        # g         :枝の出入口での流量[m3/min]
+        # flag      :計算の順当性確認のためのフラグ
+        self.pump = pump
+        self.valve = valve
+        self.kr_eq = kr_eq
+        self.kr_pipe = kr_pipe
+        self.dp = 0.0
+        self.g = 0.0
+        self.flag = 0
+    
+    def f2p(self, g): # 流量から圧力差を求める
+        self.g = g
+        self.flag = 0
+        if self.pump == None and self.valve == None: # ファンもダンパもない場合
+            if self.g > 0:
+                self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2
+            else: # 逆流する場合
+                self.dp = self.kr_eq*self.g**2 + self.kr_pipe*self.g**2
+                self.flag = 1
+        
+        elif self.pump == None: # 二方弁がある場合
+            if self.g > 0:
+                self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.valve.f2p(self.g)
+            else: # 逆流する場合
+                self.dp = self.kr_eq*self.g**2 + self.kr_pipe*self.g**2 - self.valve.f2p(self.g)
+                self.flag = 2
+        
+        elif self.valve == None: # ポンプがある場合
+            if self.pump.para == 0: # Pump_paraでない場合
+                if self.pump.inv == 0.0: #　ポンプ停止時の対応
+                    self.dp = 0.0
+                    self.g = 0.0
+                    self.pump.f2p(self.g)
+                else:
+                    if self.g > 0:
+                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g)
+                    else: # 逆流する場合 # この条件が適切かは要確認!!!!!!!!!!!!!!!!!!!!
+                        self.g = 0.0
+                        self.dp = self.pump.f2p(self.g)
+                        self.flag = 3
+            else: # Pump_paraの場合
+                if self.pump.pump.inv == 0.0: #　ポンプ停止時の対応
+                    self.dp = 0.0
+                    self.g = 0.0
+                    self.pump.f2p(self.g)
+                else:
+                    if self.g > 0:
+                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g)
+                    else: # 逆流する場合 # この条件が適切かは要確認!!!!!!!!!!!!!!!!!!!!
+                        self.g = 0.0
+                        self.dp = self.pump.f2p(self.g)
+                        self.flag = 3
+                
+        
+        else: # ポンプも弁もある場合
+            if self.pump.para == 0: # Pump_paraでない場合
+                if self.pump.inv == 0.0: #　ポンプ停止時の対応
+                    self.dp = 0.0
+                    self.g = 0.0
+                    self.pump.f2p(self.g)
+                else:
+                    if self.g > 0:
+                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g) + self.valve.f2p(self.g)
+                    else: # 逆流する場合 # この条件が適切かは要確認!!!!!!!!!!!!!!!!!!!!
+                        self.g = 0.0
+                        self.dp = self.pump.f2p(self.g)
+                        self.flag = 4
+            else: # Pump_paraの場合
+                if self.pump.pump.inv == 0.0: #　ポンプ停止時の対応
+                    self.dp = 0.0
+                    self.g = 0.0
+                    self.pump.f2p(self.g)
+                else:
+                    if self.g > 0:
+                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g) + self.valve.f2p(self.g)
+                    else: # 逆流する場合 # この条件が適切かは要確認!!!!!!!!!!!!!!!!!!!!
+                        self.g = 0.0
+                        self.dp = self.pump.f2p(self.g)
+                        self.flag = 4     
         
         return self.dp
         
+    def p2f(self, dp): # 圧力差から流量を求める
+        self.dp = dp
+        self.flag = 0
+        if self.pump == None and self.valve == None: # ポンプも二方弁もない場合
+            if self.dp < 0:
+                [co_0, co_1, co_2] = np.array([self.dp, 0, self.kr_eq + self.kr_pipe]) # 二次関数の係数の算出
+                [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+            else: # 逆流する場合
+                [co_0, co_1, co_2] = np.array([-self.dp, 0, self.kr_duct+self.kr_eq]) # 二次関数の係数の算出
+                [g, flag] = quadratic_formula(co_0, co_1, co_2)
+                self.g = -g
+                self.flag = 1
+            
+        elif self.pump == None: # 二方弁がある場合
+            if self.dp < 0:
+                [co_0, co_1, co_2] = self.valve.f2p_co() + np.array([-self.dp, 0, -self.kr_eq-self.kr_pipe])
+                [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+                self.valve.f2p(self.g)
+            else: # 逆流する場合
+                [co_0, co_1, co_2] = self.valve.f2p_co() + np.array([self.dp, 0, -self.kr_eq-self.kr_pipe])
+                [g, flag] = quadratic_formula(co_0, co_1, co_2)
+                self.g = -g
+                self.valve.f2p(self.g)
+                self.flag = 3
+        
+        elif self.valve == None: # ポンプがある場合
+            [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp, 0, -self.kr_eq-self.kr_pipe])
+            if self.pump.para == 0: # Pump_paraでない場合
+                if self.pump.inv == 0: #　ポンプ停止時の対応
+                    self.g = 0.0
+                    self.pump.f2p(self.g)
+                    self.flag = 4
+                else:
+                    [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+                    self.pump.f2p(self.g)   
+                    
+            else: # Pump_paraの場合
+                if self.pump.pump.inv == 0: #　ポンプ停止時の対応
+                    self.g = 0.0
+                    self.pump.f2p(self.g)
+                    self.flag = 4
+                else:
+                    [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+                    self.pump.f2p(self.g)
+                    
+        else: # ポンプも二方弁もある場合
+            [co_0, co_1, co_2] = self.pump.f2p_co() + self.valve.f2p_co() + np.array([-self.dp, 0, -self.kr_eq-self.kr_pipe])
+            if self.pump.para == 0: # Pump_paraでない場合
+                if self.pump.inv == 0: #　ファン停止時の対応
+                    self.g = 0.0
+                    self.pump.f2p(self.g)
+                    self.valve.f2p(self.g)
+                    self.flag = 4
+                else:
+                    [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+                    self.pump.f2p(self.g)
+                    self.valve.f2p(self.g)
+            else: # Pump_paraの場合
+                if self.pump.pump.inv == 0: #　ファン停止時の対応
+                    self.g = 0.0
+                    self.pump.f2p(self.g)
+                    self.valve.f2p(self.g)
+                    self.flag = 4
+                else:
+                    [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+                    self.pump.f2p(self.g)
+                    self.valve.f2p(self.g)
+            
+        return self.g
+
 # ポンプ、機器、バイパス弁を有する枝
-class Branch12: # コンポジションというpython文法を使う
+class Branch001: # コンポジションというpython文法を使う
     def __init__(self, valve, pump, kr_eq=0.5, kr_pipe=0.5, kr_pipe_bypass=0.5):
         # valve         :バルブのオブジェクト
         # pump          :ポンプのオブジェクト
@@ -1802,23 +1951,9 @@ class Branch12: # コンポジションというpython文法を使う
         
         return self.g
 
+
 # 空気系
 # ファン・ダンパ・機器が直列に1台以下の枝。デフォルトではファン・ダンパ・機器はなし。
-def quadratic_formula(co_0, co_1, co_2):
-    flag = 0
-    if co_1**2 - 4*co_2*co_0 > 0:
-        g1 = (-co_1 + (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-        g2 = (-co_1 - (co_1**2 - 4*co_2*co_0)**0.5)/(2 * co_2)
-        if max(g1, g2) < 0:
-            g = 0.0
-            flag = 1
-        else:
-            g = max(g1, g2)
-    else:
-        g = 0.0
-        flag = 2
-    return [g, flag]
-
 class Branch100: # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
     def __init__(self, fan=None, damper=None, kr_eq=0.0, kr_duct=0.5):
@@ -1838,7 +1973,7 @@ class Branch100: # コンポジションというpython文法を使う
     
     def f2p(self, g): # 流量から圧力差を求める
         self.g = g
-
+        # print("test3")
         if self.fan == None and self.damper == None: # ファンもダンパもない場合
             if self.g > 0:
                 self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2
@@ -1858,13 +1993,11 @@ class Branch100: # コンポジションというpython文法を使う
                 self.fan.f2p(self.g)
             else:
                 if self.g > 0:
-
+                    print("test2")
                     self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.fan.f2p(self.g)
                 else: # 逆流する場合
                     self.g = 0.0
-                    [co_0, co_1, co_2] = self.fan.f2p_co()
-                    self.dp = co_0
-                    self.fan.dp = co_0
+                    self.dp = self.fan.f2p(self.g)
         
         else: # ファンもダンパもある場合
             if self.fan.inv == 0.0: #　ファン停止時の対応
@@ -1873,12 +2006,10 @@ class Branch100: # コンポジションというpython文法を使う
                 self.fan.f2p(self.g)
             else:
                 if self.g > 0:
-                    self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.fan.f2p(self.g)
+                    self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.fan.f2p(self.g) + self.damper.f2p(self.g)
                 else: # 逆流する場合
                     self.g = 0.0
-                    [co_0, co_1, co_2] = self.fan.f2p_co()
-                    self.dp = co_0
-                    self.fan.dp = co_0
+                    self.dp = self.fan.f2p(self.g)
         
         return self.dp
         
