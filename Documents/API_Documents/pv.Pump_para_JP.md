@@ -40,7 +40,7 @@ Valve1.vlv = 0.0
 print(CP1s.pump.inv,CP1s.valve.vlv)
 print(CP1s.f2p(6.0), CP1s.p2f(136.85))
 ```
-> 0.8 0.0
+> 0.8 0.0  
 > 136.85248 6.000436759321203
 ```
 # 流量が小さい場合
@@ -50,7 +50,7 @@ Valve1.vlv = 0.3
 print(CP1s.pump.inv,CP1s.valve.vlv)
 print(CP1s.f2p(0.5), CP1s.p2f(37.53115))
 ```
-> 0.4 0.3
+> 0.4 0.3  
 > 37.53115207979398 0.5000138162955189
 ```
 CP1.inv = 0.8
@@ -60,6 +60,6 @@ Branch1 = pv.Branch000(pump=CP1s, kr_pipe=0.0, kr_eq=0.0)
 print(Branch0.f2p(2.0),Branch0.p2f(138.85248))
 print(Branch1.f2p(2.0),Branch1.p2f(138.85248))
 ```
-> 138.85248 2.000000000000001
+> 138.85248 2.000000000000001  
 > 138.85248 2.000000000000001
 
