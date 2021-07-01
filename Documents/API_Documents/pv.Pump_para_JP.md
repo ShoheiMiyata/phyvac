@@ -32,7 +32,7 @@ import phyvac as pv
 
 CP1 = pv.Pump()
 Valve1 = pv.Valve()
-CP1s = pv.Pump_para(pump=CP1, num=3, valve=Valve1, kr_pipe_pump=0.2, kr_pipe_valve=0.2)
+CP1s = pv.Pump_para(pump=CP1, num=3, valve=Valve1, kr_pipe_pump=0.5, kr_pipe_valve=0.5)
 CP1.inv=0.4
 Valve1.vlv = 0.3
 print(CP1s.pump.inv,CP1s.valve.vlv)
