@@ -37,10 +37,10 @@ CP1s = pv.Pump_para(pump=CP1, num=3, valve=Valve1, kr_pipe_pump=0.5, kr_pipe_val
 # 流量が大きい場合
 CP1.inv = 0.8
 Valve1.vlv = 0.0
-print(CP1s.pump.inv,CP1s.valve.vlv)
+print(CP1s.pump.inv,CP1s.num, CP1s.valve.vlv)
 print(CP1s.f2p(6.0), CP1s.p2f(136.85))
 ```
-> 0.8 0.0  
+> 0.8 3 0.0  
 > 136.85248 6.000436759321203
 ```
 # 流量が小さい場合
