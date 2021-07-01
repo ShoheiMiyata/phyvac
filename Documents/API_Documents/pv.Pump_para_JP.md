@@ -53,7 +53,7 @@ print(CP1s.f2p(0.5), CP1s.p2f(37.53115))
 > 0.4 0.3  
 > 37.53115207979398 0.5000138162955189
 ```
-#　BranchではPumpオブジェクトと同様に利用可能
+# BranchではPumpオブジェクトと同様に利用可能
 CP1.inv = 0.8
 CP1s = pv.Pump_para(pump=CP1, num=1, valve=None, kr_pipe_pump=0.0, kr_pipe_valve=0.0)
 Branch0 = pv.Branch000(pump=CP1, kr_pipe=0.0, kr_eq=0.0)
