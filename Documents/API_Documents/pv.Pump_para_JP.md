@@ -33,24 +33,33 @@ import phyvac as pv
 CP1 = pv.Pump()
 Valve1 = pv.Valve()
 CP1s = pv.Pump_para(pump=CP1, num=3, valve=Valve1, kr_pipe_pump=0.5, kr_pipe_valve=0.5)
-CP1.inv=0.4
+
+# 流量が大きい場合
+CP1.inv = 0.8
+Valve1.vlv = 0.0
+print(CP1s.pump.inv,CP1s.valve.vlv)
+print(CP1s.f2p(6.0), CP1s.p2f(136.85))
+```
+> 0.8 0.0
+> 136.85248 6.000436759321203
+```
+# 流量が小さい場合
+CP1.inv = 0.4
+CP1.num = 1
 Valve1.vlv = 0.3
 print(CP1s.pump.inv,CP1s.valve.vlv)
+print(CP1s.f2p(0.5), CP1s.p2f(37.53115))
 ```
 > 0.4 0.3
+> 37.53115207979398 0.5000138162955189
 ```
-print(CP1s.f2p(2.0), CP1s.p2f(36.1))
+CP1.inv = 0.8
+CP1s = pv.Pump_para(pump=CP1, num=1, valve=None, kr_pipe_pump=0.0, kr_pipe_valve=0.0)
+Branch0 = pv.Branch000(pump=CP1, kr_pipe=0.0, kr_eq=0.0)
+Branch1 = pv.Branch000(pump=CP1s, kr_pipe=0.0, kr_eq=0.0)
+print(Branch0.f2p(2.0),Branch0.p2f(138.85248))
+print(Branch1.f2p(2.0),Branch1.p2f(138.85248))
 ```
-> 36.1255047938035 2.014131371912282
-```
-CP1.inv = 0.3
-Vlv_CP1.vlv = 0.4
-dp1 = Branch_aPVb.f2p(2.1)
-print(dp1, Branch_aPVb.dp, Branch_aPVb.g, CP1.g, Vlv_CP1.g)
-```
-> 15.357309082033566 15.357309082033566 2.1 1.191954610229136 0.28390922045827205
-```
-Branch_aPVb.f2p(2.1) #　返り値を指定しなくても実行は可能
-print(dp1, Branch_aPVb.dp, Branch_aPVb.g, CP1.g, Vlv_CP1.g)
-```
-> 15.357309082033566 15.357309082033566 2.1 1.191954610229136 0.28390922045827205
+> 138.85248 2.000000000000001
+> 138.85248 2.000000000000001
+
