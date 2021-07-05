@@ -1605,7 +1605,7 @@ class Pump_para:
                 [self.pump.g, flag] = quadratic_formula(co_0c, co_1c, co_2c)
                 self.valve.g = self.num*self.pump.g - self.g
                 self.dp = - self.kr_pipe_pump * self.pump.g**2 + self.pump.f2p(self.pump.g)
-        
+                print("koko?",self.pump.g,self.num,self.g)
         return self.dp
     
     def p2f(self, dp): # 圧力差から流量を求める
@@ -1621,12 +1621,13 @@ class Pump_para:
                     [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp, 0, -self.kr_pipe_pump])
                     [self.pump.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
                     self.g = self.pump.g*self.num
+
             else:
                 self.g = 0.0
                 self.pump.f2p(self.g)
                 self.flag = 5
                 
-        else: # ポンプも二方弁もある場合
+        else: # ポンプもバイパス弁もある場合
             self.dp = dp
             self.flag = 0
             if self.valve.vlv == 0 and self.pump.inv == 0:
@@ -1638,7 +1639,7 @@ class Pump_para:
                 [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp, 0, -self.kr_pipe_pump])
                 [self.pump.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
                 self.g = self.pump.g*self.num
-                    
+                
             elif self.pump.inv == 0:
                 self.pump.g = 0.0
                 [co_0, co_1, co_2] = self.valve.f2p_co() + np.array([self.dp, 0, -self.kr_pipe_valve])
@@ -1680,7 +1681,7 @@ class Pump_para:
                 
             self.g = self.pump.g*self.num - self.valve.g
             
-            return self.g
+        return self.g
     
     def y2x_func(self, co_0, co_1, co_2, y): 
         if co_1**2-4*co_2*(co_0-y)>0:
@@ -1710,8 +1711,8 @@ class Pump_para:
             [co_p0, co_p1, co_p2] = self.pump.f2p_co() + np.array([0, 0, -self.kr_pipe_pump])
             [co_p0, co_p1, co_p2] = [co_p0, co_p1/self.num, co_p2/self.num**2]
             [co_v0, co_v1, co_v2] = self.valve.f2p_co() + np.array([0, 0, -self.kr_pipe_valve])
-            x1_min = self.y2x_func(co_p0, co_p1, co_p2+co_v2, 0)
-            y1_max = (-co_v2)*x1_min**2
+            # x1_min = self.y2x_func(co_p0, co_p1, co_p2+co_v2, 0)
+            # y1_max = (-co_v2)*x1_min**2
             
             y1 = [y_h-5+i for i in range(11)]
             x1 = [self.y2x_func(co_p0, co_p1, co_p2, y1[i]) for i in range(11)]
@@ -1860,9 +1861,10 @@ class Branch000: # ポンプ（並列ポンプ（バイパス弁付き）ユニ�
                     self.pump.f2p(self.g)
                     self.flag = 4
                 else:
+                    # print("CP1", [co_0, co_1, co_2])
                     [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
                     self.pump.f2p(self.g)   
-                    
+                 
             else: # Pump_paraの場合
                 [co_0, co_1, co_2] = self.pump.f2p_co(y_h=self.dp) + np.array([-self.dp, 0, -self.kr_eq-self.kr_pipe])
                 if self.pump.pump.inv == 0: #　ポンプ停止時の対応
@@ -1870,9 +1872,10 @@ class Branch000: # ポンプ（並列ポンプ（バイパス弁付き）ユニ�
                     self.pump.f2p(self.g)
                     self.flag = 4
                 else:
+                    # print("CP1s", [co_0, co_1, co_2])
                     [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
                     self.pump.f2p(self.g)
-
+                    
                     
         else: # ポンプも二方弁もある場合
             if self.pump.para == 0: # Pump_paraでない場合
