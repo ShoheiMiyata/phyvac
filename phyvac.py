@@ -27,7 +27,7 @@ from scipy import optimize
 # rh        相対湿度[%]
 # den       密度[kg/m^3]              density
 # p_atm     標準大気圧[kPa]
-
+# 大気圧は1013.25 hPaではなく101.325 kPa!!!
 
 CA = 1.006  # 乾き空気の定圧比熱 [kJ/kg・K]
 CV = 1.86  # 水蒸気の定圧比熱 [kJ/kg・K]
@@ -109,7 +109,7 @@ def tdb_rh2twb(tdb, rh):
     while abs(pv_1 - pv_2) > 0.01:
         twb = (twb_max + twb_min) / 2
         # Sprung equation
-        pv_2 = tdb2psat(twb) - 0.000662 * 1013.25 * (tdb - twb)
+        pv_2 = tdb2psat(twb) - 0.000662 * 101.325 * (tdb - twb)
 
         if pv_1 - pv_2 > 0:
             twb_min = twb
@@ -121,39 +121,6 @@ def tdb_rh2twb(tdb, rh):
             break
 
     return twb
-
- 
-# # 湿球温度の算出
-# def wet_bulb_temperature(Tda, rh):
-#     # cpw   :水比熱[J/kg'C]
-#     cpw = 4184
-    
-#     Tdp = dew_point_temperature(Tda,rh)
-#     # print(Tdp)
-
-#     Twbmax = Tda
-#     Twbmin = Tdp
-#     Twb = 1
-#     Twb0 = 0
-#     cnt = 0
-#     while(Twb - Twb0 > 0.01)or(Twb - Twb0 < - 0.01):
-    
-#         Twb = (Twbmax + Twbmin) / 2
-#         [h,x] = tdb_rh2h_x(Tda,rh)
-#         [hs,xs] = tdb_rh2h_x(Twb,100)
-#         Twb0 = (hs - h) / ((xs - x) * cpw)
-        
-#         if Twb - Twb0 > 0:
-#             Twbmin = Twb
-#         else:
-#             Twbmax = Twb
-          
-#         cnt += 1
-#         if cnt > 30:
-#             break
-    
-#     return Twb
-
 
 
 # 乾球温度と絶対湿度から比エンタルピー[kJ/kg']
@@ -427,7 +394,7 @@ class Valve:
         
 
 # ポンプ特性と消費電力計算
-class Pump:
+class Pump():
     # 定格値の入力
     def __init__(self, pg=[233,5.9578,-4.95], eg=[0.0099,0.4174,-0.0508], r_ef=0.8):
         # pq    :圧力-流量(pg)曲線の係数（切片、一次、二次）
@@ -760,6 +727,7 @@ class CoolingTower:
         cpw = 4184
         cp = 1100
         
+        
         if g_w > 0:
         
             # 乾球温度と湿球温度から外気比エンタルピーを求める
@@ -782,15 +750,15 @@ class CoolingTower:
     
                 # 空気出口湿球温度の仮定
                 Twbout0 = (Twboutmax + Twboutmin) / 2
-                
+                # print(Twbout0)
                 # 出口空気は飽和空気という仮定で、出口空気の比エンタルピーを求める。
                 [hout, xout] = tdb_rh2h_x(Twbout0,100)
                 
                 # 空気平均比熱cpeの計算
-                dh = hout - hin
+                dh = (hout - hin)*1000 # 比エンタルピーの単位をJ/kgに！
                 dTwb = Twbout0 - Twbin
                 cpe = dh / dTwb
-            
+
                 ua_e = self.ua * cpe / cp
                 
                 Cw = g_w * cpw
@@ -809,7 +777,7 @@ class CoolingTower:
                 Q = eps * Cmin * (Twin - Twbin)
                 
                 Twbout = Twbin + Q / Ca
-            
+                # print(Q,Twbout)
                 if Twbout < Twbout0:
                     Twboutmax = Twbout0
                 else:
@@ -1605,7 +1573,7 @@ class Pump_para:
                 [self.pump.g, flag] = quadratic_formula(co_0c, co_1c, co_2c)
                 self.valve.g = self.num*self.pump.g - self.g
                 self.dp = - self.kr_pipe_pump * self.pump.g**2 + self.pump.f2p(self.pump.g)
-                print("koko?",self.pump.g,self.num,self.g)
+                # print("koko?",self.pump.g,self.num,self.g)
         return self.dp
     
     def p2f(self, dp): # 圧力差から流量を求める
@@ -1733,7 +1701,7 @@ class Pump_para:
 
 
 # 水系
-class Branch000: # ポンプ（並列ポンプ（バイパス弁付き）ユニットも可）、弁、機器が直列に並んだ基本的な枝
+class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（バイパス弁付き）ユニットも可）、弁、機器が直列に並んだ基本的な枝）
     # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
     def __init__(self, pump=None, valve=None, kr_eq=0.0, kr_pipe=0.0):
