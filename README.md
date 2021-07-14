@@ -15,7 +15,8 @@ python+hvac => phyvac [fívək | fái-]
 
 
 ## アップデート  
-- 2021/06/28 Branch00系の廃止、Branch000の追加（水系Branch）
+- 2021/07/14 湿球温度計算の修正（大気圧の単位修正）、CoolingTowerの比エンタルピー単位修正
+- 2021/06/28 Branch00系の廃止、Branchの追加（水系Branch）
 - 2021/04/02 Branch100の追加（空気系Branch）
 
 
