@@ -56,8 +56,8 @@ print(CP1s.f2p(0.5), CP1s.p2f(37.53115))
 # BranchではPumpオブジェクトと同様に利用可能
 CP1.inv = 0.8
 CP1s = pv.Pump_para(pump=CP1, num=1, valve=None, kr_pipe_pump=0.0, kr_pipe_valve=0.0)
-Branch0 = pv.Branch000(pump=CP1, kr_pipe=0.0, kr_eq=0.0)
-Branch1 = pv.Branch000(pump=CP1s, kr_pipe=0.0, kr_eq=0.0)
+Branch0 = pv.Branch_w(pump=CP1, kr_pipe=0.0, kr_eq=0.0)
+Branch1 = pv.Branch_w(pump=CP1s, kr_pipe=0.0, kr_eq=0.0)
 print(Branch0.f2p(2.0),Branch0.p2f(138.85248))
 print(Branch1.f2p(2.0),Branch1.p2f(138.85248))
 ```
