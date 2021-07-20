@@ -11,7 +11,7 @@
 |dp|float|ポンプ揚程 [kPa]|
 |g|float|流量[m3/min]|
 |pw|float|消費電力[kW]|
-|ef|float|効率(0.0~1.0)|
+|r_ef|float|定格効率(0.0~1.0)|
   
 ## pv.Pump.f2p(g)
 gに基づいて揚程を算出する
