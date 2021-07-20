@@ -14,7 +14,7 @@ python+hvac => phyvac [fívək | fái-]
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/API_Document_List.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/API%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E3%83%AA%E3%82%B9%E3%83%88.md)  
 
 
-## アップデート  
+## Update アップデート  
 - 2021/07/14 湿球温度計算の修正（大気圧の単位修正）、CoolingTowerの比エンタルピー単位修正
 - 2021/06/28 Branch00系の廃止、Branch_wの追加（水系Branch）
 - 2021/04/02 Branch100の追加（空気系Branch）
