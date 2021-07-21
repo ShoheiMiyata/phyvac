@@ -1,12 +1,12 @@
 ## tdb2den(tdb)
-乾球温度[&deg;C]から密度[kg/m^3]を算出する関数    
+乾球温度[&deg;C]から密度[kg/m<sup>3</sup>]を算出する関数    
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
 |tdb|float|乾球温度[&deg;C]|
   
 ### returns:
-密度[kg/m^3]
+密度[kg/m<sup>3</sup>]
   
 ## サンプルコード  
 ```
