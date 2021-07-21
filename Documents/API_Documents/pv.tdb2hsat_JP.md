@@ -1,4 +1,4 @@
-## pv.tdb2hsat(tdb, rh)
+## pv.tdb2hsat(tdb)
 乾球温度[&deg;C]から飽和水蒸気圧の比エンタルピー[kJ/kg(DA)]を算出する関数    
 ### Parameters:
 |  name  |  type  | description |
