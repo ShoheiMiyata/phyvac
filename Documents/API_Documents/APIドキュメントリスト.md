@@ -16,7 +16,6 @@
 - [tdb2hsat (乾球温度→飽和水蒸気圧の比エンタルピー)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.tdb2hsat_JP.md)
 - [w2pva (絶対湿度→蒸気圧)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.w2pva_JP.md)
 - [pva2w (蒸気圧→絶対湿度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.pva2w_JP.md)
-- [tdp2psat (露点温度→飽和水蒸気圧)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.tdp2psat_JP.md)
 - [h_rh2w (比エンタルピー, 相対湿度→絶対湿度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.h_rh2w_JP.md)
 - [tdb2den (乾球温度→密度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.tdb2den_JP.md)
 - [h_rh2tdb (比エンタルピー, 相対湿度→乾球温度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.h_rh2tdb_JP.md)
