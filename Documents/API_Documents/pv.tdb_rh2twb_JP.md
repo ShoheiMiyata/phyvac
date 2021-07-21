@@ -13,9 +13,9 @@
 ```
 import phyvac as pv
 
-print(pv.tdb_rh2tdp(30.0, 60.0))
-print(pv.tdb_rh2tdp(30.0, 40.0))
-print(pv.tdb_rh2tdp(20.0, 40.0))
+print(pv.tdb_rh2twb(30.0, 60.0))
+print(pv.tdb_rh2twb(20.0, 60.0))
+print(pv.tdb_rh2twb(20.0, 40.0))
 ```
 > 結果  
 > 23.828125  
