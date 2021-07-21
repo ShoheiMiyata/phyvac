@@ -1,4 +1,4 @@
-## w2pv(tdb, rh)
+## pv.w2pv(w)
 絶対湿度[kg/kg(DA)]から蒸気圧[kPa]を算出する関数    
 ### Parameters:
 |  name  |  type  | description |
