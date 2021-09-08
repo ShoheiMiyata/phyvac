@@ -1,5 +1,5 @@
 ## pv.Pump(pg=[233,5.9578,-4.95], eg=[0.0099,0.4174,-0.0508], r_ef=0.8)
-### ポンプモジュール  
+### ポンプ単体機器モジュール  
 <img src="https://user-images.githubusercontent.com/27459538/112824603-b2f09380-90c5-11eb-8e10-45acdd9ef187.png" width=40%>
   
 ### Parameters:
