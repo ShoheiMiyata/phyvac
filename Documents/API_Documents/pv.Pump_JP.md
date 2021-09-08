@@ -18,6 +18,12 @@ gに基づいて揚程を算出する
   
 ### returns:
 揚程dp
+
+## pv.Pump.p2f(dp)
+dpに基づいて流量を算出する
+  
+### returns:
+流量g
   
 ## pv.Pump.f2p_co()
 揚程を表す流量の関数の係数を出力する
