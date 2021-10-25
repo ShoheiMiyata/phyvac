@@ -1,0 +1,545 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Apr 22 19:57:56 2021
+@author: shhmy
+"""
+# 20210520 宮田作成。
+# 20211025 野村機器・ダクトのパラメータを実験棟の値に更新。ダンパ開度とダクト圧損抵抗係数の較正コードを追記。
+
+import phyvac as pv
+import time
+import pandas as pd
+from tqdm import tqdm
+import numpy as np
+from numba import njit
+import datetime
+import os
+import winsound
+
+start = time.time()
+now = datetime.datetime.now()
+print(now)
+print("Calculation Start")
+
+output_directory = './Output/' + now.strftime('%m%d') + './' + now.strftime('%H%M')
+
+# 入力値の読み込み
+input_data = pd.read_csv("Input_211004.csv", index_col=0, parse_dates=True)
+output_data = input_data.drop(input_data.columns[[0, 1, 2, 3, 4, 5, 6, 7, 8]], axis=1)
+# 出力データフレームの作成
+output_data = output_data.assign(Fan_SA_inv=0.0, Fan_EA_inv=0.0, damp_201=0.0, damp_202=0.0, damp_203=0.0, damp_301=0.0,
+                                 damp_302=0.0, damp_303=0.0,cnt1=0.0, cnt2=0.0, cnt3=0.0, cnt4=0.0, cnt5=0.0, cnt6=0.0,
+                                 cnt7=0.0, g_ab=0.0, g_jb=0.0, g_bc=0.0, g_jh=0.0, g_kj=0.0, g_er1=0.0, g_er2=0.0,
+                                 g_cr3=0.0, g_gr4=0.0, g_gr5=0.0, g_fr6=0.0, g_r1i1=0.0, g_r2i2=0.0, g_r3i3=0.0,
+                                 g_r4i4=0.0, g_r5i5=0.0, g_r6i6=0.0, p_1=0.0, p_2=0.0, p_3=0.0, p_4=0.0, p_5=0.0, p_6=0.0)
+
+
+# 機器の定義
+## ファン
+# 210614_森さん共有資料の実測値をもとに、各ファンの50Hz時の揚程・送風機システム効率の近似曲線をそれぞれ入力
+# Fan_OA = pv.Fan(pg=[508.01, -15.561, 0.4677, -0.0061], eg=[0, 0.0254, -0.0003])
+Fan_SA = pv.Fan(pg=[1366.2, -0.205, 5E-05, -4E-09], eg=[0.0451, 0.0113, -6E-05])
+Fan_EA = pv.Fan(pg=[407.64, -4.2751, 0.1008, -0.0025], eg=[0, 0.0269, -0.0004])
+
+## ダンパ
+DAMP_r1 = pv.Damper()  # [Pa]-[(m^3/min)^2]
+DAMP_r2 = pv.Damper()
+DAMP_r3 = pv.Damper()
+DAMP_r4 = pv.Damper()
+DAMP_r5 = pv.Damper()
+DAMP_r6 = pv.Damper()
+
+# 枝の定義
+Branch_ab = pv.Branch100(kr_duct=0.10067)
+Branch_jb = pv.Branch100(kr_duct=0.00319)
+Branch_bc = pv.Branch100(fan=Fan_SA, kr_duct=0.03776)
+Branch_cr3 = pv.Branch100(damper=DAMP_r3, kr_duct=0.76231)
+Branch_cd = pv.Branch100(kr_duct=0.00507)
+Branch_de = pv.Branch100(kr_duct=0.00307)
+Branch_df = pv.Branch100(kr_duct=0.00600)
+Branch_er2 = pv.Branch100(damper=DAMP_r2, kr_duct=0.88263)
+Branch_er1 = pv.Branch100(damper=DAMP_r1, kr_duct=0.33775)
+Branch_r1i1 = pv.Branch100(kr_duct=0.1)
+Branch_r1m = pv.Branch100(kr_duct=0.07841)
+Branch_r2i2 = pv.Branch100(kr_duct=0.1)
+Branch_r2m = pv.Branch100(kr_duct=0.08633)
+Branch_ml = pv.Branch100(kr_duct=0.00224)
+Branch_r3i3 = pv.Branch100(kr_duct=0.1)
+Branch_r3k = pv.Branch100(kr_duct=0.07362)
+Branch_fr6 = pv.Branch100(damper=DAMP_r6, kr_duct=0.29209)
+Branch_fg = pv.Branch100(kr_duct=0.00304)
+Branch_gr5 = pv.Branch100(damper=DAMP_r5, kr_duct=0.30446)
+Branch_gr4 = pv.Branch100(damper=DAMP_r4, kr_duct=0.08867)
+Branch_r4i4 = pv.Branch100(kr_duct=0.1)
+Branch_r4o = pv.Branch100(kr_duct=0.07740)
+Branch_r5i5 = pv.Branch100(kr_duct=0.1)
+Branch_r5o = pv.Branch100(kr_duct=0.08518)
+Branch_on = pv.Branch100(kr_duct=0.00904)
+Branch_r6i6 = pv.Branch100(kr_duct=0.1)
+Branch_r6n = pv.Branch100(kr_duct=0.06451)
+Branch_nl = pv.Branch100(kr_duct=0.00606)
+Branch_lk = pv.Branch100(kr_duct=0.00436)
+Branch_kj = pv.Branch100(kr_duct=0.00311)
+Branch_jh = pv.Branch100(fan=Fan_EA, kr_duct=0.12398)
+
+# カーテンウォール等級
+## 0.5 (201,202,302,303室)
+# c_05 = 0.0481
+# a_05 = 1.0087
+# 実測(203,301室)
+# c_r3r4 = 0.11
+# a_r3r4 = 1
+## a4
+# c = 0.204
+# a = 0.9887
+## a3
+# c = 0.7907
+# a = 1.0112
+
+#隙間面積(㎡)
+# area_r1 = 72
+# area_r2 = 37.2
+# area_r3 = 72
+# area_r4 = 144.6
+# area_r5 = 109.8
+# area_r6 = 144.6
+
+@njit('(f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,\
+       f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8,f8)')
+def flowbalance(ab_3, ab_2, ab_1, ab_0, jb_2, bc_3, bc_2, bc_1, bc_0, cr3_2, cd_2, de_2, df_2, r3i3_2,
+                r3k_2, er2_2, er1_2, r2i2_2, r2m_2, r1i1_2, r1m_2, ml_2, lk_2, fr6_2, fg_2,
+                gr5_2, gr4_2, r4i4_2, r4o_2, r5i5_2, r5o_2, on_2, r6i6_2, r6n_2, nl_2,
+                kj_2, jh_3, jh_2, jh_1, jh_0):
+    # phyvacを利用すると計算時間がかかってしまう
+    def f2p(g_2, g):
+        if g > 0:
+            dp = g_2 * g ** 2
+        else:
+            dp = -g_2 * g ** 2
+        return dp
+
+    def f2p_fan(g_3, g_2, g_1, g_0, g):
+        if g > 0:
+            dp = g_3 * g ** 3 + g_2 * g ** 2 + g_1 * g + g_0
+        else:
+            dp = 0
+        return dp
+
+    def p2f(dp_2, dp):
+        if dp > 0:
+            g = -(dp / (-dp_2)) ** 0.5  # p2f
+        else:
+            g = (dp / dp_2) ** 0.5
+        return g
+
+    def p2f_infiltration(c, a, area, dp):
+        if dp == 0:
+            g = 0
+        else:
+            g = c * abs(dp) ** a * area / 60 * (dp) / abs(dp) #対応室の窓面積、単位㎥/min揃える
+        return g
+
+    # 流量計算
+    g_ab_min = 0.0  # 1
+    g_ab_max = 1000.0
+    g_ab_eva = 20.0
+    cnt1 = 0
+    while abs(g_ab_eva) > 1.0:
+        cnt1 += 1
+        g_ab = (g_ab_max + g_ab_min) / 2
+        dp_ab = f2p_fan(ab_3, ab_2, ab_1, ab_0, g_ab)
+
+        g_jb_min = -900.0  # 2
+        g_jb_max = 1000.0
+        g_jb_eva = 20.0
+        cnt2 = 0
+        while abs(g_jb_eva) > 1.0:
+            cnt2 += 1
+            g_jb = (g_jb_max + g_jb_min) / 2
+            dp_jb = f2p(jb_2, g_jb)
+            g_bc = g_ab + g_jb  # 3
+            dp_bc = f2p_fan(bc_3, bc_2, bc_1, bc_0, g_bc)
+
+            g_cr3_min = 0.0  # 4
+            g_cr3_max = 1000.0
+            g_cr3_eva = 20.0
+            cnt3 = 0
+            while abs(g_cr3_eva) > 1.0:
+                cnt3 += 1
+                g_cr3 = (g_cr3_max + g_cr3_min) / 2
+                dp_cr3 = f2p(cr3_2, g_cr3)
+                g_cd = g_bc - g_cr3  # 5
+                dp_cd = f2p(cd_2, g_cd)
+                dp_r3i3 = -dp_ab - dp_bc - dp_cr3  # 15
+                g_r3i3 = p2f(r3i3_2, dp_r3i3)
+                # g_r3i3 = c_r3r4 * abs(dp_r3i3) ** a_r3r4 * area_r3 / 60 * (dp_r3i3) / abs(dp_r3i3) #対応室の窓面積、単位㎥/min揃える
+                # g_r3i3 = p2f_infiltration(c_r3r4, a_r3r4, area_r3, dp_r3i3)
+                g_r3k = g_cr3 - g_r3i3  # 16
+                dp_r3k = f2p(r3k_2, g_r3k)
+
+                g_de_min = 0.0  # 6
+                g_de_max = 1000.0
+                g_de_eva = 20.0
+                cnt4 = 0
+                while abs(g_de_eva) > 1.0:
+                    cnt4 += 1
+                    g_de = (g_de_max + g_de_min) / 2
+                    dp_de = f2p(de_2, g_de)
+                    g_df = g_cd - g_de  # 7
+                    dp_df = f2p(df_2, g_df)
+
+                    g_er2_min = 0.0  # 8
+                    g_er2_max = 1000.0
+                    g_er2_eva = 20.0
+                    cnt5 = 0
+                    while abs(g_er2_eva) > 1.0:
+                        cnt5 += 1
+                        g_er2 = (g_er2_max + g_er2_min) / 2
+                        dp_er2 = f2p(er2_2, g_er2)
+                        g_er1 = g_de - g_er2  # 9
+                        dp_er1 = f2p(er1_2, g_er1)
+                        dp_r1i1 = -dp_ab - dp_bc - dp_cd - dp_de - dp_er1  # 10
+                        g_r1i1 = p2f(r1i1_2, dp_r1i1)
+                        # g_r1i1 = p2f_infiltration(c_05, a_05, area_r1, dp_r1i1)
+                        g_r1m = g_er1 - g_r1i1  # 11
+                        dp_r1m = f2p(r1m_2, g_r1m)
+                        dp_r2i2 = -dp_ab - dp_bc - dp_cd - dp_de - dp_er2  # 12
+                        g_r2i2 = p2f(r2i2_2, dp_r2i2)
+                        # g_r2i2 = p2f_infiltration(c_05, a_05, area_r2, dp_r2i2)
+                        g_r2m = g_er2 - g_r2i2  # 13
+                        dp_r2m = f2p(r2m_2, g_r2m)
+                        g_ml = g_r2m + g_r1m  # 14
+                        dp_ml = f2p(ml_2, g_ml)
+
+                        g_er2_eva = dp_er2 + dp_r2m - dp_r1m - dp_er1
+                        if g_er2_eva > 0:
+                            g_er2_min = g_er2
+                        else:
+                            g_er2_max = g_er2
+
+                        if cnt5 >= 30:
+                            break
+
+                    g_fr6_min = 0.0  # 17
+                    g_fr6_max = 1000.0
+                    g_fr6_eva = 20.0
+                    cnt6 = 0
+                    while abs(g_fr6_eva) > 1.0:
+                        cnt6 += 1
+                        g_fr6 = (g_fr6_max + g_fr6_min) / 2
+                        dp_fr6 = f2p(fr6_2, g_fr6)
+                        g_fg = g_df - g_fr6  # 18
+                        dp_fg = f2p(fg_2, g_fg)
+                        dp_r6i6 = -dp_ab - dp_bc - dp_cd - dp_df - dp_fr6  # 26
+                        g_r6i6 = p2f(r6i6_2, dp_r6i6)
+                        # g_r6i6 = p2f_infiltration(c_05, a_05, area_r6, dp_r6i6)
+                        g_r6n = g_fr6 - g_r6i6  # 27
+                        dp_r6n = f2p(r6n_2, g_r6n)
+
+                        g_gr5_min = 0.0  # 19
+                        g_gr5_max = 1000.0
+                        g_gr5_eva = 20.0
+                        cnt7 = 0
+                        while abs(g_gr5_eva) > 1.0:
+                            cnt7 += 1
+                            g_gr5 = (g_gr5_max + g_gr5_min) / 2
+                            dp_gr5 = f2p(gr5_2, g_gr5)
+                            g_gr4 = g_fg - g_gr5  # 20
+                            dp_gr4 = f2p(gr4_2, g_gr4)
+                            dp_r5i5 = -dp_ab - dp_bc - dp_cd - dp_df - dp_fg - dp_gr5  # 23
+                            g_r5i5 = p2f(r5i5_2, dp_r5i5)
+                            # g_r5i5 = p2f_infiltration(c_05, a_05, area_r5, dp_r5i5)
+                            g_r5o = g_gr5 - g_r5i5  # 24
+                            dp_r5o = f2p(r5o_2, g_r5o)
+                            dp_r4i4 = -dp_ab - dp_bc - dp_cd - dp_df - dp_fg - dp_gr4  # 21
+                            g_r4i4 = p2f(r4i4_2, dp_r4i4)
+                            # g_r4i4 = p2f_infiltration(c_r3r4, a_r3r4, area_r4, dp_r4i4)
+                            g_r4o = g_gr4 - g_r4i4  # 22
+                            dp_r4o = f2p(r4o_2, g_r4o)
+
+                            g_gr5_eva = dp_gr5 + dp_r5o - dp_r4o - dp_gr4
+                            if g_gr5_eva > 0:
+                                g_gr5_min = g_gr5
+                            else:
+                                g_gr5_max = g_gr5
+
+                            if cnt7 >= 30:
+                                break
+
+                        g_on = g_r5o + g_r4o  # 25
+                        dp_on = f2p(on_2, g_on)
+                        g_nl = g_r6n + g_on  # 28
+                        dp_nl = f2p(nl_2, g_nl)
+
+                        g_fr6_eva = dp_fr6 + dp_r6n - dp_on - dp_r5o - dp_gr5 - dp_fg
+                        if g_fr6_eva > 0:
+                            g_fr6_min = g_fr6
+                        else:
+                            g_fr6_max = g_fr6
+
+                            if cnt6 >= 30:
+                                break
+
+                    g_de_eva = dp_de + dp_er2 + dp_r2m + dp_ml - dp_nl - dp_r6n - dp_fr6 - dp_df
+                    if g_de_eva > 0:
+                        g_de_min = g_de
+                    else:
+                        g_de_max = g_de
+
+                    if cnt4 >= 30:
+                        break
+
+                g_lk = g_nl + g_ml  # 29
+                dp_lk = f2p(lk_2, g_lk)
+                g_kj = g_r3k + g_lk  # 30
+                dp_kj = f2p(kj_2, g_kj)
+                g_cr3_eva = dp_cr3 + dp_r3k - dp_lk - dp_ml - dp_r2m - dp_er2 - dp_de - dp_cd
+                if g_cr3_eva > 0:
+                    g_cr3_min = g_cr3
+                else:
+                    g_cr3_max = g_cr3
+
+                if cnt3 >= 30:
+                    break
+
+            g_jb_eva = dp_jb + dp_bc + dp_cr3 + dp_r3k + dp_kj
+            # print(g_jb_eva)
+            if g_jb_eva > 0:
+                g_jb_min = g_jb
+            else:
+                g_jb_max = g_jb
+
+            if cnt2 >= 30:
+                break
+
+        g_jh = g_kj - g_jb  # 31
+        dp_jh = f2p_fan(jh_3, jh_2, jh_1, jh_0, g_jh)
+        g_ab_eva = dp_ab - dp_jb + dp_jh
+        if g_ab_eva > 0:
+            g_ab_min = g_ab
+        else:
+            g_ab_max = g_ab
+
+        if cnt1 >= 30:
+            break
+
+    dp_r1 = -dp_r1i1
+    dp_r2 = -dp_r2i2
+    dp_r3 = -dp_r3i3
+    dp_r4 = -dp_r4i4
+    dp_r5 = -dp_r5i5
+    dp_r6 = -dp_r6i6
+
+    return [cnt1, cnt2, cnt3, cnt4, cnt5, cnt6, cnt7, g_ab, g_jb, g_bc, g_jh, g_kj, g_er1, g_er2, g_cr3, g_gr4, g_gr5,
+            g_fr6, g_r1i1, g_r2i2, g_r3i3, g_r4i4, g_r5i5, g_r6i6, dp_r1, dp_r2, dp_r3, dp_r4, dp_r5, dp_r6]
+
+
+Fan_SA.inv = 0.24
+Fan_EA.inv = 1.0
+Damp_201 = 0.93
+Damp_202 = 1.0
+Damp_203 = 0
+Damp_301 = 0.92
+Damp_302 = 0
+Damp_303 = 0.92
+
+# 制御の定義
+# 入力値であるダンパ開度、境界条件であるダクトの抵抗係数の計算にずれ幅が考えられるため、PID制御で実測値に近づくよう較正
+# 301室の風量のずれが大きいため、301室に達するダクトの抵抗係数も較正
+PID_damp_201 = pv.PID(kp=0.001, t_step=1, a_min=0.2)
+PID_damp_202 = pv.PID(kp=0.001, t_step=1, a_min=0.2)
+PID_damp_203 = pv.PID(kp=0.001, t_step=1)
+PID_damp_301 = pv.PID(kp=0.001, t_step=1, a_min=0.5)
+PID_damp_302 = pv.PID(kp=0.001, t_step=1)
+PID_damp_303 = pv.PID(kp=0.001, t_step=1, a_min=0.2)
+
+PID_duct_r1i1 = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_r2i2 = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_r3i3 = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_r4i4 = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_r5i5 = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_r6i6 = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+
+PID_duct_r1m = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_r2m = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_r3k = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_r4o = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_r5o = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_r6n = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+
+PID_duct_df = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_fg = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+PID_duct_gr4 = pv.PID(kp=0.001, t_step=1, a_min=0.0001, a_max=10)
+
+g_er1 = 5.60
+g_er2 = 4.45
+g_cr3 = 1.59
+g_gr4 = 5.15
+g_gr5 = 1.35
+g_fr6 = 5.68
+
+g_r1i1 = -1.65
+g_r2i2 = -1.46
+g_r3i3 = -2.89
+g_r4i4 = -3.99
+g_r5i5 = -0.09
+g_r6i6 = -2.08
+
+# 固定された枝の圧損係数はループ外で計算
+[ab_0, ab_1, ab_2, ab_3] = Branch_ab.f2p_co()
+[jb_0, jb_1, jb_2, jb_3] = Branch_jb.f2p_co()
+[cd_0, cd_1, cd_2, cd_3] = Branch_cd.f2p_co()
+[de_0, de_1, de_2, de_3] = Branch_de.f2p_co()
+[df_0, df_1, df_2, df_3] = Branch_df.f2p_co()
+[r3i3_0, r3i3_1, r3i3_2, r3i3_3] = Branch_r3i3.f2p_co()
+# [r3k_0, r3k_1, r3k_2, r3k_3] = Branch_r3k.f2p_co()
+[r2i2_0, r2i2_1, r2i2_2, r2i2_3] = Branch_r2i2.f2p_co()
+# [r2m_0, r2m_1, r2m_2, r2m_3] = Branch_r2m.f2p_co()
+[r1i1_0, r1i1_1, r1i1_2, r1i1_3] = Branch_r1i1.f2p_co()
+# [r1m_0, r1m_1, r1m_2, r1m_3] = Branch_r1m.f2p_co()
+[ml_0, ml_1, ml_2, ml_3] = Branch_ml.f2p_co()
+[lk_0, lk_1, lk_2, lk_3] = Branch_lk.f2p_co()
+[fg_0, fg_1, fg_2, fg_3] = Branch_fg.f2p_co()
+[r4i4_0, r4i4_1, r4i4_2, r4i4_3] = Branch_r4i4.f2p_co()
+# [r4o_0, r4o_1, r4o_2, r4o_3] = Branch_r4o.f2p_co()
+[r5i5_0, r5i5_1, r5i5_2, r5i5_3] = Branch_r5i5.f2p_co()
+# [r5o_0, r5o_1, r5o_2, r5o_3] = Branch_r5o.f2p_co()
+[on_0, on_1, on_2, on_3] = Branch_on.f2p_co()
+[r6i6_0, r6i6_1, r6i6_2, r6i6_3] = Branch_r6i6.f2p_co()
+# [r6n_0, r6n_1, r6n_2, r6n_3] = Branch_r6n.f2p_co()
+[nl_0, nl_1, nl_2, nl_3] = Branch_nl.f2p_co()
+[kj_0, kj_1, kj_2, kj_3] = Branch_kj.f2p_co()
+[bc_0, bc_1, bc_2, bc_3] = Branch_bc.f2p_co()
+[jh_0, jh_1, jh_2, jh_3] = Branch_jh.f2p_co()
+
+
+for calstep in tqdm(range(1000)):
+
+    # ダンパ開度のPID制御  各室給気風量→実測値
+    # DAMP_r1.damp = PID_damp_201.control(sv=5.60, mv=g_er1)
+    # DAMP_r2.damp = PID_damp_202.control(sv=4.45, mv=g_er2)
+    # DAMP_r3.damp = PID_damp_203.control(sv=1.59, mv=g_cr3)
+    # DAMP_r4.damp = PID_damp_301.control(sv=5.15, mv=g_gr4)
+    # DAMP_r5.damp = PID_damp_302.control(sv=1.35, mv=g_gr5)
+    # DAMP_r6.damp = PID_damp_303.control(sv=5.68, mv=g_fr6)
+
+    DAMP_r1.damp = 0.93
+    DAMP_r2.damp = 1
+    DAMP_r3.damp = 0
+    DAMP_r4.damp = 0.92
+    DAMP_r5.damp = 0
+    DAMP_r6.damp = 0.92
+
+    # 室排気ダクト抵抗係数のPID制御  すきま風風量→実測値
+    # Branch_r1i1.kr_duct = PID_duct_r1i1.control(sv=-1.65, mv=g_r1i1)
+    # Branch_r2i2.kr_duct = PID_duct_r2i2.control(sv=-1.46, mv=g_r2i2)
+    # Branch_r3i3.kr_duct = PID_duct_r3i3.control(sv=-2.89, mv=g_r3i3)
+    # Branch_r4i4.kr_duct = PID_duct_r4i4.control(sv=-3.99, mv=g_r4i4)
+    # Branch_r5i5.kr_duct = PID_duct_r5i5.control(sv=-0.09, mv=g_r5i5)
+    # Branch_r6i6.kr_duct = PID_duct_r6i6.control(sv=-2.08, mv=g_r6i6)
+
+    # 室RAダクト抵抗係数のPID制御　各室還気風量→実測値
+    # Branch_r1m.kr_duct = PID_duct_r1m.control(sv=7.25, mv=g_er1-g_r1i1)
+    # Branch_r2m.kr_duct = PID_duct_r2m.control(sv=5.91, mv=g_er2-g_r2i2)
+    # Branch_r3k.kr_duct = PID_duct_r3k.control(sv=4.48, mv=g_cr3-g_r3i3)
+    # Branch_r4o.kr_duct = PID_duct_r4o.control(sv=9.14, mv=g_gr4-g_r4i4)
+    # Branch_r5o.kr_duct = PID_duct_r5o.control(sv=1.44, mv=g_gr5-g_r5i5)
+    # Branch_r6n.kr_duct = PID_duct_r6n.control(sv=7.76, mv=g_fr6-g_r6i6)
+
+    # 301室に繋がるダクト抵抗係数のPID制御　各ダクト給気風量→実測値
+    # Branch_df.kr_duct = PID_duct_df.control(sv=12.18, mv=g_gr4+g_gr5 +g_fr6)
+    # Branch_fg.kr_duct = PID_duct_fg.control(sv=6.5, mv=g_gr4+g_gr5)
+    # Branch_gr4.kr_duct = PID_duct_gr4.control(sv=5.15, mv=g_gr4)
+
+    # PID制御の中で一番近いもの
+    [r4o_0, r4o_1, r4o_2, r4o_3] = Branch_r4o.f2p_co()
+
+    # ファンとダンパをもつ枝の圧損係数はループ内で計算
+    [cr3_0, cr3_1, cr3_2, cr3_3] = Branch_cr3.f2p_co()
+    [er2_0, er2_1, er2_2, er2_3] = Branch_er2.f2p_co()
+    [er1_0, er1_1, er1_2, er1_3] = Branch_er1.f2p_co()
+    [fr6_0, fr6_1, fr6_2, fr6_3] = Branch_fr6.f2p_co()
+    [gr5_0, gr5_1, gr5_2, gr5_3] = Branch_gr5.f2p_co()
+    [gr4_0, gr4_1, gr4_2, gr4_3] = Branch_gr4.f2p_co()
+
+    [r1i1_0, r1i1_1, r1i1_2, r1i1_3] = Branch_r1i1.f2p_co()
+    [r2i2_0, r2i2_1, r2i2_2, r2i2_3] = Branch_r2i2.f2p_co()
+    [r3i3_0, r3i3_1, r3i3_2, r3i3_3] = Branch_r3i3.f2p_co()
+    [r4i4_0, r4i4_1, r4i4_2, r4i4_3] = Branch_r4i4.f2p_co()
+    [r5i5_0, r5i5_1, r5i5_2, r5i5_3] = Branch_r5i5.f2p_co()
+    [r6i6_0, r6i6_1, r6i6_2, r6i6_3] = Branch_r6i6.f2p_co()
+
+    [r1m_0, r1m_1, r1m_2, r1m_3] = Branch_r1m.f2p_co()
+    [r2m_0, r2m_1, r2m_2, r2m_3] = Branch_r2m.f2p_co()
+    [r3k_0, r3k_1, r3k_2, r3k_3] = Branch_r3k.f2p_co()
+    [r4o_0, r4o_1, r4o_2, r4o_3] = Branch_r4o.f2p_co()
+    [r5o_0, r5o_1, r5o_2, r5o_3] = Branch_r5o.f2p_co()
+    [r6n_0, r6n_1, r6n_2, r6n_3] = Branch_r6n.f2p_co()
+
+    # [df_0, df_1, df_2, df_3] = Branch_df.f2p_co()
+    # [fg_0, fg_1, fg_2, fg_3] = Branch_fg.f2p_co()
+
+    [cnt1, cnt2, cnt3, cnt4, cnt5, cnt6, cnt7, g_ab, g_jb, g_bc, g_jh, g_kj, g_er1, g_er2, g_cr3, g_gr4, g_gr5, g_fr6, \
+     g_r1i1, g_r2i2, g_r3i3, g_r4i4, g_r5i5, g_r6i6, dp_r1, dp_r2, dp_r3, dp_r4, dp_r5, dp_r6] = \
+        flowbalance(ab_3, ab_2, ab_1, ab_0, jb_2, bc_3, bc_2, bc_1, bc_0, cr3_2, cd_2, de_2, df_2, r3i3_2, \
+                    r3k_2, er2_2, er1_2, r2i2_2, r2m_2, r1i1_2, r1m_2, ml_2, lk_2, fr6_2, fg_2, \
+                    gr5_2, gr4_2, r4i4_2, r4o_2, r5i5_2, r5o_2, on_2, r6i6_2, r6n_2, nl_2, \
+                    kj_2, jh_3, jh_2, jh_1, jh_0)
+    print("")
+    print("Damp_201, Damp_202, Damp_203, Damp_301, Damp_302, Damp_302=", DAMP_r1.damp, DAMP_r2.damp,
+          DAMP_r3.damp, DAMP_r4.damp, DAMP_r5.damp, DAMP_r6.damp)
+    print("kr_r1, kr_r2, kr_r3, kr_r4, kr_r5, kr_r6=", round(Branch_r1i1.kr_duct, 4), round(Branch_r2i2.kr_duct, 4),
+          round(Branch_r3i3.kr_duct, 4), round(Branch_r4i4.kr_duct, 4), round(Branch_r5i5.kr_duct, 4), round(Branch_r6i6.kr_duct, 4))
+
+    if (cnt1==30) or (cnt2==30) or (cnt3==30) or (cnt4==30) or (cnt5==30) or (cnt6==30) or (cnt7==30):
+        print("【✕:Not convergence】 cnt=", round(cnt1), round(cnt2), round(cnt3), round(cnt4), round(cnt5), round(cnt6), round(cnt7))
+    else:
+        print("【○:Convergence】 cnt=", round(cnt1), round(cnt2), round(cnt3), round(cnt4), round(cnt5), round(cnt6), round(cnt7))
+
+    print("r1: 5.60/", round(g_er1, 2), "r2: 4.45/", round(g_er2, 2), "r3: 1.59/", round(g_cr3, 2),
+          "r4: 5.15/", round(g_gr4, 2), "r5: 1.35/", round(g_gr5, 2), "r6: 5.68/", round(g_fr6, 2))
+    print("i1: -1.65/", round(g_r1i1, 2), "i2: -1.46/", round(g_r2i2, 2), "i3: -2.89/", round(g_r3i3, 2),
+          "i4: -3.99/", round(g_r4i4, 2), "i5: -0.09/", round(g_r5i5, 2), "i6: -2.08/", round(g_r6i6, 2))
+
+    # eva1 = abs(g_er1-5.60) + abs(g_er2-4.45) + abs(g_cr3-1.59) + abs(g_gr4-5.15) + abs(g_gr5-1.35) + abs(g_fr6-5.68) # 評価指標1:各室の合計給気風量の実測値と計算値の差
+    # eva2 = abs(g_r1i1+1.65) + abs(g_r2i2 + 1.46) + abs(g_r3i3 + 2.89) + abs(g_r4i4 + 3.99) + abs(
+    #     g_r5i5 + 0.09) + abs(g_r6i6 + 2.08)  # 評価指標2:各室のすきま風風量の実測値と計算値の差
+    # eva3 = eva1 + eva2
+    # print("eva1, eva2, eva3=", round(eva1, 1), round(eva2, 1), round(eva3, 1))
+    print("dp_r1", round(dp_r1,2), "dp_r2", round(dp_r2,2), "dp_r3", round(dp_r3,2), "dp_r4", round(dp_r4,2),
+          "dp_r5", round(dp_r5,2), "dp_r6", round(dp_r6,2))
+
+    # 各ステップの結果を出力したい場合は下記パラグラフのコメントアウトを解除
+    # if (cnt1==30) or (cnt2==30) or (cnt3==30) or (cnt4==30) or (cnt5==30) or (cnt6==30) or (cnt7==30):
+    #     pass
+    # else:
+    #     print("【calstep】", calstep)
+    #     print("SA=", Fan_SA.inv, "EA=", Fan_EA.inv, "Damp_201=", Damp_201, "Damp_202=", Damp_202,
+    #           "Damp_203=", Damp_203, "Damp_301=", Damp_301, "Damp_302=", Damp_302, "Damp_303=", Damp_303)
+    #     print("Succeeded")
+    # print("SA=", Fan_SA.inv, "EA=", Fan_EA.inv, "Damp_201=", DAMP_r1.damp, "Damp_202=", DAMP_r2.damp,
+    #           "Damp_203=", DAMP_r3.damp, "Damp_301=", DAMP_r4.damp, "Damp_302=", DAMP_r5.damp, "Damp_303=", DAMP_r6.damp)
+    # print("d_r1=", round(DAMP_r1.damp,2), "d_r2=", round(DAMP_r2.damp,2), "d_r3=", round(DAMP_r3.damp,2),
+    #       "d_r4=", round(DAMP_r4.damp,2), "d_r5=", round(DAMP_r5.damp,2), "d_r6=", round(DAMP_r6.damp,2))
+    # print("kr_r1=", round(Branch_r1i1.kr_duct, 4), "kr_r2=", round(Branch_r2i2.kr_duct, 4), "kr_r3=", round(Branch_r3i3.kr_duct, 4),
+    #       "kr_r4=", round(Branch_r4i4.kr_duct, 4), "kr_r5=", round(Branch_r5i5.kr_duct, 4), "kr_r6=", round(Branch_r6i6.kr_duct, 4))
+
+
+    output_data.iloc[calstep] = np.array([[Fan_SA.inv, Fan_EA.inv, DAMP_r1.damp, DAMP_r2.damp, DAMP_r3.damp,
+                                           DAMP_r4.damp, DAMP_r5.damp, DAMP_r6.damp, cnt1, cnt2, cnt3, cnt4, cnt5, cnt6,
+                                           cnt7, g_ab, g_jb, g_bc, g_jh, g_kj, g_er1, g_er2, g_cr3, g_gr4, g_gr5, g_fr6,
+                                           g_r1i1, g_r2i2, g_r3i3, g_r4i4, g_r5i5, g_r6i6, dp_r1, dp_r2, dp_r3, dp_r4,
+                                           dp_r5, dp_r6]])
+                                           # Branch_r1i1.kr_duct, Branch_r2i2.kr_duct, Branch_r3i3.kr_duct,
+                                           # Branch_r4i4.kr_duct, Branch_r5i5.kr_duct, Branch_r6i6.kr_duct]])
+
+output_filename = './Output/' + now.strftime('%m%d') + '/' + now.strftime('%H%M') + '/' + now.strftime('%H%M') +'.csv'
+os.makedirs(output_directory, exist_ok=True)  # Output＞「MMDD」フォルダ＞「hhmm」フォルダ作成
+# output_data.to_csv(output_filename)  # Output＞「MMDD」＞「hhmm」に「season_MM-DD(計算日)_5s.csv」を保存
+
+elapsed_time = time.time() - start
+print("elapsed_time:{0}".format(round(elapsed_time, 0)) + "[s]")  # 計算にかかった時間を出力
+print("Calculation Finish")
+
+# 計算終了時に音を鳴らしたくない場合は下の1行をコメントアウト
+winsound.Beep(440, 700)  # ラ♪の音
