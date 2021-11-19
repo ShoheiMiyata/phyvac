@@ -1591,6 +1591,75 @@ class Fan:
         else:
             self.pw = 0.0
             self.flag = 0
+ 
+
+# 蒸気噴霧式加湿器
+class SteamSprayHumidifier:
+    # from HVACSIM+ TYPE 22 https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nbsir84-2996.pdf p90
+    # from TRNSYS https://sel.me.wisc.edu/trnsys/trnlib/aux_heat_and_cool/616new.for
+    def __init__(self, area_humidifier=0.42, dp=45, eff=1.0):
+        # 空気の流れに蒸気を注入して空気の湿度を高める定圧プロセスの出口空気温度、流量、絶対湿度を計算
+        # 出口空気の絶対湿度は，蒸気流量または飽和絶対湿度（大気圧時）に飽和効率を乗じた値により制限
+        # 水分が加わることで空気の質量流量がわずかに増加する
+        # 仕様書
+        # area_humidifier       加湿器面積[m2]
+        # dp:                   圧力損失[Pa]
+        # eff:                  飽和効率[-]
+
+        # 入力
+        # tdb_air_in:           入口空気乾球温度['C]
+        # w_air_in:             入口空気絶対湿度[kg/kg']
+        # frowrate_air_in:      入口空気質量流量[kg/s]
+        # t_steam_in            入口水蒸気温度[℃]
+        # flowrate_steam_in:    入口水蒸気流量[kg/s]
+
+        # 出力
+        # tdb_air_out:          出口空気乾球温度['C]
+        # w_air_out:            出口空気絶対湿度[kg/kg']
+        # flowrate_air_out      出口空気質量流量[kg/s]
+
+        # 内部変数
+        # Cpa:                  乾き空気の定圧比熱 [kJ/kg・K]
+        # Cps:                  水蒸気の定圧比熱 [kJ/kg・K]
+        # Cpai:                 入口水蒸気の定圧比熱 [kJ/kg・K]
+
+        self.area_humidifier = area_humidifier
+        self.dp = dp
+        self.eff = eff
+
+        # その都度変わる値
+        self.tdb_air_in = 0
+        self.w_air_in = 0
+        self.flowrate_air_in = 0
+        self.flowrate_steam_in = 0
+        self.t_steam_in = 0
+        self.tdb_air_out = 0
+        self.w_air_out = 0
+        self.flowrate_air_out = 0
+
+    def cal(self, tdb_air_in, w_air_in, flowrate_air_in, flowrate_steam_in, t_steam_in):
+        self.tdb_air_in = tdb_air_in
+        self.w_air_in = w_air_in
+        self.flowrate_air_in = flowrate_air_in
+        self.flowrate_steam_in = flowrate_steam_in
+        self.t_steam_in = t_steam_in
+
+        Cpa = 1.006  # 乾き空気の定圧比熱 [kJ/kg・K]
+        Cps = 1.86  # 水蒸気の定圧比熱 [kJ/kg・K]
+        Cpai = (Cpa + self.w_air_in * Cps) / (1 + self.w_air_in)
+
+        self.tdb_air_out = (self.flowrate_steam_in * Cps * self.t_steam_in + self.flowrate_air_in * Cpai * self.tdb_air_in) \
+                           / (self.flowrate_steam_in * Cps + self.flowrate_air_in * Cpai)
+        w_air_out = self.w_air_in + self.flowrate_steam_in * (1 + self.w_air_in) / self.flowrate_air_in
+
+        p_sat = psy_psat_tsat(self.tdb_air_out)
+        w_sat = psy_w_pv(p_sat)
+
+        self.w_air_out = min(w_air_out, self.eff * w_sat)
+        self.flowrate_air_out = self.flowrate_air_in * (1+self.w_air_out) / (1+self.w_air_in)
+
+        return self.tdb_air_out, self.w_air_out, self.flowrate_air_out
+
     
 
 # 制御関係モデル ###############################################################
