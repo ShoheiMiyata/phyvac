@@ -1600,7 +1600,7 @@ class SteamSprayHumidifier:
     def __init__(self, area_humidifier=0.42, dp=45, eff=1.0):
         # 空気の流れに蒸気を注入して空気の湿度を高める定圧プロセスの出口空気温度、流量、絶対湿度を計算
         # 出口空気の絶対湿度は，蒸気流量または飽和絶対湿度（大気圧時）に飽和効率を乗じた値により制限
-        # 水分が加わることで空気の質量流量がわずかに増加する
+        
         # 仕様書
         # area_humidifier       加湿器面積[m2]
         # dp:                   圧力損失[Pa]
@@ -1622,6 +1622,8 @@ class SteamSprayHumidifier:
         # Cpa:                  乾き空気の定圧比熱 [kJ/kg・K]
         # Cps:                  水蒸気の定圧比熱 [kJ/kg・K]
         # Cpai:                 入口水蒸気の定圧比熱 [kJ/kg・K]
+        # psat:                 出口空気飽和時の水蒸気分圧[kPa]
+        # wsat:                 出口空気飽和時の絶対湿度[kg/kg']
 
         self.area_humidifier = area_humidifier
         self.dp = dp
@@ -1646,16 +1648,25 @@ class SteamSprayHumidifier:
 
         Cpa = 1.006  # 乾き空気の定圧比熱 [kJ/kg・K]
         Cps = 1.86  # 水蒸気の定圧比熱 [kJ/kg・K]
+        
+        # 入口空気の定圧比熱は入口絶対湿度に依存する
         Cpai = (Cpa + self.w_air_in * Cps) / (1 + self.w_air_in)
 
+        # 出口空気温度は入口空気と水蒸気温度の重み付け平均で求められる
         self.tdb_air_out = (self.flowrate_steam_in * Cps * self.t_steam_in + self.flowrate_air_in * Cpai * self.tdb_air_in) \
                            / (self.flowrate_steam_in * Cps + self.flowrate_air_in * Cpai)
+        
+        # 噴霧される蒸気のすべてが、空気を加湿したと仮定した際の出口空気の絶対湿度
         w_air_out = self.w_air_in + self.flowrate_steam_in * (1 + self.w_air_in) / self.flowrate_air_in
 
+        # 出口空気が飽和している際の絶対湿度は、飽和空気の水蒸気分圧を用いて計算できる
         p_sat = psy_psat_tsat(self.tdb_air_out)
         w_sat = psy_w_pv(p_sat)
 
+        # 出口空気の絶対湿度は飽和効率と飽和空気の絶対湿度の積を越えることはできない
         self.w_air_out = min(w_air_out, self.eff * w_sat)
+        
+        # 水分が加わることで空気の質量流量がわずかに増加する
         self.flowrate_air_out = self.flowrate_air_in * (1+self.w_air_out) / (1+self.w_air_in)
 
         return self.tdb_air_out, self.w_air_out, self.flowrate_air_out
