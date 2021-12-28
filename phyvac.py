@@ -1522,12 +1522,12 @@ class Damper():
 # ファン特性と消費電力計算
 class Fan:
     # 定格値の入力
-    def __init__(self, pg=[0.6467, 0.0082, -0.0004], eg=[-0.0166, 0.0399, -0.0008], r_ef=0.8):
-        # pg    :圧力-流量(pg)曲線の係数（切片、一次、二次）
+    def __init__(self, pg=[0.6467, 0.0082, -0.0004, 0], eg=[-0.0166, 0.0399, -0.0008], r_ef=0.6):
+        # pg    :圧力-流量(pg)曲線の係数（切片、一次、二次、三次）
         # eg    :効率-流量(eg)曲線の係数（切片、一次、二次）
         # r_ef  :定格時の最高効率(本来は計算によって求める？)rated efficiency
         # inv   :回転数比(0.0~1.0)
-        # dp_f  :ファン揚程[kPa]
+        # dp_f  :ファン揚程[Pa]  # 21/05/21 単位kPaから修正
         # g     :流量[m3/min]
         # pw    :消費電力[kW]
         # flag  :計算に問題があったら1、なかったら0
@@ -1548,7 +1548,7 @@ class Fan:
         # 流量がある場合のみ揚程を計算する
         if self.g > 0:
             self.dp = (self.pg[0] + self.pg[1] * (self.g / self.inv) + self.pg[2] * (
-                    self.g / self.inv) ** 2) * self.inv ** 2
+                    self.g / self.inv) ** 2 + self.pg[3] * (self.g / self.inv) ** 3) * self.inv ** 2
         else:
             self.dp = 0
 
@@ -1561,28 +1561,41 @@ class Fan:
         return self.dp
 
     def f2p_co(self):  # coefficient for f2p
-        return [self.pg[0] * self.inv ** 2, self.pg[1] * self.inv, self.pg[2]]
+        if self.inv > 0:
+            co_0 = self.pg[0] * self.inv ** 2
+            co_1 = self.pg[1] * self.inv
+            co_2 = self.pg[2]
+            co_3 = self.pg[3] / self.inv
+
+        else:
+            co_0 = 0
+            co_1 = 0
+            co_2 = 0
+            co_3 = 0
+
+        return [co_0, co_1, co_2, co_3]
 
     def cal(self):
         # 流量がある場合のみ消費電力を計算する
         if self.g > 0 and self.inv > 0:
-
             # G: INV=1.0時（定格）の流量
             G = self.g / self.inv
             # K: 効率換算係数
             K = 1.0 - (1.0 - self.r_ef) / (self.inv ** 0.2) / self.r_ef
+            if K < 0.08018:  # r_ef=0.6のとき、invがあまりに小さいとef<0、pw=0と処理されるため、inv=0.2のときのK(=0.08018)以下にはならないと制約
+                K = 0.08018
             # ef: 効率
             self.ef = K * (self.eg[0] + self.eg[1] * G + self.eg[2] * G ** 2)
 
             self.dp = (self.pg[0] + self.pg[1] * (self.g / self.inv) + self.pg[2] * (
-                    self.g / self.inv) ** 2) * self.inv ** 2
+                    self.g / self.inv) ** 2 + self.pg[3] * (self.g / self.inv) ** 3) * self.inv ** 2
             if self.dp < 0:
                 self.dp = 0
                 self.flag = 1
 
             #  軸動力を求める
             if self.ef > 0:
-                self.pw = 1.0 * self.g * self.dp / (60 * self.ef)
+                self.pw = self.g * (self.dp / 1000) / (60 * 0.8 * self.ef)  # 0.8は実測値から求めたモーター損失
                 self.flag = 0
             else:
                 self.pw = 0
