@@ -1,5 +1,6 @@
 ## pv.SprayHumidifier()
-ファン特性と消費電力の計算 
+気化式加湿器の出口状態の計算
+
 <img src="https://user-images.githubusercontent.com/78840483/147629436-70da761d-3b0e-4b91-8e81-bd44aa0aec5f.png" width=40%>
 <img src="https://user-images.githubusercontent.com/78840483/147629938-d30c39e5-74e1-4b77-87dc-d0d1ba632cc6.png" width=40%>
 
