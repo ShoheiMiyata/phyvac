@@ -23,7 +23,7 @@
 
   
 ## pv.SprayHumidifier.cal(tdb_air_in, w_air_in, flowrate_air_in, flowrate_water_req)
-入口乾球温度、入口絶対湿度、空気質量流量、要求加湿量を入力値として出口空気乾球温度、出口空気湿球温度、出口絶対湿度、加湿量および圧力損失を算出する
+入口乾球温度、入口絶対湿度、空気質量流量、要求加湿量を入力値として出口状態と圧力損失を算出する
   
 ### returns:
 tdb_air_out, twb_air_out, w_air_out, flowrate_water_add, dp
