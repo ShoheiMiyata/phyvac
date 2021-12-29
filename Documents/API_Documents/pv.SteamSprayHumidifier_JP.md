@@ -31,7 +31,7 @@ import pandas as pd
 
 HUM = SprayHumidifier() # HUMの定義(特性はspec_table=pd.read_excel('EquipmentSpecTable.xlsx', sheet_name='SteamSprayHumidifier'を読み込み） 
 # 読み込んだ入力特性は以下
-# HUM.area = 0.42
+# HUM.area = 0.675
 # HUM.dp = 45
 # HUM.sat_eff = 0.6
 
