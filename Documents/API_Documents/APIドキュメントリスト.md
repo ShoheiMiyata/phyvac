@@ -7,6 +7,8 @@
 - [Branch_w (ポンプ、機器、弁を有する基本的な枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch_w_JP.md)
 - [Branch100（ポンプ、機器、バイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch12_JP.md)
 - [Fan (ファン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Fan_JP.md)  
+- [SprayHumidifier (気化式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SprayHumidifier_JP.md) 
+- [SteamSprayHumidifier (蒸気噴霧式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SteamSprayHumidifier.md) 
 #### 空気状態関数
 - [tdb_rh2tdp (乾球温度, 相対湿度→露点温度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.tdb_rh2tdp_JP.md)
 - [tdb_rh2h_x (乾球温度, 相対湿度→比エンタルピー, 絶対湿度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.tdb_rh2h_x_JP.md)
