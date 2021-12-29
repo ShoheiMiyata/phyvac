@@ -44,7 +44,7 @@ HUM = SprayHumidifier() # SA1の定義(特性はspec_table=pd.read_excel('Equipm
 # HUM.a1 = -2.1643
 # HUM.a0 = 2.1286
 
-# 入口乾球温度=16[℃], 入口空気絶対湿度=0.007[kg/kg’], 空気質量流量= 1.67[kg/s], 要求加湿流量=0.001[kg/s]のときの出口状態を計算
+# 入口乾球温度=16[℃], 入口空気絶対湿度=0.007[kg/kg’], 空気質量流量= 1.68[kg/s], 要求加湿流量=0.001[kg/s]のときの出口状態を計算
 HUM.cal(16, 0.007, 4675 * 1.293 / 3600, 0.001))
 print(HUM.tdb_air_out, HUM.twb_air_out, HUM.w_air_out, HUM.flowrate_water_add, HUM.dp)
 
