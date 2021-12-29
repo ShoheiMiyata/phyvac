@@ -26,7 +26,7 @@
 入口乾球温度、入口絶対湿度、空気質量流量、要求加湿量を入力値として出口状態と圧力損失を算出する
   
 ### returns:
-tdb_air_out, twb_air_out, w_air_out, flowrate_water_add, dp
+加湿器出口空気温度tdb_air_out, twb_air_out、出口絶対湿度w_air_out、加湿量flowrate_water_add、圧力損失dp
 
   
 ## サンプルコード  
