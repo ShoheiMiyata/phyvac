@@ -35,8 +35,8 @@ import phyvac as pv # 必要なモジュールのインポート
 import math
 import pandas as pd
 
-HUM = SprayHumidifier() # SA1の定義(特性はspec_table=pd.read_excel('EquipmentSpecTable.xlsx', sheet_name='SprayHumidifier'を読み込み）
-# 入力機器特性は以下
+HUM = SprayHumidifier() # HUMの定義(特性はspec_table=pd.read_excel('EquipmentSpecTable.xlsx', sheet_name='SprayHumidifier'を読み込み）
+# 読み込んだ入力機器特性は以下
 # HUM.d = 0.075
 # HUM.area = 0.675
 # HUM.rh_border = 95
