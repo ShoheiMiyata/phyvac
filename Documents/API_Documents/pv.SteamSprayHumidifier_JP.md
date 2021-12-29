@@ -29,18 +29,11 @@
 import phyvac as pv # 必要なモジュールのインポート
 import pandas as pd
 
-HUM = SprayHumidifier() # SA1の定義(特性はspec_table=pd.read_excel('EquipmentSpecTable.xlsx', sheet_name='SteamSprayHumidifier'を読み込み）
-# 入力機器特性は以下
-# HUM.d = 0.075
-# HUM.area = 0.675
-# HUM.rh_border = 95
-# HUM.a2 = 4.2143
-# HUM.a1 = -2.1643
-# HUM.a0 = 2.1286
+HUM = SprayHumidifier() # HUMの定義(特性はspec_table=pd.read_excel('EquipmentSpecTable.xlsx', sheet_name='SteamSprayHumidifier'を読み込み）
 
 # 入口乾球温度=16[℃], 入口空気絶対湿度=0.007[kg/kg’], 空気質量流量= 1.68[kg/s], 加湿蒸気流量=0.0305[kg/s], 加湿蒸気温度=40[℃]のときの出口状態を計算
 HUM = SteamSprayHumidifier()
-HUM.cal(16, 0.007, 1.68, 0.0305, 40))
+HUM.cal(16, 0.007, 1.68, 0.0305, 40)
 print(HUM.tdb_air_out, HUM.w_air_out, HUM.flowrate_air_out, HUM.dp)
 
 ```
