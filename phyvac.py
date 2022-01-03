@@ -445,7 +445,7 @@ class Pump():
             # G: INV=1.0時（定格）の流量
             G = self.g / self.inv
             # K: 効率換算係数
-            K = 1.0 - (1.0 - self.r_ef) / (self.inv**0.2) / self.r_ef 
+            K = (1.0 - (1.0 - self.r_ef) / (self.inv**0.2)) / self.r_ef 
             # ef: 効率
             self.ef = K * (self.eg[0] + self.eg[1] * G + self.eg[2] * G**2)
             
@@ -1581,9 +1581,7 @@ class Fan:
             # G: INV=1.0時（定格）の流量
             G = self.g / self.inv
             # K: 効率換算係数
-            K = 1.0 - (1.0 - self.r_ef) / (self.inv ** 0.2) / self.r_ef
-            if K < 0.08018:  # r_ef=0.6のとき、invがあまりに小さいとef<0、pw=0と処理されるため、inv=0.2のときのK(=0.08018)以下にはならないと制約
-                K = 0.08018
+            K = (1.0 - (1.0 - self.r_ef) / (self.inv ** 0.2)) / self.r_ef
             # ef: 効率
             self.ef = K * (self.eg[0] + self.eg[1] * G + self.eg[2] * G ** 2)
 
