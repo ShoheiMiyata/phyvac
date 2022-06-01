@@ -9,7 +9,7 @@ python+hvac => phyvac [fívək | fái-]
 [流量バランス計算(空気側)：1室、OAファン、RAファン、EAファン]()  
 
 ## Question and Discussion 質問・議論
-分からないことや気になることがありましたら下記リンクに投稿して議論しましょう
+分からないことや気になることがありましたら下記リンクに投稿して議論しましょう  
 https://groups.google.com/g/phyvac
 
 
