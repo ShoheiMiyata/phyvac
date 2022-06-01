@@ -8,6 +8,10 @@ python+hvac => phyvac [fívək | fái-]
 [流量バランス計算(水側)：AHU2台、Chiller2台、送水二次ポンプ](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/%E6%B5%81%E9%87%8F%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E8%A8%88%E7%AE%97(%E6%B0%B4%E5%81%B4)%EF%BC%9AAHU2%E5%8F%B0%E3%80%81Chiller2%E5%8F%B0%E3%80%81%E9%80%81%E6%B0%B4%E4%BA%8C%E6%AC%A1%E3%83%9D%E3%83%B3%E3%83%97.md)  
 [流量バランス計算(空気側)：1室、OAファン、RAファン、EAファン]()  
 
+## Question and Discussion 質問・議論
+分からないことや気になることがありましたら下記リンクに投稿して議論しましょう
+https://groups.google.com/g/phyvac
+
 
 ## API Document   APIドキュメント
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/API_Document_List.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/API%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E3%83%AA%E3%82%B9%E3%83%88.md)  
