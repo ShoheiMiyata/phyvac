@@ -2191,18 +2191,22 @@ class Pump_para:
 class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（バイパス弁付き）ユニットも可）、弁、機器が直列に並んだ基本的な枝）
     # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
-    def __init__(self, pump=None, valve=None, kr_eq=0.0, kr_pipe=0.0):
-        # pump      :ポンプのオブジェクト。並列ポンプ（バイパス弁付き）のオブジェクトも挿入可能
-        # valve     :二方弁のオブジェクト
-        # kr_eq     :機器の圧損係数[Pa/(m3/min)^2]
-        # kr_pipe   :配管の圧損係数[Pa/(m3/min)^2]
-        # dp        :枝の出入口差圧[Pa]加圧：+, 減圧：-
-        # g         :枝の出入口での流量[m3/min]
-        # flag      :計算の順当性確認のためのフラグ
+    def __init__(self, pump=None, valve=None, kr_eq=0.0, kr_pipe=0.0, actual_head=0.0):
+        # pump        :ポンプのオブジェクト。並列ポンプ（バイパス弁付き）のオブジェクトも挿入可能
+        # valve       :二方弁のオブジェクト
+        # kr_eq       :機器の圧損係数[Pa/(m3/min)^2]
+        # kr_pipe  　 :配管の圧損係数[Pa/(m3/min)^2]
+        # actual_head :実揚程[m]。冷却塔などで水を汲み上げる必要がある場合に用いる
+        # dp          :枝の出入口差圧[Pa]加圧：+, 減圧：-
+        # g           :枝の出入口での流量[m3/min]
+        # flag        :計算の順当性確認のためのフラグ
+        self.rho = 993.326    # 37℃水の密度[kg/m3]
+        self.ga = 9.8         # 重力加速度[m/s2]
         self.pump = pump
         self.valve = valve
         self.kr_eq = kr_eq
         self.kr_pipe = kr_pipe
+        self.actual_head = actual_head * self.rho * self.ga / 1000   # 実揚程を[m]から[kPa]に変換
         self.dp = 0.0
         self.g = 0.0
         self.flag = 0
@@ -2212,14 +2216,14 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
         self.flag = 0
         if self.pump == None and self.valve == None: # ファンもダンパもない場合
             if self.g > 0:
-                self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2
+                self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 - self.actual_head
             else: # 逆流する場合
                 self.dp = self.kr_eq*self.g**2 + self.kr_pipe*self.g**2
                 self.flag = 1
         
         elif self.pump == None: # 二方弁がある場合
             if self.g > 0:
-                self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.valve.f2p(self.g)
+                self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.valve.f2p(self.g) - self.actual_head
             else: # 逆流する場合
                 self.dp = self.kr_eq*self.g**2 + self.kr_pipe*self.g**2 - self.valve.f2p(self.g)
                 self.flag = 2
@@ -2232,7 +2236,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
                     self.pump.f2p(self.g)
                 else:
                     if self.g > 0:
-                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g)
+                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g) - self.actual_head
                     else: # 逆流する場合 # この条件が適切かは要確認!!!!!!!!!!!!!!!!!!!!
                         self.g = 0.0
                         self.dp = self.pump.f2p(self.g)
@@ -2244,7 +2248,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
                     self.pump.f2p(self.g)
                 else:
                     if self.g > 0:
-                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g)
+                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g) - self.actual_head
                     else: # 逆流する場合 # この条件が適切かは要確認!!!!!!!!!!!!!!!!!!!!
                         self.g = 0.0
                         self.dp = self.pump.f2p(self.g)
@@ -2260,7 +2264,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
                     self.pump.f2p(self.g)
                 else:
                     if self.g > 0:
-                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g) + self.valve.f2p(self.g)
+                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g) + self.valve.f2p(self.g) - self.actual_head
                     else: # 逆流する場合 # この条件が適切かは要確認!!!!!!!!!!!!!!!!!!!!
                         self.g = 0.0
                         self.dp = self.pump.f2p(self.g)
@@ -2272,7 +2276,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
                     self.pump.f2p(self.g)
                 else:
                     if self.g > 0:
-                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g) + self.valve.f2p(self.g)
+                        self.dp = - self.kr_eq*self.g**2 - self.kr_pipe*self.g**2 + self.pump.f2p(self.g) + self.valve.f2p(self.g) - self.actual_head
                     else: # 逆流する場合 # この条件が適切かは要確認!!!!!!!!!!!!!!!!!!!!
                         self.g = 0.0
                         self.dp = self.pump.f2p(self.g)
@@ -2285,7 +2289,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
         self.flag = 0
         if self.pump == None and self.valve == None: # ポンプも二方弁もない場合
             if self.dp < 0:
-                [co_0, co_1, co_2] = np.array([self.dp, 0, self.kr_eq + self.kr_pipe]) # 二次関数の係数の算出
+                [co_0, co_1, co_2] = np.array([self.dp - self.actual_head, 0, self.kr_eq + self.kr_pipe]) # 二次関数の係数の算出
                 [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
             else: # 逆流する場合
                 [co_0, co_1, co_2] = np.array([-self.dp, 0, self.kr_pipe + self.kr_eq]) # 二次関数の係数の算出
@@ -2295,7 +2299,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
             
         elif self.pump == None: # 二方弁がある場合
             if self.dp < 0:
-                [co_0, co_1, co_2] = self.valve.f2p_co() + np.array([-self.dp, 0, -self.kr_eq-self.kr_pipe])
+                [co_0, co_1, co_2] = self.valve.f2p_co() + np.array([-self.dp - self.actual_head, 0, -self.kr_eq-self.kr_pipe])
                 [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
                 self.valve.f2p(self.g)
             else: # 逆流する場合
@@ -2310,7 +2314,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
             # print(self.pump.f2p_co(),co_0, co_1, co_2)
             
             if self.pump.para == 0: # Pump_paraでない場合
-                [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp, 0, -self.kr_eq-self.kr_pipe])
+                [co_0, co_1, co_2] = self.pump.f2p_co() + np.array([-self.dp - self.actual_head, 0, -self.kr_eq-self.kr_pipe])
                 if self.pump.inv == 0: #　ポンプ停止時の対応
                     self.g = 0.0
                     self.pump.f2p(self.g)
@@ -2321,7 +2325,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
                     self.pump.f2p(self.g)   
                  
             else: # Pump_paraの場合
-                [co_0, co_1, co_2] = self.pump.f2p_co(y_h=self.dp) + np.array([-self.dp, 0, -self.kr_eq-self.kr_pipe])
+                [co_0, co_1, co_2] = self.pump.f2p_co(y_h=self.dp) + np.array([-self.dp - self.actual_head, 0, -self.kr_eq-self.kr_pipe])
                 if self.pump.pump.inv == 0: #　ポンプ停止時の対応
                     self.g = 0.0
                     self.pump.f2p(self.g)
@@ -2334,7 +2338,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
                     
         else: # ポンプも二方弁もある場合
             if self.pump.para == 0: # Pump_paraでない場合
-                [co_0, co_1, co_2] = self.pump.f2p_co() + self.valve.f2p_co() + np.array([-self.dp, 0, -self.kr_eq-self.kr_pipe])
+                [co_0, co_1, co_2] = self.pump.f2p_co() + self.valve.f2p_co() + np.array([-self.dp - self.actual_head, 0, -self.kr_eq-self.kr_pipe])
                 if self.pump.inv == 0: #　ファン停止時の対応
                     self.g = 0.0
                     self.pump.f2p(self.g)
@@ -2345,7 +2349,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
                     self.pump.f2p(self.g)
                     self.valve.f2p(self.g)
             else: # Pump_paraの場合
-                [co_0, co_1, co_2] = self.pump.f2p_co(y_h=self.dp) + self.valve.f2p_co() + np.array([-self.dp, 0, -self.kr_eq-self.kr_pipe])
+                [co_0, co_1, co_2] = self.pump.f2p_co(y_h=self.dp) + self.valve.f2p_co() + np.array([-self.dp - self.actual_head, 0, -self.kr_eq-self.kr_pipe])
                 if self.pump.pump.inv == 0: #　ファン停止時の対応
                     self.g = 0.0
                     self.pump.f2p(self.g)
