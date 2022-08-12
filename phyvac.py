@@ -2288,7 +2288,7 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
                 [co_0, co_1, co_2] = np.array([self.dp, 0, self.kr_eq + self.kr_pipe]) # 二次関数の係数の算出
                 [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
             else: # 逆流する場合
-                [co_0, co_1, co_2] = np.array([-self.dp, 0, self.kr_duct+self.kr_eq]) # 二次関数の係数の算出
+                [co_0, co_1, co_2] = np.array([-self.dp, 0, self.kr_pipe + self.kr_eq]) # 二次関数の係数の算出
                 [g, flag] = quadratic_formula(co_0, co_1, co_2)
                 self.g = -g
                 self.flag = 1
