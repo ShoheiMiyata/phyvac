@@ -6,7 +6,7 @@
 - [Fan (ファン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Fan_JP.md)  
 - [SprayHumidifier (気化式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SprayHumidifier_JP.md) 
 - [SteamSprayHumidifier (蒸気噴霧式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SteamSprayHumidifier_JP.md) 
-#### Branch（ダクト・配管枝）  
+#### Branch（配管・ダクト枝）  
 - [Branch_w (ポンプ、機器、弁を有する基本的な枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch_w_JP.md)
 - [Branch100（ポンプ、機器、バイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch12_JP.md)
 #### 制御  
