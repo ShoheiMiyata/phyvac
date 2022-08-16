@@ -2,7 +2,7 @@
 """
 @author: shhmy
 """
-# phyvacモジュール。hvav + python ->phyvac
+# phyvacモジュール。hvac + python ->phyvac
 # 空調システムの計算を極力物理原理・詳細な制御ロジックに基づいて行う。
 # ver0.2 20210628
 
@@ -283,7 +283,7 @@ def w_tdb2rh(w, tdb):
         return pv / psat * 100
 
 
-# 乾球温度と湿球湿度から絶対湿度[kg/kg']
+# 乾球温度と湿球温度から絶対湿度[kg/kg']
 def tdb_twb2w(tdb, twb):
     psat = tdp2psat(twb)
     wsat = pv2w(psat)
@@ -397,8 +397,8 @@ class Valve:
 class Pump():
     # 定格値の入力
     def __init__(self, pg=[233,5.9578,-4.95], eg=[0.0099,0.4174,-0.0508], r_ef=0.8):
-        # pq    :圧力-流量(pg)曲線の係数（切片、一次、二次）
-        # eq    :効率-流量(eg)曲線の係数（切片、一次、二次）
+        # pg    :圧力-流量(pg)曲線の係数（切片、一次、二次）
+        # eg    :効率-流量(eg)曲線の係数（切片、一次、二次）
         # r_ef  :定格時の最高効率(本来は計算によって求める？)rated efficiency
         # inv   :回転数比(0.0~1.0)
         # dp_p  :ポンプ揚程[kPa]
@@ -1396,7 +1396,7 @@ class W2a_hex():
 
             # saturation enthalpy based on Tdb
             # p_a parameter of temperature
-            # p_b slice
+            # p_b intercept
             [p_a, p_b] = getparameter_hex(self.tin_water)
             xd = 1 / self.cap_air
             yd = -1 / self.cap_water
