@@ -788,6 +788,93 @@ class AbsorptionChillerESS:
         return self.capacity_h, self.input_fuel_h, self.cop_h, self.tout_h
 
 
+# 省エネ基準に基づいたVRFモデル (Energy-Saving Standard)　2022/8/13
+class VariableRefrigerantFlowESS:
+    def __init__(self, rated_capacity_c, rated_input_power_c, rated_capacity_h, rated_input_power_h):
+        # rated_capacity_c:     定格冷房能力 [kW]
+        # rated_input_power_c:   定格冷房消費電力 [kW]
+        # rated_capacity_h:     定格暖房能力 [kW]
+        # rated_input_fuel_h:   定格暖房消費電力 [kW]
+        self.rated_capacity_c = rated_capacity_c
+        self.rated_input_power_c = rated_input_power_c
+        self.rated_capacity_h = rated_capacity_h
+        self.rated_input_power_h = rated_input_power_h
+        # 出力値
+        self.capacity_c = 0
+        self.input_power_c = 0
+        self.cop_c = 0
+        self.capacity_h = 0
+        self.input_power_h = 0
+        self.cop_h = 0
+
+    # cooling mode
+    def cal_c(self, odb, indoor_capacity):
+        if odb < 15:   # 外気乾球温度の下限
+            odb = 15
+        if odb > 43:   # 外気乾球温度の上限
+            odb = 43
+
+        k_1 = -0.0025 * odb + 1.0875   # 能力比特性
+        capacity_a = self.rated_capacity_c * k_1   # その外気条件での最大能力
+        self.capacity_c = capacity_a
+
+        cr = indoor_capacity / self.rated_capacity_c   # combination ratio: 室内機容量が室外機容量に示す比例
+        if cr < 1:
+            self.capacity_c = indoor_capacity
+            if capacity_a < indoor_capacity:
+                self.capacity_c = capacity_a
+
+        plr = self.capacity_c / capacity_a  # 運転部分負荷率(その外気条件での最大能力に対する部分負荷率)
+        if plr > 1:
+            plr = 1
+        if plr < 0.3:
+            plr = 0.3
+
+        k_2 = 0.0001212 * odb ** 2 + 0.00369 * odb + 0.72238   # 入力比特性
+        k_3 = 0.8573 * plr ** 2 - 0.0456 * plr + 0.1883   # 部分負荷特性
+
+        self.input_power_c = self.rated_input_power_c * k_2 * k_3
+        self.cop_c = self.capacity_c / self.input_power_c
+
+        return self.capacity_c, self.input_power_c, self.cop_c
+
+    # heating mode
+    def cal_h(self, owb, indoor_capacity):
+        if owb < -20:  # 外気湿球温度の下限
+            owb = -20
+        if owb > 15:  # 外気湿球温度の上限
+            owb = 15
+
+        k_1 = 0  # 能力比特性
+        if -20 <= owb <= -8:
+            k_1 = 0.0255 * owb + 0.847
+        if -8 < owb <= 4.5:
+            k_1 = 0.0153 * owb + 0.762
+        if 4.5 < owb <= 15:
+            k_1 = 0.0255 * owb + 0.847
+        capacity_a = self.rated_capacity_h * k_1
+        self.capacity_h = capacity_a
+
+        cr = indoor_capacity / self.rated_capacity_h
+        if cr < 1:
+            self.capacity_h = indoor_capacity
+            if capacity_a < indoor_capacity:
+                self.capacity_h = capacity_a
+
+        plr = self.capacity_h / capacity_a
+        if plr > 1:
+            plr = 1
+        if plr < 0.3:
+            plr = 0.3
+
+        k_2 = 0.0128 * owb + 0.9232  # 入力比特性
+        k_3 = 0.7823 * plr ** 2 + 0.0398 * plr + 0.1779  # 部分負荷特性
+        self.input_power_h = self.rated_input_power_h * k_2 * k_3
+        self.cop_h = self.capacity_h / self.input_power_h
+
+        return self.capacity_h, self.input_power_h, self.cop_h
+    
+    
 # 冷却塔
 class CoolingTower:
     def __init__(self, ua=143000, kr=1.0):
