@@ -684,6 +684,109 @@ class AirSourceHeatPump:
         
         self.dp_ch = -self.kr_ch*g_ch**2
 
+        
+# 省エネ基準に基づいた吸収式冷温水発生機モデル (Energy-Saving Standard) 
+class AbsorptionChillerESS:
+    # rated_capacity_c:     定格冷房能力 [kW]
+    # rated_input_fuel_c:   定格冷房燃料消費量 [Nm3](燃料: 都市ガス)
+    # power_con_c:          定格冷房消費電力 [kW]
+    # rated_capacity_h:     定格暖房能力 [kW]
+    # rated_input_fuel_h:   定格暖房燃料消費量 [Nm3](燃料: 都市ガス)
+    # power_con_h:          定格暖房消費電力 [kW]
+
+    def __init__(self, rated_capacity_c, rated_input_fuel_c, power_con_c,
+                 rated_capacity_h, rated_input_fuel_h, power_con_h):
+
+        self.rated_capacity_c = rated_capacity_c
+        self.rated_input_fuel_c = rated_input_fuel_c
+        self.power_con_c = power_con_c
+        self.rated_capacity_h = rated_capacity_h
+        self.rated_input_fuel_h = rated_input_fuel_h
+        self.power_con_h = power_con_h
+
+        self.cw_c = 4.192  # 10℃水の比熱, [kJ/(kg・k)]
+        self.cw_h = 4.178  # 40℃水の比熱, [kJ/(kg・k)]
+        self.rho_c = 999.741  # 10℃水の密度, [kg/m3]
+        self.rho_h = 992.210  # 40℃水の密度, [kg/m3]
+        self.cg = 40.6  # 都市ガス13A, 低位発熱量[MJ/m3N]
+        self.k = 3.6  # MJ to kWh, [MJ/kWh]
+
+        # 出力値
+        self.capacity_c = 0  # 冷房能力, [kW]
+        self.input_fuel_c = 0  # 冷房燃料消費量, [Nm3]
+        self.cop_c = 0  # 冷房運転COP, [-]
+        self.tout_ch = 7  # 冷水出口温度, ℃
+
+        self.capacity_h = 0  # 暖房能力, [kW]
+        self.input_fuel_h = 0  # 暖房燃料消費量, [Nm3]
+        self.cop_h = 0  # 暖房運転COP, [-]
+        self.tout_h = 45  # 温水出口温度, ℃
+
+    def cal_c(self, g, tin_cd=32, tin_ch=15, tout_ch_sv=7):
+        # g:          冷水流量[m3/min]
+        # tin_cd:     冷却水温度, ℃
+        # tin_ch:     冷水入口温度, ℃
+        # tout_ch_sv: 冷水出口温度設定値, ℃
+
+        k_1 = 1  # 最大能力比特性
+        capacity = self.rated_capacity_c * k_1  # 最大能力
+        g = g * self.rho_c / 60  # 体積流量[m3/min] to 質量流量[kg/s]
+        self.capacity_c = g * (tin_ch - tout_ch_sv) * self.cw_c  # 処理する熱量
+
+        self.tout_ch = tout_ch_sv
+        if self.capacity_c > self.rated_capacity_c:  # 処理熱量が定格能力より大きい時の冷水出口温度を求める
+            delta_t = (self.capacity_c - self.rated_capacity_c) / (g * self.cw_c)
+            self.tout_ch = tout_ch_sv + delta_t
+            self.capacity_c = self.rated_capacity_c
+
+        plr = self.capacity_c / capacity
+        if plr > 1:
+            plr = 1
+        if plr < 0.2:
+            plr = 0.2
+
+        k_2 = 0.012333 * tin_cd + 0.605333  # 最大入力比
+        k_3 = 0.167757 * plr ** 2 + 0.757814 * plr + 0.074429  # 入力比
+        k_4 = -0.01276 * self.tout_ch + 1.0893  # 入力比
+        self.input_fuel_c = self.rated_input_fuel_c * k_2 * k_3 * k_4  # 燃料消費量
+
+        q_gas = self.input_fuel_c * self.cg / self.k  # 消費熱量
+        self.cop_c = self.capacity_c / (q_gas + self.power_con_c)
+
+        return self.capacity_c, self.input_fuel_c, self.cop_c, self.tout_ch
+
+    def cal_h(self, g, tin_h=37, tout_h_sv=45):
+        # g:          温水流量[m3/min]
+        # tin_h:      温水入口温度, ℃
+        # tout_h_sv:  温水出口温度設定値, ℃
+
+        k_1 = 1  # 最大能力比特性
+        capacity = self.rated_capacity_h * k_1   # 最大能力
+
+        g = g * self.rho_h / 60  # 体積流量[m3/min] to 質量流量[kg/s]
+        self.capacity_h = g * (tout_h_sv - tin_h) * self.cw_h
+
+        self.tout_h = tout_h_sv
+        if self.capacity_h > self.rated_capacity_h:
+            delta_t = (self.capacity_h - self.rated_capacity_h) / (g * self.cw_h)
+            self.tout_h = tout_h_sv - delta_t
+            self.capacity_h = self.rated_capacity_h
+
+        plr = self.capacity_h / capacity
+        if plr > 1:
+            plr = 1
+        if plr < 0.1:
+            plr = 0.1
+
+        k_2 = 1
+        k_3 = 1 * plr
+        k_4 = 1
+        self.input_fuel_h = self.rated_input_fuel_h * k_2 * k_3 * k_4
+        q_gas = self.input_fuel_h * self.cg / self.k  # 消費熱量
+        self.cop_h = self.capacity_h / (q_gas + self.power_con_h)
+
+        return self.capacity_h, self.input_fuel_h, self.cop_h, self.tout_h
+
 
 # 冷却塔
 class CoolingTower:
