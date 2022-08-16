@@ -4,6 +4,7 @@
 
 能力・消費電力・COPの計算
 
+
 計算できる範囲: 外気乾球温度(冷房, 15~43℃), 外気湿球温度(暖房, -20~15℃), 運転時部分負荷率(0.3~1)
 
 ### Parameters:
@@ -86,6 +87,7 @@ print(vrf.capacity_c, vrf.input_power_c, vrf.cop_c)
 # 暖房の計算
 # 定格条件
 vrf.cal_h(owb=6, indoor_capacity=37.5)
+print(vrf.capacity_h, vrf.input_power_h, vrf.cop_h)
 ```
 
 > 結果
