@@ -107,7 +107,7 @@ print(vrf.capacity_h, vrf.input_power_h, vrf.cop_h)
 # 外気湿球温度が変化し、室内機の容量が室外機より小さい場合
 vrf.cal_h(owb=10, indoor_capacity=37.5*0.6) 
 print(vrf.capacity_h, vrf.input_power_h, vrf.cop_h)
-vrf.cal_h(owb=0, indoor_capacity=37.5*0.9)  
+vrf.cal_h(owb=-10, indoor_capacity=37.5)  
 print(vrf.capacity_h, vrf.input_power_h, vrf.cop_h)
 ```
 
@@ -115,4 +115,4 @@ print(vrf.capacity_h, vrf.input_power_h, vrf.cop_h)
 >
 > 22.5 4.8032810492285725 4.684298039069272
 >
-> 28.575 9.776688 2.9227689377016017
+> 22.2 8.421168 2.636213883869791
