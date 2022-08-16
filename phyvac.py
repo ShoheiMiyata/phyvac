@@ -689,39 +689,40 @@ class AirSourceHeatPump:
 class AbsorptionChillerESS:
     # rated_capacity_c:     定格冷房能力 [kW]
     # rated_input_fuel_c:   定格冷房燃料消費量 [Nm3](燃料: 都市ガス)
-    # power_con_c:          定格冷房消費電力 [kW]
+    # power_c:              定格冷房消費電力 [kW]
     # rated_capacity_h:     定格暖房能力 [kW]
     # rated_input_fuel_h:   定格暖房燃料消費量 [Nm3](燃料: 都市ガス)
-    # power_con_h:          定格暖房消費電力 [kW]
+    # power_h:              定格暖房消費電力 [kW]
 
-    def __init__(self, rated_capacity_c, rated_input_fuel_c, power_con_c,
-                 rated_capacity_h, rated_input_fuel_h, power_con_h):
+    def __init__(self, rated_capacity_c, rated_input_fuel_c, power_c,
+                 rated_capacity_h, rated_input_fuel_h, power_h):
 
         self.rated_capacity_c = rated_capacity_c
         self.rated_input_fuel_c = rated_input_fuel_c
-        self.power_con_c = power_con_c
+        self.power_c = power_c
         self.rated_capacity_h = rated_capacity_h
         self.rated_input_fuel_h = rated_input_fuel_h
-        self.power_con_h = power_con_h
+        self.power_h = power_h
 
-        self.cw_c = 4.192  # 10℃水の比熱, [kJ/(kg・k)]
-        self.cw_h = 4.178  # 40℃水の比熱, [kJ/(kg・k)]
+        self.cw_c = 4.192     # 10℃水の比熱, [kJ/(kg・k)]
+        self.cw_h = 4.178     # 40℃水の比熱, [kJ/(kg・k)]
         self.rho_c = 999.741  # 10℃水の密度, [kg/m3]
         self.rho_h = 992.210  # 40℃水の密度, [kg/m3]
-        self.cg = 40.6  # 都市ガス13A, 低位発熱量[MJ/m3N]
-        self.k = 3.6  # MJ to kWh, [MJ/kWh]
+        self.cg = 40.6        # 都市ガス13A, 低位発熱量[MJ/m3N]
+        self.k = 3.6          # MJ to kWh, [MJ/kWh]
 
         # 出力値
-        self.capacity_c = 0  # 冷房能力, [kW]
-        self.input_fuel_c = 0  # 冷房燃料消費量, [Nm3]
-        self.cop_c = 0  # 冷房運転COP, [-]
-        self.tout_ch = 7  # 冷水出口温度, ℃
-
-        self.capacity_h = 0  # 暖房能力, [kW]
-        self.input_fuel_h = 0  # 暖房燃料消費量, [Nm3]
-        self.cop_h = 0  # 暖房運転COP, [-]
-        self.tout_h = 45  # 温水出口温度, ℃
-
+        # power_cとpower_hは計算できないため、そのまま出力 
+        self.capacity_c = 0     # 冷房能力, [kW]
+        self.input_fuel_c = 0   # 冷房燃料消費量, [Nm3]
+        self.cop_c = 0          # 冷房運転COP, [-]
+        self.tout_ch = 7        # 冷水出口温度, ℃
+        
+        self.capacity_h = 0     # 暖房能力, [kW]
+        self.input_fuel_h = 0   # 暖房燃料消費量, [Nm3]
+        self.cop_h = 0          # 暖房運転COP, [-]
+        self.tout_h = 45        # 温水出口温度, ℃
+        
     def cal_c(self, g, tin_cd=32, tin_ch=15, tout_ch_sv=7):
         # g:          冷水流量[m3/min]
         # tin_cd:     冷却水温度, ℃
@@ -751,9 +752,9 @@ class AbsorptionChillerESS:
         self.input_fuel_c = self.rated_input_fuel_c * k_2 * k_3 * k_4  # 燃料消費量
 
         q_gas = self.input_fuel_c * self.cg / self.k  # 消費熱量
-        self.cop_c = self.capacity_c / (q_gas + self.power_con_c)
+        self.cop_c = self.capacity_c / (q_gas + self.power_c)
 
-        return self.capacity_c, self.input_fuel_c, self.cop_c, self.tout_ch
+        return self.capacity_c, self.input_fuel_c, self.cop_c, self.tout_ch, self.power_c
 
     def cal_h(self, g, tin_h=37, tout_h_sv=45):
         # g:          温水流量[m3/min]
@@ -783,18 +784,18 @@ class AbsorptionChillerESS:
         k_4 = 1
         self.input_fuel_h = self.rated_input_fuel_h * k_2 * k_3 * k_4
         q_gas = self.input_fuel_h * self.cg / self.k  # 消費熱量
-        self.cop_h = self.capacity_h / (q_gas + self.power_con_h)
+        self.cop_h = self.capacity_h / (q_gas + self.power_h)
 
-        return self.capacity_h, self.input_fuel_h, self.cop_h, self.tout_h
+        return self.capacity_h, self.input_fuel_h, self.cop_h, self.tout_h, self.power_h
 
 
-# 省エネ基準に基づいたVRFモデル (Energy-Saving Standard)　2022/8/13
+# 省エネ基準に基づいたVRFモデル (Energy-Saving Standard)　
 class VariableRefrigerantFlowESS:
     def __init__(self, rated_capacity_c, rated_input_power_c, rated_capacity_h, rated_input_power_h):
-        # rated_capacity_c:     定格冷房能力 [kW]
+        # rated_capacity_c:      定格冷房能力 [kW]
         # rated_input_power_c:   定格冷房消費電力 [kW]
-        # rated_capacity_h:     定格暖房能力 [kW]
-        # rated_input_fuel_h:   定格暖房消費電力 [kW]
+        # rated_capacity_h:      定格暖房能力 [kW]
+        # rated_input_fuel_h:    定格暖房消費電力 [kW]
         self.rated_capacity_c = rated_capacity_c
         self.rated_input_power_c = rated_input_power_c
         self.rated_capacity_h = rated_capacity_h
