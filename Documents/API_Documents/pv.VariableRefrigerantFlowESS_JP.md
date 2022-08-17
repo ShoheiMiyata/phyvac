@@ -27,7 +27,7 @@
 
 ## pv.VariableRefrigerantFlowESS.cal_c(odb, indoor_capacity)
 
-室内機冷房能力(indoor_capacity)と外気乾球温度(odb)から、運転時室外機の冷凍能力・電力消費量・COPを算出する
+室内ユニットの合計冷房能力(indoor_capacity)と外気乾球温度(odb)から、運転時室外機の冷凍能力・電力消費量・COPを算出する
 
 ### returns:
 
@@ -35,7 +35,7 @@
 
 ## pv.VariableRefrigerantFlowESS.cal_h(owb, indoor_capacity)
 
-室内機暖房能力(indoor_capacity)と外気湿球温度(owb)により、運転時室外機の暖房能力・電力消費量・COPを算出する
+室内ユニットの合計暖房能力(indoor_capacity)と外気湿球温度(owb)により、運転時室外機の暖房能力・電力消費量・COPを算出する
 
 ### returns:
 
