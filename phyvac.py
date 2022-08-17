@@ -11,6 +11,7 @@ import math
 import pandas as pd
 from scipy.interpolate import RegularGridInterpolator
 from scipy import optimize
+from sklearn.linear_model import LinearRegression
 
 # 空気状態関数　###############################################################
 # 空気調和・衛生工学会編：空気調和・衛生工学便覧14版，1基礎編，第3章, pp.39-56，2010.
@@ -875,7 +876,264 @@ class VariableRefrigerantFlowESS:
 
         return self.capacity_h, self.input_power_h, self.cop_h
     
-    
+ 
+# EnergyPlusに基づいたVRFモデル
+# EnergyPlus Engineering Reference(22.1), Variable Refrigerant Flow Heat Pumps, System Curve based VRF Model
+# Raustad, R.A., (2012) Creating Performance Curves for Variable Refrigerant Flow Heat Pumps in EnergyPlus
+# Cooling Mode
+class VariableRefrigerantFlowEP:
+    def __init__(self, rated_capacity=31.6548, rated_input_power=9.73, length=10, height=5):
+
+        self.rated_capacity = rated_capacity  # kW
+        self.rated_input_power = rated_input_power   # kW
+
+        self.plr_min = 0.2    # minimum operating part load ratio (0~0.4)
+
+        self.length = length   # equivalent piping length from outdoor unit to indoor units, m
+        self.height = height   # vertical height of the difference between the highest and lowest terminal unit, m
+        self.indoor_capacity = 0  # kW
+        self.cr = 0  # combination ratio = (rated part load ratio)
+
+        # datasets for regression analysis
+        boundary = pd.read_excel('vrf_syscurve.xlsx', sheet_name='boundary_dataset', header=None)
+        boundary = boundary.drop(boundary.index[0])
+        self.boundary = pd.DataFrame(boundary, dtype='float64')
+
+        low_temp_c = pd.read_excel('vrf_syscurve.xlsx', sheet_name='lowt_dataset_c', header=None)
+        low_temp_c = low_temp_c.drop(low_temp_c.index[0])
+        self.low_temp_c = pd.DataFrame(low_temp_c, dtype='float64')
+
+        low_temp_p = pd.read_excel('vrf_syscurve.xlsx', sheet_name='lowt_dataset_p', header=None)
+        low_temp_p = low_temp_p.drop(low_temp_p.index[0])
+        self.low_temp_p = pd.DataFrame(low_temp_p, dtype='float64')
+
+        high_temp_c = pd.read_excel('vrf_syscurve.xlsx', sheet_name='hight_dataset_c', header=None)
+        high_temp_c = high_temp_c.drop(high_temp_c.index[0])
+        self.high_temp_c = pd.DataFrame(high_temp_c, dtype='float64')
+
+        high_temp_p = pd.read_excel('vrf_syscurve.xlsx', sheet_name='hight_dataset_p', header=None)
+        high_temp_p = high_temp_p.drop(high_temp_p.index[0])
+        self.high_temp_p = pd.DataFrame(high_temp_p, dtype='float64')
+
+    # combination ratio correction factor
+    def get_cr_correction(self):
+        cr_data = pd.read_excel('vrf_syscurve.xlsx', sheet_name='cr_correction', header=None)
+        cr_data = cr_data.drop(cr_data.index[0])
+        cr_data = pd.DataFrame(cr_data, dtype='float64')
+
+        x_data = np.array(cr_data.iloc[:, 1]).reshape(-1, 1)
+        y_data = np.array(cr_data.iloc[:, 0]).reshape(-1, 1)
+        model = LinearRegression()
+        model.fit(x_data, y_data)
+        a = model.coef_
+        b = model.intercept_
+        cr_correction_factor = a * self.cr + b
+        cr_correction_factor = cr_correction_factor[0][0]
+
+        if cr_correction_factor <= 1:
+            return 1
+        else:
+            return cr_correction_factor
+
+    # energy input ratio modifier function of part-load ratio
+    def get_eirfplr(self):
+
+        if self.cr <= 1:
+            eirfplr_data = pd.read_excel('vrf_syscurve.xlsx', sheet_name='eirfplr', header=None)
+            eirfplr_data = eirfplr_data.drop(eirfplr_data.index[0])
+            eirfplr_data = eirfplr_data.dropna(how='all', axis=1)
+            eirfplr_data = pd.DataFrame(eirfplr_data, dtype='float64')
+
+            x_data = eirfplr_data.iloc[:, 3:]
+            y_data = eirfplr_data.iloc[:, 1]
+            model = LinearRegression()
+            model.fit(x_data, y_data)
+            a, b, c = model.coef_
+            d = model.intercept_
+            eirfplr = a * self.cr + b * self.cr ** 2 + c * self.cr ** 3 + d
+
+            return eirfplr
+
+    # piping correction factor for length and height
+    def get_piping_correction(self):
+        pipe_data = pd.read_excel('vrf_syscurve.xlsx', sheet_name='piping_correction', header=None)
+        pipe_data = pipe_data.drop(pipe_data.index[0])
+        pipe_data = pd.DataFrame(pipe_data, dtype='float64')
+
+        x_data = pipe_data.iloc[:, 1:]
+        y_data = pipe_data.iloc[:, 0]
+        model = LinearRegression()
+        model.fit(x_data, y_data)
+        a = model.intercept_
+        b, c, d, e, f = model.coef_
+        piping_correction_length = a + b * self.length + c * self.length ** 2 + d * self.cr + e * self.cr ** 2 \
+                                   + f * self.length * self.cr
+
+        piping_correction_height = 1 - 0.0019231 * self.height
+
+        return piping_correction_length, piping_correction_height
+
+    # calculation in the condition that pipe loss is considered
+    def cal_loss(self, iwb, odb, indoor_capacity):
+        self.indoor_capacity = indoor_capacity
+        self.cr = self.indoor_capacity / self.rated_capacity
+        if self.cr > 1.5:
+            self.cr = 1.5
+        capacity, input_power, cop = self.cal(iwb, odb)
+        piping_correction_length, piping_correction_height = self.get_piping_correction()
+        # available capacity of the outdoor unit
+        capacity_a = capacity * piping_correction_length * piping_correction_height
+
+        if self.cr == 1:
+            cop = capacity_a / input_power
+            return capacity_a, input_power, cop
+
+        else:
+            cr_correction_factor = self.get_cr_correction()
+            eirfplr = self.get_eirfplr()
+            # plr: operating part load ratio
+            plr = self.indoor_capacity / capacity_a
+            cr_limit = self.plr_min * capacity_a / self.rated_capacity
+
+            if self.cr > 1:
+                capacity_h = capacity_a * cr_correction_factor
+                cop = capacity_h / input_power
+
+                return capacity_h, input_power, cop
+
+            if cr_limit <= self.cr < 1:
+                input_power_l = input_power * eirfplr
+                capacity_l = self.indoor_capacity
+                if self.indoor_capacity > capacity_a:  # when cr is near to 1, like 0.9, this situation may happen
+                    capacity_l = capacity_a
+                cop = capacity_l / input_power_l
+
+                return capacity_l, input_power_l, cop
+
+            if 0 < self.cr < cr_limit:  # same to plr < plr_min
+                cycling_ratio = plr / self.plr_min
+                cycling_ratio_fraction = 0.15 * cycling_ratio + 0.85
+                rtf = cycling_ratio / cycling_ratio_fraction  # runtime fraction
+
+                input_power_min = input_power * eirfplr * rtf
+                capacity_min = self.indoor_capacity
+                cop = capacity_min / input_power_min
+
+                return capacity_min, input_power_min, cop
+
+    # calculation in the condition of "cr≠1", i.e. "indoor_capacity"≠"rated_capacity"
+    def cal_pl(self, iwb, odb, indoor_capacity):
+        self.indoor_capacity = indoor_capacity
+        self.cr = self.indoor_capacity / self.rated_capacity
+        if self.cr > 1.5:
+            self.cr = 1.5   # maximum value of cr
+        capacity, input_power, cop = self.cal(iwb, odb)   # the capacity calculated here is the available capacity
+        cr_correction_factor = self.get_cr_correction()
+        eirfplr = self.get_eirfplr()
+        plr = self.indoor_capacity / capacity   # operating part load ratio
+        # because "self.cr=indoor_capacity/rated_capacity", plr=rated_capacity/capacity * self.cr
+        # i.e. self.cr = plr * capacity/rated_capacity
+        cr_limit = self.plr_min * capacity / self.rated_capacity     # get from the relationship between "plr" and "cr"
+
+        if self.cr >= 1:
+            capacity_h = capacity * cr_correction_factor
+            cop = capacity_h / input_power
+
+            return capacity_h, input_power, cop
+
+        if cr_limit <= self.cr < 1:
+            input_power_l = input_power * eirfplr
+            capacity_l = self.indoor_capacity
+            if self.indoor_capacity > capacity:   # when cr is near to 1, like 0.9, this situation may happen
+                capacity_l = capacity
+            cop = capacity_l / input_power_l
+
+            return capacity_l, input_power_l, cop
+
+        if 0 < self.cr < cr_limit:   # same to plr < plr_min
+            cycling_ratio = plr / self.plr_min
+            cycling_ratio_fraction = 0.15 * cycling_ratio + 0.85
+            rtf = cycling_ratio / cycling_ratio_fraction  # runtime fraction
+
+            input_power_min = input_power * eirfplr * rtf
+            capacity_min = self.indoor_capacity
+            cop = capacity_min / input_power_min
+
+            return capacity_min, input_power_min, cop
+
+    # calculation in the condition of "cr=1"
+    def cal(self, iwb, odb):
+        # regression analysis for Cooling Capacity Ratio Boundary performance curve
+        x_data_b = self.boundary.iloc[:, 1:]
+        y_data_b = self.boundary.iloc[:, 0]
+        model_b = LinearRegression()
+        model_b.fit(x_data_b, y_data_b)
+        a = model_b.intercept_
+        b, c = model_b.coef_
+        odb_boundary = a + b * iwb + c * iwb ** 2
+
+        # If the input outdoor dry-bulb temperature is lower than the calculated 'odb_boundary'
+        # the low temperature region performance curve is used
+        # else the high temperature region performance curve is used
+        if odb <= odb_boundary:
+            # regression analysis for Cooling Capacity Ratio Modifier Function of Low Temperatures
+            x_data_c = self.low_temp_c.iloc[:, 1:]
+            y_data_c = self.low_temp_c.iloc[:, 0]
+            model_c = LinearRegression()
+            model_c.fit(x_data_c, y_data_c)
+            intercept_c = model_c.intercept_
+            coef_c = model_c.coef_
+            capft = intercept_c + coef_c[0] * iwb + coef_c[1] * iwb ** 2 \
+                    + coef_c[2] * odb + coef_c[3] * odb ** 2 + coef_c[4] * iwb * odb
+
+            capacity = self.rated_capacity * capft
+
+            # regression analysis for Input Power Ratio Modifier Function of Low Temperatures
+            x_data_p = self.low_temp_p.iloc[:, 3:]
+            y_data_p = self.low_temp_p.iloc[:, 2]
+            model_p = LinearRegression()
+            model_p.fit(x_data_p, y_data_p)
+            intercept_p = model_p.intercept_
+            coef_p = model_p.coef_
+            eirft = intercept_p + coef_p[0] * iwb + coef_p[1] * iwb ** 2 \
+                    + coef_p[2] * odb + coef_p[3] * odb ** 2 + coef_p[4] * iwb * odb
+            power_ratio = eirft * capft
+
+            input_power = self.rated_input_power * power_ratio
+            cop = capacity / input_power
+
+            return capacity, input_power, cop
+
+        else:
+            # regression analysis for Cooling Capacity Ratio Modifier Function of High Temperatures
+            x_data_c = self.high_temp_c.iloc[:, 1:]
+            y_data_c = self.high_temp_c.iloc[:, 0]
+            model_c = LinearRegression()
+            model_c.fit(x_data_c, y_data_c)
+            intercept_c = model_c.intercept_
+            coef_c = model_c.coef_
+            capft = intercept_c + coef_c[0] * iwb + coef_c[1] * iwb ** 2 \
+                    + coef_c[2] * odb + coef_c[3] * odb ** 2 + coef_c[4] * iwb * odb
+
+            capacity = self.rated_capacity * capft
+
+            # regression analysis for Input Power Ratio Modifier Function of High Temperatures
+            x_data_p = self.high_temp_p.iloc[:, 3:]
+            y_data_p = self.high_temp_p.iloc[:, 2]
+            model_p = LinearRegression()
+            model_p.fit(x_data_p, y_data_p)
+            intercept_p = model_p.intercept_
+            coef_p = model_p.coef_
+            eirft = intercept_p + coef_p[0] * iwb + coef_p[1] * iwb ** 2 \
+                    + coef_p[2] * odb + coef_p[3] * odb ** 2 + coef_p[4] * iwb * odb
+            power_ratio = eirft * capft
+
+            input_power = self.rated_input_power * power_ratio
+            cop = capacity / input_power
+
+            return capacity, input_power, cop
+        
+        
 # 冷却塔
 class CoolingTower:
     def __init__(self, ua=143000, kr=1.0):
