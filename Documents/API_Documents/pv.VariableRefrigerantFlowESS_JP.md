@@ -23,7 +23,7 @@
 | --------------- | ----- | ------------------------- |
 | odb             | float | 外気乾球温度 [℃]          |
 | owb             | float | 外気湿球温度 [℃]          |
-| indoor_capacity | float | 室内機冷房(暖房)能力 [kW] |
+| indoor_capacity | float | 室内ユニット冷房(暖房)能力 [kW] |
 
 ## pv.VariableRefrigerantFlowESS.cal_c(odb, indoor_capacity)
 
