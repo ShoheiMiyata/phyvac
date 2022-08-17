@@ -895,29 +895,29 @@ class VariableRefrigerantFlowEP:
         self.cr = 0  # combination ratio = (rated part load ratio)
 
         # datasets for regression analysis
-        boundary = pd.read_excel('vrf_syscurve.xlsx', sheet_name='boundary_dataset', header=None)
+        boundary = pd.read_excel('equipment_spec.xlsx', sheet_name='boundary_dataset', header=None)
         boundary = boundary.drop(boundary.index[0])
         self.boundary = pd.DataFrame(boundary, dtype='float64')
 
-        low_temp_c = pd.read_excel('vrf_syscurve.xlsx', sheet_name='lowt_dataset_c', header=None)
+        low_temp_c = pd.read_excel('equipment_spec.xlsx', sheet_name='lowt_dataset_c', header=None)
         low_temp_c = low_temp_c.drop(low_temp_c.index[0])
         self.low_temp_c = pd.DataFrame(low_temp_c, dtype='float64')
 
-        low_temp_p = pd.read_excel('vrf_syscurve.xlsx', sheet_name='lowt_dataset_p', header=None)
+        low_temp_p = pd.read_excel('equipment_spec.xlsx', sheet_name='lowt_dataset_p', header=None)
         low_temp_p = low_temp_p.drop(low_temp_p.index[0])
         self.low_temp_p = pd.DataFrame(low_temp_p, dtype='float64')
 
-        high_temp_c = pd.read_excel('vrf_syscurve.xlsx', sheet_name='hight_dataset_c', header=None)
+        high_temp_c = pd.read_excel('equipment_spec.xlsx', sheet_name='hight_dataset_c', header=None)
         high_temp_c = high_temp_c.drop(high_temp_c.index[0])
         self.high_temp_c = pd.DataFrame(high_temp_c, dtype='float64')
 
-        high_temp_p = pd.read_excel('vrf_syscurve.xlsx', sheet_name='hight_dataset_p', header=None)
+        high_temp_p = pd.read_excel('equipment_spec.xlsx', sheet_name='hight_dataset_p', header=None)
         high_temp_p = high_temp_p.drop(high_temp_p.index[0])
         self.high_temp_p = pd.DataFrame(high_temp_p, dtype='float64')
 
     # combination ratio correction factor
     def get_cr_correction(self):
-        cr_data = pd.read_excel('vrf_syscurve.xlsx', sheet_name='cr_correction', header=None)
+        cr_data = pd.read_excel('equipment_spec.xlsx', sheet_name='cr_correction', header=None)
         cr_data = cr_data.drop(cr_data.index[0])
         cr_data = pd.DataFrame(cr_data, dtype='float64')
 
@@ -939,7 +939,7 @@ class VariableRefrigerantFlowEP:
     def get_eirfplr(self):
 
         if self.cr <= 1:
-            eirfplr_data = pd.read_excel('vrf_syscurve.xlsx', sheet_name='eirfplr', header=None)
+            eirfplr_data = pd.read_excel('equipment_spec.xlsx', sheet_name='eirfplr', header=None)
             eirfplr_data = eirfplr_data.drop(eirfplr_data.index[0])
             eirfplr_data = eirfplr_data.dropna(how='all', axis=1)
             eirfplr_data = pd.DataFrame(eirfplr_data, dtype='float64')
@@ -956,7 +956,7 @@ class VariableRefrigerantFlowEP:
 
     # piping correction factor for length and height
     def get_piping_correction(self):
-        pipe_data = pd.read_excel('vrf_syscurve.xlsx', sheet_name='piping_correction', header=None)
+        pipe_data = pd.read_excel('equipment_spec.xlsx', sheet_name='piping_correction', header=None)
         pipe_data = pipe_data.drop(pipe_data.index[0])
         pipe_data = pd.DataFrame(pipe_data, dtype='float64')
 
