@@ -18,7 +18,7 @@ https://groups.google.com/g/phyvac
 
 ## Validation 検証  
 プログラムの計算の妥当性について検証をおこなっています。  
-[List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents)  
+[List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md)  
 
 ## Update アップデート  
 - 2021/07/14 湿球温度計算の修正（大気圧の単位修正）、CoolingTowerの比エンタルピー単位修正
