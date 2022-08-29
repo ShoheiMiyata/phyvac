@@ -2955,10 +2955,10 @@ class Branch_w: # 水配管の基本的な枝（ポンプ（並列ポンプ（�
     def __init__(self, pump=None, valve=None, kr_eq=0.0, kr_pipe=0.0, actual_head=0.0):
         # pump        :ポンプのオブジェクト。並列ポンプ（バイパス弁付き）のオブジェクトも挿入可能
         # valve       :二方弁のオブジェクト
-        # kr_eq       :機器の圧損係数[Pa/(m3/min)^2]
-        # kr_pipe  　 :配管の圧損係数[Pa/(m3/min)^2]
+        # kr_eq       :機器の圧損係数[kPa/(m3/min)^2]
+        # kr_pipe  　 :配管の圧損係数[kPa/(m3/min)^2]
         # actual_head :実揚程[m]。冷却塔などで水を汲み上げる必要がある場合に用いる
-        # dp          :枝の出入口差圧[Pa]加圧：+, 減圧：-
+        # dp          :枝の出入口差圧[kPa]加圧：+, 減圧：-
         # g           :枝の出入口での流量[m3/min]
         # flag        :計算の順当性確認のためのフラグ
         self.rho = 993.326    # 37℃水の密度[kg/m3]
