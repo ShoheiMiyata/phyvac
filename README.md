@@ -21,6 +21,7 @@ https://groups.google.com/g/phyvac
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md)  
 
 ## Update アップデート  
+- 2022/08/31 Pumpモデルで定義時に性能曲線を図示するよう修正
 - 2022/08/22 VRFモデル、GeoThermalHPモデル、吸収式冷凍機モデルの追加　その他微修正
 - 2021/07/14 湿球温度計算の修正（大気圧の単位修正）、CoolingTowerの比エンタルピー単位修正
 - 2021/06/28 Branch00系の廃止、Branch_wの追加（水系Branch）
