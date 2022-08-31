@@ -6,9 +6,11 @@
 # 空調システムの計算を極力物理原理・詳細な制御ロジックに基づいて行う。
 # ver0.2 20210628
 
-import numpy as np
 import math
+import traceback
+import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy.interpolate import RegularGridInterpolator
 from scipy import optimize
 from sklearn.linear_model import LinearRegression
@@ -397,17 +399,22 @@ class Valve:
 # ポンプ特性と消費電力計算
 class Pump():
     # 定格値の入力
-    def __init__(self, pg=[233,5.9578,-4.95], eg=[0.0099,0.4174,-0.0508], r_ef=0.8):
-        # pg    :圧力-流量(pg)曲線の係数（切片、一次、二次）
-        # eg    :効率-流量(eg)曲線の係数（切片、一次、二次）
-        # r_ef  :定格時の最高効率(本来は計算によって求める？)rated efficiency
-        # inv   :回転数比(0.0~1.0)
-        # dp_p  :ポンプ揚程[kPa]
-        # g_p   :流量[m3/min]
-        # pw_p  :消費電力[kW]
+    def __init__(self, pg=[233,5.9578,-4.95], eg=[0.0099,0.4174,-0.0508], r_ef=0.8, figure=1):
+        # pg     :圧力-流量(pg)曲線の係数（切片、一次、二次）
+        # eg     :効率-流量(eg)曲線の係数（切片、一次、二次）
+        # r_ef   :定格時の最高効率(本来は計算によって求める？)rated efficiency
+        # inv    :回転数比(0.0~1.0)
+        # dp_p   :ポンプ揚程[kPa]
+        # g_p    :流量[m3/min]
+        # pw_p   :消費電力[kW]
         # flag   :計算に問題があったら1、なかったら0
-        # ef    :効率(0.0~1.0)
-        # para  :並列ポンプか否かのフラグ
+        # ef     :効率(0.0~1.0)
+        # para   :並列ポンプか否かのフラグ
+        # figure :1だったらポンプの性能曲線を表示する、1でなかったら表示しない
+        
+        (filename, line_number, function_name, text) = traceback.extract_stack()[-2]
+        self.name = text[:text.find('=')].strip()  # インスタンス名の取得、'__init__'の最初でなければならない
+        
         self.pg = pg
         self.eg = eg
         self.r_ef = r_ef
@@ -418,6 +425,9 @@ class Pump():
         self.pw = 0.0
         self.flag = 0
         self.para = 0
+        
+        if figure == 1:
+            self.figure_curve()
     
     def f2p(self, g): # flow to pressure for pump
         self.g = g
@@ -469,6 +479,29 @@ class Pump():
             self.pw = 0.0
             self.ef = 0.0
             self.flag = 0
+            
+    def figure_curve(self):
+        x_max, _ = quadratic_formula(self.pg[0], self.pg[1], self.pg[2])
+        x = np.linspace(0, x_max * 0.8, 50)
+        y_p = self.pg[0] + self.pg[1] * x + self.pg[2] * x ** 2
+        y_e = self.eg[0] + self.eg[1] * x + self.eg[2] * x ** 2
+        fig, ax1 = plt.subplots()
+        color1 = 'tab:orange'
+        ax1.set_xlabel('Flow [m3/min]')
+        ax1.set_ylabel('Total Head [kPa]', color=color1)
+        ax1.plot(x, y_p, color=color1)
+        ax1.tick_params(axis='y', labelcolor=color1)
+        ax1.set_ylim(0, self.pg[0] + 10)
+
+        ax2 = ax1.twinx()
+        color2 = 'tab:blue'
+        ax2.set_ylabel('Efficiency [-]', color=color2)
+        ax2.plot(x, y_e, color=color2)
+        ax2.tick_params(axis='y', labelcolor=color2)
+        ax2.set_ylim(0, 1)
+        plt.title('{}'.format(self.name))
+
+        return plt.show()
         
         
 # 負荷率-COP曲線に基づく冷凍機COP計算。表は左から右、上から下に負荷率や冷却水入口温度が上昇しなければならない。
