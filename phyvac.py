@@ -2249,8 +2249,8 @@ class W2a_hex():
     
 # ダンパ特性と圧力損失計算
 class Damper():
-    def __init__(self, coef = [[1.0, 0.0000203437802163088], [0.8, 0.0000495885440290287],
-                    [0.6, 0.000143390887269431], [0.4, 0.000508875127863876], [0.2, 0.00351368187709778]]):
+    def __init__(self, coef = [[1.0, 0.0203437802163088], [0.8, 0.0495885440290287],
+                    [0.6, 0.143390887269431], [0.4, 0.508875127863876], [0.2, 3.51368187709778]]):
         # damp  :ダンパ開度[0.0~1.0]
         # dp    :圧力損失[kPa]  # 単位注意
         # g     :流量[m^3/min]
@@ -2262,14 +2262,14 @@ class Damper():
         self.damp = 0
         self.dp = 0
 
-    def f2p(self, damp, g):
+    def f2p(self, g):
         n = len(self.coef)
         self.g = g
-        self.damp = damp
-        if damp >= self.coef[0][0]:
-            self.dp = self.coef[0][1] * self.g ** 2  # [kPa]
-        elif damp <= self.coef[n - 1][0]:
-            self.dp = self.coef[n - 1][1] * self.g ** 2  # [kPa]
+        
+        if self.damp >= self.coef[0][0]:
+            self.dp = -self.coef[0][1] * self.g ** 2  # [kPa]
+        elif self.damp <= self.coef[n - 1][0]:
+            self.dp = -self.coef[n - 1][1] * self.g ** 2  # [kPa]
         else:
             for i in range(1, n):  # 線形補間の上限・下限となる曲線を探す
                 coef_a = self.coef[i - 1]  # higher limit curve
@@ -2278,7 +2278,7 @@ class Damper():
                     break
             a = coef_a[1] * self.g ** 2
             b = coef_b[1] * self.g ** 2
-            self.dp = (a - b) / (coef_a[0] - coef_b[0]) * (self.damp - coef_b[0]) + b
+            self.dp = -((a - b) / (coef_a[0] - coef_b[0]) * (self.damp - coef_b[0]) + b)
         
         if g >= 0:
             self.dp = self.dp
@@ -2287,13 +2287,13 @@ class Damper():
             
         return self.dp
 
-    def p2f(self, damp, dp):
+    def p2f(self, dp):
         n = len(self.coef)
         self.dp = abs(dp)
-        self.damp = damp
-        if damp >= self.coef[0][0]:
+        
+        if self.damp >= self.coef[0][0]:
             self.g = pow(self.dp/self.coef[0][1], 0.5)
-        elif damp <= self.coef[n - 1][0]:
+        elif self.damp <= self.coef[n - 1][0]:
             self.g = pow(self.dp/self.coef[n - 1][1], 0.5)
         else:
             for i in range(1, n):  # 線形補間の上限・下限となる曲線を探す
@@ -2311,6 +2311,28 @@ class Damper():
             self.g = -self.g
             
         return self.g
+    
+    def f2p_co(self): 
+        if self.damp == 0.0:
+            return np.array([0.0, 0.0, -999999999])
+        else:
+            n = len(self.coef)
+
+            if self.damp >= self.coef[0][0]:
+                co = -self.coef[0][1]
+            elif self.damp <= self.coef[n - 1][0]:
+                co = -self.coef[n - 1][1]
+            else:
+                for i in range(1, n):  # 線形補間の上限・下限となる曲線を探す
+                    coef_a = self.coef[i - 1]  # higher limit curve
+                    coef_b = self.coef[i]  # lower limit curve
+                    if coef_b[0] <= self.damp < coef_a[0]:
+                        break
+                a = coef_a[1]
+                b = coef_b[1]
+                co = -((a - b) / (coef_a[0] - coef_b[0]) * (self.damp - coef_b[0]) + b)
+
+            return np.array([0.0, 0.0, co])
 
     
 # ファン特性と消費電力計算
@@ -3239,7 +3261,7 @@ class Branch001: # コンポジションというpython文法を使う
 
 # 空気系
 # ファン・ダンパ・機器が直列に1台以下の枝。デフォルトではファン・ダンパ・機器はなし。
-class Branch100: # コンポジションというpython文法を使う
+class Branch_a: # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
     def __init__(self, fan=None, damper=None, kr_eq=0.0, kr_duct=0.5):
         # fan       :ファンのオブジェクト
@@ -3258,18 +3280,21 @@ class Branch100: # コンポジションというpython文法を使う
     
     def f2p(self, g): # 流量から圧力差を求める
         self.g = g
-        # print("test3")
+        self.flag = 0
+        
         if self.fan == None and self.damper == None: # ファンもダンパもない場合
             if self.g > 0:
                 self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2
             else: # 逆流する場合
                 self.dp = self.kr_duct*self.g**2 + self.kr_eq*self.g**2
+                self.flag = 1
         
         elif self.fan == None: # ダンパがある場合
             if self.g > 0:
                 self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.damper.f2p(self.g)
             else: # 逆流する場合
                 self.dp = self.kr_duct*self.g**2 + self.kr_eq*self.g**2 - self.damper.f2p(self.g)
+                self.flag = 2
         
         elif self.damper == None: # ファンがある場合
             if self.fan.inv == 0.0: #　ファン停止時の対応
@@ -3278,11 +3303,11 @@ class Branch100: # コンポジションというpython文法を使う
                 self.fan.f2p(self.g)
             else:
                 if self.g > 0:
-                    print("test2")
                     self.dp = - self.kr_duct*self.g**2 - self.kr_eq*self.g**2 + self.fan.f2p(self.g)
                 else: # 逆流する場合
                     self.g = 0.0
                     self.dp = self.fan.f2p(self.g)
+                    self.flag = 3
         
         else: # ファンもダンパもある場合
             if self.fan.inv == 0.0: #　ファン停止時の対応
@@ -3295,6 +3320,7 @@ class Branch100: # コンポジションというpython文法を使う
                 else: # 逆流する場合
                     self.g = 0.0
                     self.dp = self.fan.f2p(self.g)
+                    self.flag = 4
         
         return self.dp
         
@@ -3309,7 +3335,7 @@ class Branch100: # コンポジションというpython文法を使う
                 [co_0, co_1, co_2] = np.array([-self.dp, 0, self.kr_duct+self.kr_eq]) # 二次関数の係数の算出
                 [g, flag] = quadratic_formula(co_0, co_1, co_2)
                 self.g = -g
-                self.flag = 3
+                self.flag = 1
             
         elif self.fan == None: # ダンパがある場合
             if -self.dp > 0:
@@ -3319,16 +3345,18 @@ class Branch100: # コンポジションというpython文法を使う
                 [co_0, co_1, co_2] = self.damper.f2p_co() + np.array([-self.dp, 0, self.kr_duct+self.kr_eq])
                 [g, flag] = quadratic_formula(co_0, co_1, co_2)
                 self.g = -g
-                self.flag = 3
+                self.damper.f2p(self.g)
+                self.flag = 2
         
         elif self.damper == None: # ファンがある場合
             [co_0, co_1, co_2] = self.fan.f2p_co() + np.array([-self.dp, 0, -self.kr_duct-self.kr_eq])
             if self.fan.inv == 0: #　ファン停止時の対応
                 self.g = 0.0
                 self.fan.f2p(self.g)
-                self.flag = 4
+                self.flag = 3
             else:
                 [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
+                self.fan.f2p(self.g)
                 
         else: # ファンもダンパもある場合
             [co_0, co_1, co_2] = self.fan.f2p_co() + self.damper.f2p_co() + np.array([-self.dp, 0, -self.kr_duct-self.kr_eq])
@@ -3339,10 +3367,9 @@ class Branch100: # コンポジションというpython文法を使う
                 self.flag = 4
             else:
                 [self.g, self.flag] = quadratic_formula(co_0, co_1, co_2)
-            
-        if self.fan != None:
-            self.fan.g = self.g
-            
+                self.fan.f2p(self.g)
+                self.damper.f2p(self.g)
+
         return self.g
 
 
