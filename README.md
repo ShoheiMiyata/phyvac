@@ -9,7 +9,7 @@ python+hvac => phyvac [fívək | fái-]
 [流量バランス計算(空気側)：1室、OAファン、RAファン、EAファン]()  
 
 ## Question and Discussion
-分からないことや気になることがありましたら下記リンクに投稿して議論しましょう  
+Please post anything you care to know!  
 https://groups.google.com/g/phyvac
 
 
@@ -17,7 +17,7 @@ https://groups.google.com/g/phyvac
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/API_Document_List.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/API%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E3%83%AA%E3%82%B9%E3%83%88.md)  
 
 ## Validation  
-プログラムの計算の妥当性について検証をおこなっています。  
+The programs are validated based on   
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md)  
 
 ## License
