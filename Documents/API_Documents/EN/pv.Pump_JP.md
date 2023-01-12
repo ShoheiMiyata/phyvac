@@ -44,7 +44,7 @@ import phyvac as pv # Import needed module
 
 CP1 = pv.Pump() # Definition of CP1 (default values are used for parameters)
 CP1.inv = 0.8 # Input inv
-CP1.f2p(g=1.5) # Calculate the pump's lift when inv = 0.8 and flow rate = 0.8
+CP1.f2p(g=1.5) # Calculate the pump's lift when inv = 0.8 and flow rate = 1.5
 CP1.cal() # Calculate the electricity consumption under the conditions above
 
 print(CP1.g, CP1.dp, CP1.pw)
