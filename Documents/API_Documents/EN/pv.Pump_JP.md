@@ -14,41 +14,41 @@
 |r_ef|float|Rated efficiency(0.0~1.0)|
  
 ## pv.Pump.f2p(g)
-gに基づいて揚程を算出する
+Calculate the pump's lift by g
   
 ### returns:
-揚程dp
+Pump's lift dp
 
 ## pv.Pump.p2f(dp)
-dpに基づいて流量を算出する
+Calculate the flow rate by dp
   
 ### returns:
-流量g
+Flow rate g
   
 ## pv.Pump.f2p_co()
-揚程を表す流量の関数の係数を出力する
+Output the coefficients of the function of the flow rate that represents pump's lift
   
 ### returns:
-リスト[切片, 1次, 2次]
+List [slicing, primary, secondary]
   
 ## pv.Pump.cal()
-消費電力を算出する
+Calculate the electricity consumption
   
 ### returns:
-消費電力pw
+Electricity consumption pw
   
   
-## サンプルコード  
+## Sample codes
 ```
-import phyvac as pv # 必要なモジュールのインポート
+import phyvac as pv # Import needed module
 
-CP1 = pv.Pump() # CP1の定義(特性はデフォルト値を利用)
-CP1.inv = 0.8 # invの入力
-CP1.f2p(g=1.5) # invが0.8, 流量1.5 m3/min時の揚程を算出
-CP1.cal() # 上記条件下での消費電力を算出
+CP1 = pv.Pump() # Definition of CP1 (default values are used for parameters)
+CP1.inv = 0.8 # Input inv
+CP1.f2p(g=1.5) # Calculate the pump's lift when inv = 0.8 and flow rate = 0.8
+CP1.cal() # Calculate the electricity consumption under the conditions above
 
 print(CP1.g, CP1.dp, CP1.pw)
 ```
-> 結果  
+> Result 
 > 1.5 145.13186000000002 5.978149443740741
   
