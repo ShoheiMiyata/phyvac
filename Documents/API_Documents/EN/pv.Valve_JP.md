@@ -8,42 +8,42 @@ Characteristics of valves
 |cv_max|float|Coefficient of flow rate|
 |r|float|Range ability。最も弁を閉じたときの流量比の逆数|
 |vlv|float|Valve opening degree(0.0~1.0)|
-|dp|float|圧力損失 [kPa]|
-|g|float|流量[m3/min]|
+|dp|float|Pressure loss [kPa]|
+|g|float|Flow rate[m3/min]|
   
 ## pv.Pump.f2p(g)
-gに基づいて揚程を算出する
+Calculate pump's lift by g
   
 ### returns:
-圧力損失dp
+Pressure loss dp
   
 ## pv.Pump.p2f(dp)
-dpに基づいて流量を算出する
+Calculate flow rate by dp
   
 ### returns:
-流量g
+Flow rate g
   
 ## pv.Pump.f2p_co()
-圧力損失を表す流量の関数の係数を出力する
+Output the function of flow rate that represents pressure loss
   
 ### returns:
-リスト[切片, 1次, 2次]
+List[slicing, primary, secondary]
   
-## サンプルコード  
+## Sample codes  
 ```
-import phyvac as pv # 必要なモジュールのインポート
+import phyvac as pv
 Valve1 = pv.Valve()
 Valve1.vlv = 0.6
 Valve1.f2p(1.3)
 print(Valve1.dp)
 ```
-> 結果  
+> Result
 > -50.898105429006975
   
 ```
-Valve1.vlv = 0.0 # 全閉時
-Valve1.f2p(0.5) # 仮に流量0.5を与える
+Valve1.vlv = 0.0 # Valves are totally closed
+Valve1.f2p(0.5) # Flow rate = 0.5
 print(Valve1.dp)
 ```
-> 結果(全閉時は常に圧力損失-99999999 kPaを出力する(無限大を模擬))  
+> Result (Output: pressure loss = -99999999 when valves are totally closed (infinity))
 > -99999999
