@@ -5,14 +5,14 @@
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
-|pg|list|pressure-flow(pg)coefficient of curve [切片、一次、二次]|
-|eg|list|効率-流量(eg)曲線の係数 [切片、一次、二次]|
-|inv|float|インバータ周波数比(0.0~1.0)|
-|dp|float|ポンプ揚程 [kPa]|
-|g|float|流量[m3/min]|
-|pw|float|消費電力[kW]|
-|r_ef|float|定格効率(0.0~1.0)|
-  
+|pg|list|Pressure-Flow Rate (pg) coefficient of curve [slicing, primary, secondary]|
+|eg|list|Efficiency - Flow Rate (eg) coefficient of curve [slicing, primary, secondary]|
+|inv|float|Inverter Frequency Ratio (0.0~1.0)|
+|dp|float|Pump's lift [kPa]|
+|g|float|Flow Rate[m3/min]|
+|pw|float|Electricity Consumption[kW]|
+|r_ef|float|Rated efficiency(0.0~1.0)|
+ 
 ## pv.Pump.f2p(g)
 gに基づいて揚程を算出する
   
