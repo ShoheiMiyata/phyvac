@@ -1,13 +1,13 @@
 ## pv.Valve(cv_max=800, r=100)
-弁特性  
+Characteristics of valves  
 <img src="https://user-images.githubusercontent.com/27459538/112825297-8db05500-90c6-11eb-996e-51355f95a5f7.png" width=40%>
   
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
-|cv_max|float|流量係数|
-|r|float|レンジアビリティ。最も弁を閉じたときの流量比の逆数|
-|vlv|float|弁開度(0.0~1.0)|
+|cv_max|float|Coefficient of flow rate|
+|r|float|Range ability。最も弁を閉じたときの流量比の逆数|
+|vlv|float|Valve opening degree(0.0~1.0)|
 |dp|float|圧力損失 [kPa]|
 |g|float|流量[m3/min]|
   
