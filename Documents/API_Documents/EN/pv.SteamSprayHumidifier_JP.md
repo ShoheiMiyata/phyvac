@@ -1,5 +1,5 @@
 ## pv.SteamSprayHumidifier(spec_table=pd.read_excel('EquipmentSpecTable.xlsx', sheet_name='SteamSprayHumidifier', header=None)
-蒸気噴霧式加湿器の出口状態の計算
+Calculation of outlet conditions for steam atomizing humidifiers
 
 ### Parameters:
 |  name  |  type  | description |
