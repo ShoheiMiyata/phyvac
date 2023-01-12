@@ -1,6 +1,6 @@
 ### APIドキュメントリスト
 #### 機器  
-- [Pump (ポンプ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/EN/pv.Pump_JP.md)
+- [Pump (ポンプ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Pump_JP.md)
 - [Pump_para (並列ポンプ複数台とバイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Pump_para_JP.md)
 - [Valve (弁)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Valve_JP.md)
 - [Fan (ファン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Fan_JP.md)  
