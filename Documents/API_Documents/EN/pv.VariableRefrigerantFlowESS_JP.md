@@ -2,116 +2,116 @@
 
 省エネルギー基準に基づいたビルマルモデル
 
-能力・消費電力・COPの計算
+Calculating cooling capacity, power consumption, COP
 
-計算できる範囲: 外気乾球温度(冷房, 15～43℃), 外気湿球温度(暖房, -20～15℃), 運転時部分負荷率(0.3～1)
+Calculation range: outdoor dry bulb temperature(cooling, 15～43℃), outdoor wet bulb temperature(heating, -20～15℃), operating partial load ratio(0.3～1)
 
 ### Parameters:
 
-定格条件:
+Rated conditions:
 
-| name                | type  | description           |
-| ------------------- | ----- | --------------------- |
-| rated_capacity_c    | float | 定格冷房能力 [kW]     |
-| rated_input_power_c | float | 定格冷房消費電力 [kW] |
-| rated_capacity_h    | float | 定格暖房能力 [kW]     |
-| rated_input_power_h | float | 定格暖房消費電力 [kW] |
+| name                | type  | description                                                   |
+| ------------------- | ----- | ------------------------------------------------------------- |
+| rated_capacity_c    | float | Rated cooling capacity [kW]                                   |
+| rated_input_power_c | float | Rated consumption of electricity for cooling [kW]             |
+| rated_capacity_h    | float | Rated heating capacity [kW]                                   |
+| rated_input_power_h | float | Rated consumption of electricity for heating [kW]             |
 
-計算条件:
+Calculation conditions:
 
-| name            | type  | description               |
-| --------------- | ----- | ------------------------- |
-| odb             | float | 外気乾球温度 [℃]          |
-| owb             | float | 外気湿球温度 [℃]          |
-| indoor_capacity | float | 室内ユニット冷房(暖房)能力 [kW] |
+| name            | type  | description                                 |
+| --------------- | ----- | ------------------------------------------- |
+| odb             | float | outdoor dry bulb temperature [℃]           |
+| owb             | float | outdoor wet bulb temperature [℃]           |
+| indoor_capacity | float | Indoor unit cooling (heating) capacity [kW] |
 
 ## pv.VariableRefrigerantFlowESS.cal_c(odb, indoor_capacity)
 
-室内ユニットの合計冷房能力(indoor_capacity)と外気乾球温度(odb)から、運転時室外機の冷凍能力・電力消費量・COPを算出する
+Calculate the cooling capacity of outdoor unit, power consumption, COP when opterating based on total cooling capacity of indoor unit and outdoor dry temperature
 
 ### returns:
 
-冷凍能力(capacity)・電力消費量(input_power)・COP(cop)
+Cooling capacity(capacity)・power consumption(input_power)・COP(cop)
 
 ## pv.VariableRefrigerantFlowESS.cal_h(owb, indoor_capacity)
 
-室内ユニットの合計暖房能力(indoor_capacity)と外気湿球温度(owb)により、運転時室外機の暖房能力・電力消費量・COPを算出する
+Calculate the heating capacity, electricity consumption, and COP of the outdoor unit during operation based on the total heating capacity of the indoor unit (indoor_capacity) and outdoor wet bulb temperature (owb)
 
 ### returns:
 
-暖房能力(capacity)・電力消費量(input_power)・COP(cop)
+Heating capacity (capacity), power consumption (input_power), COP (cop)
 
-## **サンプルコード**
+## **Sample codes**
 
 ```python
-import phyvac as pv   # 必要なモジュールのインポート
+import phyvac as pv
 
-# 機器vrfの定義
+# Definition of vrf
 vrf = pv.VariableRefrigerantFlowESS(rated_capacity_c=31.6548, rated_input_power_c=9.73, rated_capacity_h=37.5, rated_input_power_h=10.59)  
-# 冷房の計算
-# 定格条件
+# Calculation of cooling
+# Rated conditions
 vrf.cal_c(odb=35, indoor_capacity=31.6548) 
 print(vrf.capacity_c, vrf.input_power_c, vrf.cop_c)
 ```
 
-> 結果
+> Result
 >
 > 31.654799999999998 9.73 3.253319630010277
 
 ```python
-# 室内機の容量が室外機より小さい場合
+# When the capacity of indoor unit is smaller than that of outdoor unit
 vrf.cal_c(odb=35, indoor_capacity=31.6548*0.8)
 print(vrf.capacity_c, vrf.input_power_c, vrf.cop_c)
 ```
 
-> 結果
+> Result
 >
 > 25.323840000000004 6.815787160000003 3.715468133837676
 
 ```python
-# 外気乾球温度が変化し、室内機の容量が室外機より小さい場合
+# When the outdoor dry bulb temperature changes and the capacity of the indoor unit is smaller than that of the outdoor unit
 vrf.cal_c(odb=32, indoor_capacity=31.6548*0.7)
 print(vrf.capacity_c, vrf.input_power_c, vrf.cop_c)
 vrf.cal_c(odb=40, indoor_capacity=31.6548)
 print(vrf.capacity_c, vrf.input_power_c, vrf.cop_c)
 ```
 
-> 結果
+> Result
 >
 > 22.15836 5.353946481437806 4.138696581451326
 >
 > 31.259114999999998 10.351747000000001 3.0196946467103567
 
 ```python
-# 暖房の計算
-# 定格条件
+# Calculation of heating
+# Rated conditions
 vrf.cal_h(owb=6, indoor_capacity=37.5)
 print(vrf.capacity_h, vrf.input_power_h, vrf.cop_h)
 ```
 
-> 結果
+> Result
 >
 > 37.5 10.59 3.5410764872521248
 
 ```python
-# 室内機の容量が室外機より小さい場合
+# When the capacity of indoor unit is smaller than that of outdoor unit
 vrf.cal_h(owb=6, indoor_capacity=37.5*0.7)
 print(vrf.capacity_h, vrf.input_power_h, vrf.cop_h)
 ```
 
-> 結果
+> Result
 >
 > 26.25 6.238431329999999 4.207788562769994
 
 ```python
-# 外気湿球温度が変化し、室内機の容量が室外機より小さい場合
+# When the outdoor wet bulb temperature changes and the capacity of the indoor unit is smaller than that of the outdoor unit
 vrf.cal_h(owb=10, indoor_capacity=37.5*0.6) 
 print(vrf.capacity_h, vrf.input_power_h, vrf.cop_h)
 vrf.cal_h(owb=-10, indoor_capacity=37.5)  
 print(vrf.capacity_h, vrf.input_power_h, vrf.cop_h)
 ```
 
-> 結果
+> Result
 >
 > 22.5 4.8032810492285725 4.684298039069272
 >
