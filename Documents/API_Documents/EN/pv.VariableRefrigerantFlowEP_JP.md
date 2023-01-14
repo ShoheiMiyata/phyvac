@@ -97,7 +97,7 @@ print(vrf.cal_loss(iwb=19, odb=35, indoor_capacity=31.6548))
 # When the indoor unit capacity is smaller than the outdoor unit capacity
 print(vrf.cal_pl(iwb=25, odb=35, indoor_capacity=25))
 print(vrf.cal_loss(iwb=25, odb=35, indoor_capacity=25))
-# この場合、その温度条件下の室外機冷凍能力は配管損失を考えて計算しても、要求された室内容量を提供できるため、同じ計算結果になるのである。
+# In this case, the outdoor unit cooling capacity under those temperature conditions can be calculated considering the piping losses and still provide the required indoor capacity, so the calculation results are the same.
 ```
 
 > Result
