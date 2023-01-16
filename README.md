@@ -20,9 +20,6 @@ https://groups.google.com/g/phyvac
 The programs are validated based on evaluation prodcedure provided by SHASE (The Society of Heating, Air-Conditioning and Sanitary Engineers in Japan).  
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md)  
 
-## License
-The phyvac is available under a 3-clause BSD-license.
-
 ## Update  
 - 2022/08/31 Pumpモデルで定義時に性能曲線を図示するよう修正
 - 2022/08/22 VRFモデル、GeoThermalHPモデル、吸収式冷凍機モデルの追加　その他微修正
