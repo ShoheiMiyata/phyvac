@@ -6,9 +6,9 @@
 - [Fan](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Fan_JP.md)  
 - [SprayHumidifier](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.SprayHumidifier_JP.md) 
 - [SteamSprayHumidifier](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.SteamSprayHumidifier_JP.md) 
-- [AbsorptionChillerESS (absorption chiller based on Energy Saving )](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.AbsorptionChillerESS_JP.md) 
+- [AbsorptionChillerESS (absorption chiller based on energy conservation standards)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.AbsorptionChillerESS_JP.md) 
 - [VariableRefrigerantFlowEP (VRF based on EnergyPlus)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.VariableRefrigerantFlowEP_JP.md)
-- [VariableRefrigerantFlowESS (ビル用マルチエアコン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.VariableRefrigerantFlowESS_JP.md)
+- [VariableRefrigerantFlowESS (VRF based on energy conservation standards)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.VariableRefrigerantFlowESS_JP.md)
 #### Branch（pipe, duct）  
 - [Branch_w (ポンプ、機器、弁を有する基本的な枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Branch_w_JP.md)
 - [Branch100（ポンプ、機器、バイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Branch12_JP.md)
