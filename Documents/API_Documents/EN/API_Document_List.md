@@ -1,20 +1,20 @@
 ### API Document List
 #### Equipment  
-- [Pump (ポンプ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Pump_JP.md)
-- [Pump_para (並列ポンプ複数台とバイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Pump_para_JP.md)
-- [Valve (弁)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Valve_JP.md)
-- [Fan (ファン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Fan_JP.md)  
-- [SprayHumidifier (気化式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.SprayHumidifier_JP.md) 
-- [SteamSprayHumidifier (蒸気噴霧式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.SteamSprayHumidifier_JP.md) 
-- [AbsorptionChillerESS (吸収式冷温水発生機)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.AbsorptionChillerESS_JP.md) 
-- [VariableRefrigerantFlowEP (ビル用マルチエアコン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.VariableRefrigerantFlowEP_JP.md)
+- [Pump](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Pump_JP.md)
+- [Pump_para (parallel pumps)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Pump_para_JP.md)
+- [Valve ](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Valve_JP.md)
+- [Fan](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Fan_JP.md)  
+- [SprayHumidifier](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.SprayHumidifier_JP.md) 
+- [SteamSprayHumidifier](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.SteamSprayHumidifier_JP.md) 
+- [AbsorptionChillerESS (absorption chiller based on Energy Saving )](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.AbsorptionChillerESS_JP.md) 
+- [VariableRefrigerantFlowEP (VRF based on EnergyPlus)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.VariableRefrigerantFlowEP_JP.md)
 - [VariableRefrigerantFlowESS (ビル用マルチエアコン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.VariableRefrigerantFlowESS_JP.md)
 #### Branch（pipe, duct）  
 - [Branch_w (ポンプ、機器、弁を有する基本的な枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Branch_w_JP.md)
 - [Branch100（ポンプ、機器、バイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.Branch12_JP.md)
 #### Control  
-- [PID (PID制御)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.PID_JP.md)
-- [UnitNum (台数制御)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.UnitNum_JP.md)
+- [PID](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.PID_JP.md)
+- [UnitNum (unit number control)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.UnitNum_JP.md)
 
 #### Psychrometric Functions  
 - [tdb_rh2tdp (乾球温度, 相対湿度→露点温度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/pv.tdb_rh2tdp_JP.md)
