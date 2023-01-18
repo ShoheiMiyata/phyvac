@@ -23,7 +23,8 @@
 ### 他ツールとの比較  
 
 <img src="https://user-images.githubusercontent.com/27459538/213061354-3a17f7cb-312a-48c2-9607-254c4e3e5a01.png" width=70%>
-<img src="https://user-images.githubusercontent.com/27459538/185287500-6e30b1e6-f6e6-4463-96bc-c7445490ab39.png" width=70%>
-<img src="https://user-images.githubusercontent.com/27459538/185287563-627922e5-86df-48e1-8d95-626b2768fffd.png" width=70%>
-<img src="https://user-images.githubusercontent.com/27459538/185287572-d7cf802b-9274-4579-a958-8ddcf4f4775e.png" width=70%>  
-周波数比が50％以下のケースは効率に乖離があるものの、軸動力・消費電力の絶対値の誤差としては大きくない。
+<img src="https://user-images.githubusercontent.com/27459538/213061465-ecea4466-cde1-451f-8e3e-00230826ca39.png" width=70%> 
+- 能力はほぼ一致している。  
+- ケースE-AHP110-c～ E-AHP110-ｈは冷水/温水出口温度が特性曲線と異なるため精度が低下した。  
+- 暖房ケースは外気温度が外挿となるケースが多く、精度が低下  
+- 冷温水出口温度と外挿対応がプログラムの改善の方針  
