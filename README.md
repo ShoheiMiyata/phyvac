@@ -17,7 +17,8 @@ https://groups.google.com/g/phyvac
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/EN/API_Document_List.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/API%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E3%83%AA%E3%82%B9%E3%83%88.md)  
 
 ## Validation  
-The programs are validated based on evaluation prodcedure provided by SHASE (The Society of Heating, Air-Conditioning and Sanitary Engineers in Japan).  
+The programs are validated based on Guideline of Test Procedure for the Evaluation of Building Energy Simulation Tool (SHASE-G 0023-2022) provided by SHASE (The Society of Heating, Air-Conditioning and Sanitary Engineers in Japan).  
+本プログラムは、空気調和・衛生工学会（SHASE）が提供する建物エネルギーシミュレーションツールの評価手法に関するガイドライン（SHASE-G 0023-2022）に基づき検証されています。  
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md)  
 
 ## Update  
