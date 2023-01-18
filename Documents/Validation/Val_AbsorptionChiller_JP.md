@@ -14,11 +14,9 @@
   
   
 ### 他ツールとの比較  
-<img src="https://user-images.githubusercontent.com/27459538/213061354-3a17f7cb-312a-48c2-9607-254c4e3e5a01.png" width=70%>  
-<img src="https://user-images.githubusercontent.com/27459538/213061465-ecea4466-cde1-451f-8e3e-00230826ca39.png" width=70%>  
+<img src="https://user-images.githubusercontent.com/27459538/213089533-83298e40-fc38-4df4-9095-a322ab6b522b.png" width=70%>  
+<img src="https://user-images.githubusercontent.com/27459538/213089626-2686a82c-1ee1-46ab-9550-50c01ee42ca2.png" width=70%>  
+<img src="https://user-images.githubusercontent.com/27459538/213089666-e5dafae7-96ce-480d-aa89-60c008704df8.png" width=70%>  
 
-- 能力はほぼ一致している。
-- ケースE-AHP110-c～ E-AHP110-ｈは冷水/温水出口温度が特性曲線と異なるため精度が低下した。
-- 暖房ケースは外気温度が外挿となるケースが多く、精度が低下
-- 冷温水出口温度と外挿対応がプログラムの改善の方針
-
+- 概ねメーカ提供値と同じ傾向
+- 本モデルは消費電力が運転条件によって変化するモデルではない
