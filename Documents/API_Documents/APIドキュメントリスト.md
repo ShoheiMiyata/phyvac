@@ -9,11 +9,13 @@
 - [Pump (ポンプ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Pump_JP.md)
 - [Pump_para (並列ポンプ複数台とバイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Pump_para_JP.md)
 - [Valve (弁)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Valve_JP.md)
+- [HEX_w2w（水-水プレート式熱交換器)]
+- [CoolingTower (冷却塔)]
+- [CoolingTower_closed (密閉式冷却塔)]
 - [AHU (エアハンドリングユニット）]
 - [AHU_simple (簡略AHU)]
 - [Fan (ファン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Fan_JP.md)  
 - [Damper (ダンパ)]
-- [HEX_w2w（水-水プレート式熱交換器)]
 - [Coil (コイル)]
 - [SprayHumidifier (気化式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SprayHumidifier_JP.md) 
 - [SteamSprayHumidifier (蒸気噴霧式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SteamSprayHumidifier_JP.md) 
