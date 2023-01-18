@@ -1,14 +1,22 @@
 ### APIドキュメントリスト
 #### 機器  
+- [Chiller]
+- [AirSourceHeatPump (空冷ヒートポンプ)]
+- [GeoThermalHeatPump_LCEM (地中熱ヒートポンプ LCEMモデル)]
+- [AbsorptionChillerESS (吸収式冷温水発生機 省エネ基準モデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.AbsorptionChillerESS_JP.md) 
+- [VariableRefrigerantFlowEP (ビル用マルチエアコン EnergyPlusモデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.VariableRefrigerantFlowEP_JP.md)
+- [VariableRefrigerantFlowESS (ビル用マルチエアコン 省エネ基準モデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.VariableRefrigerantFlowESS_JP.md)
 - [Pump (ポンプ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Pump_JP.md)
 - [Pump_para (並列ポンプ複数台とバイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Pump_para_JP.md)
 - [Valve (弁)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Valve_JP.md)
 - [Fan (ファン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Fan_JP.md)  
+- [Damper]
+- [HEX_w2w（水-水プレート式熱交換器)]
+- [Coil (コイル)]
 - [SprayHumidifier (気化式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SprayHumidifier_JP.md) 
 - [SteamSprayHumidifier (蒸気噴霧式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SteamSprayHumidifier_JP.md) 
-- [AbsorptionChillerESS (吸収式冷温水発生機)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.AbsorptionChillerESS_JP.md) 
-- [VariableRefrigerantFlowEP (ビル用マルチエアコン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.VariableRefrigerantFlowEP_JP.md)
-- [VariableRefrigerantFlowESS (ビル用マルチエアコン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.VariableRefrigerantFlowESS_JP.md)
+- [TES (蓄熱槽)]
+
 #### Branch（配管・ダクト枝）  
 - [Branch_w (ポンプ、機器、弁を有する基本的な枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch_w_JP.md)
 - [Branch100（ポンプ、機器、バイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch12_JP.md)
