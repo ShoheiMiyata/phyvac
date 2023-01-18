@@ -1,4 +1,4 @@
-## ポンプ単体機器モジュールの検証
+## ポンプ単体機器クラスの検証
 ### テストケースと計算結果  
 <img src="https://user-images.githubusercontent.com/27459538/185287282-5a31c119-d291-45f4-86b8-23640bb0932d.png" width=70%>
 
