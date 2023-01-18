@@ -1,6 +1,6 @@
 ## 空気熱源ヒートポンプ単体機器クラスの検証
 ### テストケースと計算結果  
-|Case No.|入力||制御目標値|環境条件|出力(参考)|計算結果| |
+|Case No.|入力| |制御目標値|環境条件|出力(参考)|計算結果| |
 |:----|:----|:----|:----|:----|:----|:----|:----|
 | |冷温水流量 [%]|冷温水入口温度 [℃]|冷温水出口温度 [℃]|外気温度 [℃]|負荷率 [%]|能力 [kW]|消費電力 [kW]|
 |E-AHP100-c|100|12|7|35℃DB|100|299.9967|99.59889|
@@ -21,7 +21,8 @@
 
 
 ### 他ツールとの比較  
-<img src="https://user-images.githubusercontent.com/27459538/185287422-52e5d842-080f-430b-9338-aa06b5a7ba54.png" width=70%>
+
+<img src="https://user-images.githubusercontent.com/27459538/213061354-3a17f7cb-312a-48c2-9607-254c4e3e5a01.png" width=70%>
 <img src="https://user-images.githubusercontent.com/27459538/185287500-6e30b1e6-f6e6-4463-96bc-c7445490ab39.png" width=70%>
 <img src="https://user-images.githubusercontent.com/27459538/185287563-627922e5-86df-48e1-8d95-626b2768fffd.png" width=70%>
 <img src="https://user-images.githubusercontent.com/27459538/185287572-d7cf802b-9274-4579-a958-8ddcf4f4775e.png" width=70%>  
