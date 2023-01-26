@@ -1,5 +1,5 @@
 ## pv.tdb_rh2tdp(tdb, rh)
-乾球温度[&deg;C]と相対湿度[%]から露点温度[&deg;C]を算出する関数    
+Function to calculate dew point temperature [&deg;C] from dry bulb temperature [&deg;C] and relative humidity [%].   
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
