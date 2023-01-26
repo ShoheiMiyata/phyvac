@@ -20,6 +20,7 @@ The number of units
   
 ## Sample codes
 Target system：System with 2 pumps; initial 1 unit; increasing steps
+
 <img src="https://user-images.githubusercontent.com/27459538/112746375-55871480-8fe9-11eb-8b22-dee30ced54fb.png" width=40%>
 
   
@@ -50,9 +51,11 @@ ax.set_xlabel('calstep')
 ax.set_ylabel("num,flow") 
 ```
 > Result
+> 
 > <img src="https://user-images.githubusercontent.com/27459538/112747216-cda40900-8fee-11eb-839b-52a34299483a.png" width=40%>
   
 Target system: 3 pumps, 3 initial values, sample of reduced stages  
+
 <img src="https://user-images.githubusercontent.com/27459538/112747245-00e69800-8fef-11eb-86c7-ad7a30870d61.png" width=40%>
   
 ```
@@ -84,4 +87,5 @@ ax.set_xlabel('calstep')
 ax.set_ylabel("num,flow") 
 ```
 > Result
+> 
 > <img src="https://user-images.githubusercontent.com/27459538/112747511-fa592000-8ff0-11eb-8a52-e67736ed8867.png" width=40%>
