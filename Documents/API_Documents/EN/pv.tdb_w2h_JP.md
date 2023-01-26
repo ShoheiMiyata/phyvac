@@ -1,15 +1,15 @@
 ## pv.tdb_w2h(tdb, w)
-乾球温度[&deg;C]と絶対湿度[kg/kg(DA)]から比エンタルピー[kJ/kg(DA)]を算出する関数    
+Function to calculate specific enthalpy [kJ/kg(DA)] from dry bulb temperature [&deg;C] and absolute humidity [kg/kg(DA)    
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
-|tdb|float|乾球温度[&deg;C]|
-|w|float|絶対湿度[kg/kg(DA)]|
+|tdb|float|Dry Bulb Temperature[&deg;C]|
+|w|float|Absolute humidity[kg/kg(DA)]|
   
 ### returns:
-比エンタルピー[kJ/kg(DA)]
+Specific enthalpy[kJ/kg(DA)]
   
-## サンプルコード  
+## Sample Codes
 ```
 import phyvac as pv
 
