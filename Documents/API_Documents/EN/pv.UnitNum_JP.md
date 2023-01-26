@@ -1,5 +1,5 @@
 ## pv.UnitNum(thre_up=[0.5,1.0], thre_down=[0.4,0.9], t_wait=15, num=1)
-Number control (controls the number of pumps and chillers based on the flow rate g. However, g does not necessarily have to be the flow rate. However, g does not necessary) 
+Number control (controls the number of pumps and chillers based on the flow rate g. However, g does not necessarily have to be the flow rate. However, g does not necessary) /n
 <img src="https://user-images.githubusercontent.com/27459538/112745838-43f03d80-8fe6-11eb-8d2b-7ba1e58a3cae.png" width=40%>
   
 ### Parameters:
