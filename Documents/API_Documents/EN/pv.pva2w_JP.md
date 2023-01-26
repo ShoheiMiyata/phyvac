@@ -1,14 +1,14 @@
 ## pva2w(pva)
-蒸気圧[kPa]から絶対湿度[kg/kg(DA)]を算出する関数    
+Function to calculate absolute humidity [kg/kg(DA)] from vapor pressure [kPa]
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
-|pva|float|蒸気圧[kPa]|
+|pva|float|Steam pressure[kPa]|
   
 ### returns:
-絶対湿度[kg/kg(DA)]
+Absolute humidity[kg/kg(DA)]
   
-## サンプルコード  
+## Sample codes  
 ```
 import phyvac as pv
 
