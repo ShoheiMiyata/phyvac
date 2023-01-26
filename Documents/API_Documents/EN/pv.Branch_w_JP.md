@@ -1,6 +1,6 @@
 ## pv.Branch_w(pump=None, valve=None, kr_eq=0.0, kr_pipe=0.0)
-水配管の基本的な枝  
-ポンプ（並列ポンプ（バイパス弁付き）ユニットも可）、弁、機器が直列に並んだ基本的な枝  
+Basic branches of water piping   
+Basic branch with pumps (parallel pump (with bypass valve) units are acceptable), valves, and equipment in series
   
 <img src="https://user-images.githubusercontent.com/27459538/124419774-2545d380-dd99-11eb-88d9-2113fe5dac7d.png" width=30%>
 
@@ -8,12 +8,12 @@
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
-|pump|object|ポンプのオブジェクト。pump_paraも可|
-|pump|object|二方弁のオブジェクト|
-|kr_eq|float|機器の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
-|kr_pipe|float|管の圧力損失 \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
-|g|float|流量 \[m<sup>3</sup>/min] |
-|dp|float|枝の出入口圧力差 \[kPa] 流れの向きに対して加圧：+, 減圧：- |
+|pump|object|Pump's object 。pump_para is also acceptable|
+|pump|object|Two-way valve object|
+|kr_eq|float|Equipment pressure drop \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
+|kr_pipe|float|Pipe pressure drop \[kPa/(m<sup>3</sup>/min)<sup>2</sup>]|
+|g|float|Flow rate \[m<sup>3</sup>/min] |
+|dp|float|Branch inlet/outlet pressure difference \[kPa] Against flow direction: Pressurization: +, Depressurization: - |
   
 ## pv.Branch_w.f2p(g)
 流量から圧力差を求める
