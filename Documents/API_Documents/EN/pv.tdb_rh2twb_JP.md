@@ -1,15 +1,15 @@
 ## pv.tdb_rh2twb(tdb, rh)
-乾球温度[&deg;C]と相対湿度[%]から湿球温度[&deg;C]を算出する関数    
+Function to calculate wet bulb temperature [&deg;C] from dry bulb temperature [&deg;C] and relative humidity [%].
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
-|tdb|float|乾球温度[&deg;C]|
-|rh|float|相対湿度[%] (0.0~100.0)|
+|tdb|float|Dry Bulb Temperature[&deg;C]|
+|rh|float|Relative humidity[%] (0.0~100.0)|
   
 ### returns:
-湿球温度[&deg;C]
+Wet bulb temperature[&deg;C]
   
-## サンプルコード  
+## Sample Codes  
 ```
 import phyvac as pv
 
@@ -17,7 +17,7 @@ print(pv.tdb_rh2twb(30.0, 60.0))
 print(pv.tdb_rh2twb(20.0, 60.0))
 print(pv.tdb_rh2twb(20.0, 40.0))
 ```
-> 結果  
+> Results
 > 23.828125  
 > 15.234375  
 > 12.40234375  
