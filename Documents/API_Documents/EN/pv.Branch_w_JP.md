@@ -16,17 +16,17 @@ Basic branch with pumps (parallel pump (with bypass valve) units are acceptable)
 |dp|float|Branch inlet/outlet pressure difference \[kPa] Against flow direction: Pressurization: +, Depressurization: - |
   
 ## pv.Branch_w.f2p(g)
-流量から圧力差を求める
+Calculate the pressure difference from the flow rate
   
 ### returns:
-枝の圧力差（変数dpにも値は格納される）
+Pressure difference at the branch （the value of dp is also stored）
 ## pv.Branch_w.p2f(dp)
-圧力差から流量を求める
-  
+Calculate flow rate from pressure difference
+
 ### returns:
-流量（変数gにも値は格納される）
+Flow rate（the value of g is also stored）
   
-## サンプルコード
+## Sample codes
 ```
 import phyvac as pv
 
@@ -37,17 +37,17 @@ print(Branch_aPEb.pump.inv, Branch_aPEb.kr_pipe, Branch_aPEb.g, Branch_aPEb.dp)
 > 0.0 0.5 0.0 0.0
 ```
 CP1.inv = 0.8
-dp1 = Branch_aPEb.f2p(2.1) # 流量2.1 m3/minの時の枝の出入口圧力差を算出
+dp1 = Branch_aPEb.f2p(2.1) # Calculate the inlet/outlet pressure difference of a branch at a flow rate of 2.1 m3/min
 print(dp1, Branch_aPEb.dp, Branch_aPEb.g)
 ```
 > 129.361604 129.361604 2.1
 ```
-g1 = Branch_aPEb.p2f(120.0) # 枝の出入口圧力差が120.0 kPaの時の流量を算出
+g1 = Branch_aPEb.p2f(120.0) # Calculate flow rate at a branch inlet/outlet pressure difference of 120.0 kPa
 print(g1, Branch_aPEb.dp, Branch_aPEb.g)
 ```
 > 2.4598822345001583 120.0 2.4598822345001583
 ```
-Branch_aPEb.f2p(2.1) #　返り値を指定しなくても関数の実行は可能
+Branch_aPEb.f2p(2.1) #　Function execution is possible without specifying a return value
 print(Branch_aPEb.dp, Branch_aPEb.g)
 ```
 > 129.361604 2.1
