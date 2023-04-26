@@ -9,7 +9,7 @@ PI制御（本モジュールにおいてD成分は省略されている）
 |a_max,a_min|float|制御値の最大・最小範囲(0~1)|
 |kp|float|比例ゲイン|
 |ti|float|積分時間|
-|sv|float|設定値|
+|sp|float|設定値|
 |mv|float|設定値に対する計測値（制御目標値）。流量や温度など。|
 |sig|float|sv-mvの積分値|
 |t_reset|float|積分リセット(sv-mvの正負がt_resetの間常に同一である場合にsigを0とする)|
@@ -39,7 +39,7 @@ PID_CP1 = pv.PID(kp=0.1, ti=30, a_min=0.0,t_reset=60) # CP1のPID制御の定義
 
 for calstep in range(60):
     CP1_g_sv = 1.5 # 流量設定値を1.5 m3/minとする
-    CP1.inv = PID_CP1.control(sv=CP1_g_sv,mv=CP1.g) # PI制御の実行
+    CP1.inv = PID_CP1.control(sp=CP1_g_sv,mv=CP1.g) # PI制御の実行
     Branch.p2f(dp=0) # Branchの出入口圧力差=0として単一閉ループの流量計算を行う
     result[calstep,0] = calstep
     result[calstep,1] = CP1.g
