@@ -4,8 +4,8 @@
 """
 # phyvacモジュール。hvac + python ->phyvac
 # 空調システムの計算を極力物理原理・詳細な制御ロジックに基づいて行う。
-# ver0.2 20210628
-
+# ver20230422
+print("phyvac: ver20230425_1")
 import math
 import traceback
 import numpy as np
@@ -400,16 +400,18 @@ class Valve:
 # ポンプ特性と消費電力計算
 class Pump():
     # 定格値の入力
-    def __init__(self, pg=[233, 5.9578, -4.95], eg=[0.0099, 0.4174, -0.0508], r_ef=0.8, figure=1):
+    def __init__(self, pg=[233, 5.9578, -4.95], eg=[0.0099, 0.4174, -0.0508], r_ef=0.8, g_d=0.25, inv=1.0, figure=1):
         # pg     :圧力-流量(pg)曲線の係数（切片、一次、二次）
         # eg     :効率-流量(eg)曲線の係数（切片、一次、二次）
         # r_ef   :定格時の最高効率(本来は計算によって求める？)rated efficiency
         # inv    :回転数比(0.0~1.0)
         # dp_p   :ポンプ揚程[kPa]
-        # g_p    :流量[m3/min]
+        # g      :流量[m3/min]
+        # g_d    :定格流量[m3/min]
         # pw_p   :消費電力[kW]
         # flag   :計算に問題があったら1、なかったら0
         # ef     :効率(0.0~1.0)
+        # g_d    :定格流量
         # para   :並列ポンプか否かのフラグ
         # figure :1だったらポンプの性能曲線を表示する、1でなかったら表示しない
 
@@ -419,7 +421,8 @@ class Pump():
         self.pg = pg
         self.eg = eg
         self.r_ef = r_ef
-        self.inv = 0.0
+        self.inv = inv
+        self.g_d = g_d
         self.dp = 0.0
         self.g = 0.0
         self.ef = 0.0
@@ -457,9 +460,9 @@ class Pump():
             # G: INV=1.0時（定格）の流量
             G = self.g / self.inv
             # K: 効率換算係数
-            K = (1.0 - (1.0 - self.r_ef) / (self.inv ** 0.2)) / self.r_ef
+            k = (1.0 - (1.0 - self.r_ef) / (self.inv ** 0.2)) / self.r_ef
             # ef: 効率
-            self.ef = K * (self.eg[0] + self.eg[1] * G + self.eg[2] * G ** 2)
+            self.ef = k * (self.eg[0] + self.eg[1] * G + self.eg[2] * G ** 2)
 
             self.dp = (self.pg[0] + self.pg[1] * (self.g / self.inv) + self.pg[2] * (
                         self.g / self.inv) ** 2) * self.inv ** 2
@@ -484,13 +487,17 @@ class Pump():
 
     def figure_curve(self):
         x_max, _ = quadratic_formula(self.pg[0], self.pg[1], self.pg[2])
-        x = np.linspace(0, x_max * 0.8, 50)
-        y_p = self.pg[0] + self.pg[1] * x + self.pg[2] * x ** 2
-        y_e = self.eg[0] + self.eg[1] * x + self.eg[2] * x ** 2
+        x = np.linspace(0, self.g_d, 50)
+        y_p = (self.pg[0] + self.pg[1] * (x/self.inv) + self.pg[2] * (x/self.inv) ** 2) * self.inv ** 2
+        x2_max, _ = quadratic_formula(self.pg[0] * self.inv ** 2, self.pg[1] * self.inv, self.pg[2])
+        # x2 = np.linspace(0, min(self.g_d, x2_max, self.g_d*self.inv), 50)
+        x2 = np.linspace(0, self.g_d * self.inv, 50)
+        k = (1.0 - (1.0 - self.r_ef) / (self.inv ** 0.2)) / self.r_ef
+        y_e = k * (self.eg[0] + self.eg[1] * (x2/self.inv) + self.eg[2] * (x2/self.inv) ** 2)
         fig, ax1 = plt.subplots()
         color1 = 'tab:orange'
         ax1.set_xlabel('Flow [m3/min]')
-        ax1.set_ylabel('Total Head [kPa]', color=color1)
+        ax1.set_ylabel('Pressure [kPa]', color=color1)
         ax1.plot(x, y_p, color=color1)
         ax1.tick_params(axis='y', labelcolor=color1)
         ax1.set_ylim(0, self.pg[0] + 10)
@@ -498,7 +505,7 @@ class Pump():
         ax2 = ax1.twinx()
         color2 = 'tab:blue'
         ax2.set_ylabel('Efficiency [-]', color=color2)
-        ax2.plot(x, y_e, color=color2)
+        ax2.plot(x2, y_e, color=color2)
         ax2.tick_params(axis='y', labelcolor=color2)
         ax2.set_ylim(0, 1)
         plt.title('{}'.format(self.name))
@@ -557,15 +564,15 @@ class Chiller:
         self.data = pl_cop.values
 
     # 機器特性表に基づく冷凍機COPの算出
-    def cal(self, tout_ch_sv, tin_ch, g_ch, tin_cd, g_cd):
+    def cal(self, tout_ch_sp, tin_ch, g_ch, tin_cd, g_cd):
         self.flag = 0
-        self.tout_ch_sv = tout_ch_sv
+        self.tout_ch_sp = tout_ch_sp
         self.tin_ch = tin_ch
         self.g_ch = g_ch
         self.tin_cd = tin_cd
         self.g_cd = g_cd
         # 冷水出口温度[℃]
-        self.tout_ch = self.tout_ch_sv
+        self.tout_ch = self.tout_ch_sp
         # 冷凍熱量[kW]
         self.q_ch = (self.tin_ch - self.tout_ch) * self.g_ch * 1000 * 4.186 / 60
 
@@ -646,22 +653,22 @@ class AirSourceHeatPump:
         self.pw_d = float(spec_table.iat[1, 3])
         self.kr_ch = float(spec_table.iat[1, 4])
         # 補機電力[kW]
-        self.pw_sub = 0
+        self.pw_sub = 0.0
         # 定格冷凍機COP
         self.COP_rp = self.q_ch_d / self.pw_d
         # 以下、毎時刻変わる可能性のある値
-        self.tout_ch = 7
-        self.pw = 0
-        self.q_ch = 0
+        self.tout_ch = 7.0
+        self.pw = 0.0
+        self.q_ch = 0.0
         self.pl = 0  # 負荷率(0.0~1.0)
-        self.cop = 0
-        self.flag = 0  # 問題があったら1,なかったら0
-        self.dp_ch = 0
-        self.tin_ch = 12
-        self.g_ch = 0
-        self.tin_ch = 15
-        self.tout_ch = 7
-        self.tout_ch_sv = 7
+        self.cop = 0.0
+        self.flag = 0  # 問題があったら1または2,なかったら0
+        self.dp_ch = 0.0
+        self.tin_ch = 12.0
+        self.g_ch = 0.0
+        self.tin_ch = 15.0
+        self.tout_ch = 7.0
+        self.tout_ch_sp = 7.0
 
         pl_cop = spec_table.drop(spec_table.index[[0, 1, 2]])
         pl_cop.iat[0, 0] = '-'
@@ -669,18 +676,18 @@ class AirSourceHeatPump:
         self.data = pl_cop.values
 
     # 機器特性表に基づく空冷HPのCOPの算出
-    def cal(self, tout_ch_sv, tin_ch, g_ch, tdb):
+    def cal(self, tout_ch_sp, tin_ch, g_ch, tdb):
         self.flag = 0
-        self.tout_ch_sv = tout_ch_sv
+        self.tout_ch_sp = tout_ch_sp
         self.tin_ch = tin_ch
         self.g_ch = g_ch
         # 冷水出口温度[℃]
-        self.tout_ch = self.tout_ch_sv
+        self.tout_ch = self.tout_ch_sp
         # 冷凍熱量[kW]
         self.q_ch = (self.tin_ch - self.tout_ch) * self.g_ch * 1000 * 4.186 / 60
         # 処理熱量の上限を定格値とする（負荷率の上限を100%とする）。超える場合は冷水出口温度が上昇する
         if self.q_ch > self.q_ch_d:
-            self.tout_ch = self.tout_ch_sv + (self.q_ch - self.q_ch_d) / (self.g_ch * 1000 * 4.186 / 60)
+            self.tout_ch = self.tout_ch_sp + (self.q_ch - self.q_ch_d) / (self.g_ch * 1000 * 4.186 / 60)
             self.q_ch = self.q_ch_d
             self.flag = 1
 
@@ -698,11 +705,11 @@ class AirSourceHeatPump:
                 self.pl = pl[-1]
                 pl_cop = self.pl
                 self.q_ch = self.q_ch_d
-                self.flag = 1
+                self.flag = 2
 
             elif self.pl < pl[0]:
                 pl_cop = pl[-1]
-                self.flag = 2
+                self.flag = 3
 
             self.cop = float(cop([[tdb, pl_cop]]))
             # 逆カルノーサイクルに基づく定格に対する冷水出口温度変化によるCOP補正
@@ -715,12 +722,12 @@ class AirSourceHeatPump:
             self.pw = 0
             self.cop = 0
             self.pl = 0
-            self.flag = 0
+            self.flag = 4
         else:
             self.pw = 0
             self.cop = 0
             self.pl = 0
-            self.flag = 1
+            self.flag = 5
 
         self.dp_ch = -self.kr_ch * g_ch ** 2
 
@@ -763,21 +770,21 @@ class AbsorptionChillerESS:
         self.cop_h = 0  # 暖房運転COP, [-]
         self.tout_h = 45  # 温水出口温度, ℃
 
-    def cal_c(self, g, tin_cd=32, tin_ch=15, tout_ch_sv=7):
+    def cal_c(self, g, tin_cd=32, tin_ch=15, tout_ch_sp=7):
         # g:          冷水流量[m3/min]
         # tin_cd:     冷却水温度, ℃
         # tin_ch:     冷水入口温度, ℃
-        # tout_ch_sv: 冷水出口温度設定値, ℃
+        # tout_ch_sp: 冷水出口温度設定値, ℃
 
         k_1 = 1  # 最大能力比特性
         capacity = self.rated_capacity_c * k_1  # 最大能力
         g = g * self.rho_c / 60  # 体積流量[m3/min] to 質量流量[kg/s]
-        self.capacity_c = g * (tin_ch - tout_ch_sv) * self.cw_c  # 処理する熱量
+        self.capacity_c = g * (tin_ch - tout_ch_sp) * self.cw_c  # 処理する熱量
 
-        self.tout_ch = tout_ch_sv
+        self.tout_ch = tout_ch_sp
         if self.capacity_c > self.rated_capacity_c:  # 処理熱量が定格能力より大きい時の冷水出口温度を求める
             delta_t = (self.capacity_c - self.rated_capacity_c) / (g * self.cw_c)
-            self.tout_ch = tout_ch_sv + delta_t
+            self.tout_ch = tout_chsp + delta_t
             self.capacity_c = self.rated_capacity_c
 
         plr = self.capacity_c / capacity
@@ -796,21 +803,21 @@ class AbsorptionChillerESS:
 
         return self.capacity_c, self.input_fuel_c, self.cop_c, self.tout_ch, self.power_c
 
-    def cal_h(self, g, tin_h=37, tout_h_sv=45):
+    def cal_h(self, g, tin_h=37, tout_h_sp=45):
         # g:          温水流量[m3/min]
         # tin_h:      温水入口温度, ℃
-        # tout_h_sv:  温水出口温度設定値, ℃
+        # tout_h_sp:  温水出口温度設定値, ℃
 
         k_1 = 1  # 最大能力比特性
         capacity = self.rated_capacity_h * k_1  # 最大能力
 
         g = g * self.rho_h / 60  # 体積流量[m3/min] to 質量流量[kg/s]
-        self.capacity_h = g * (tout_h_sv - tin_h) * self.cw_h
+        self.capacity_h = g * (tout_h_sp - tin_h) * self.cw_h
 
-        self.tout_h = tout_h_sv
+        self.tout_h = tout_h_sp
         if self.capacity_h > self.rated_capacity_h:
             delta_t = (self.capacity_h - self.rated_capacity_h) / (g * self.cw_h)
-            self.tout_h = tout_h_sv - delta_t
+            self.tout_h = tout_h_sp - delta_t
             self.capacity_h = self.rated_capacity_h
 
         plr = self.capacity_h / capacity
@@ -2058,7 +2065,7 @@ class W2a_hex():
                  rated_g_water=1.9833333, rated_v_water=1.25, rated_tin_water=7, rated_q=40.4, rated_rh_border=95):
         # q_load    :負荷熱量[GJ/min]
         # _d        :定格
-        # q         :熱交換能力[kw]
+        # q         :熱交換能力[kW]
         # g         :流量[kg/s]
         # v         :速度[m/s]
         # t         :温度[℃]
@@ -2077,6 +2084,26 @@ class W2a_hex():
         self.rated_tin_water = rated_tin_water
         self.rated_q = rated_q
         self.rated_rh_border = rated_rh_border
+        self.tout_air = 20
+        self.wout_air = 20
+        self.rhout_air = 50
+        self.rhin_air = 50
+        self.tout_water = 10
+        self.q = 0
+        self.tdb_in_air = 20
+        self.w_in_air = 0.001
+        self.rh_border = self.rated_rh_border
+        self.tin_water = 10
+        self.g_air = 0
+        self.g_water = 0
+        self.tout_air = 0
+        self.tdb_in_air = 0
+        self.wout_air = 0
+        self.tout_water = 0
+        self.ratio_drywet = 0
+        self.coolingcoil = 0
+        self.heatingcoil = 0
+
 
         # heat transfer coefficient dry - kW/(m^2*K) wet - kW/[m^2*(kJ/kg)]
         self.rated_coef_dry = 1 / (
@@ -2142,11 +2169,11 @@ class W2a_hex():
 
                 self.area_surface = self.rated_area_dry_sur + self.rated_area_wet_sur
 
-    def coil_cal(self, tdb_in_air, win_air, rh_border, tin_water, g_air, g_water, coolingcoil, heatingcoil):
+    def cal(self, tdb_in_air, w_in_air, tin_water, g_air, g_water):
         # simulation input
         self.tdb_in_air = tdb_in_air
-        self.w_air_inlet = win_air
-        self.rh_border = rh_border
+        self.w_in_air = w_in_air
+        self.rhin_air = w_tdb2rh(self.w_in_air, self.tdb_in_air)
         self.tin_water = tin_water
         self.g_air = g_air
         self.g_water = g_water
@@ -2155,22 +2182,22 @@ class W2a_hex():
         self.wout_air = 0
         self.tout_water = 0
         self.ratio_drywet = 0
-        self.coolingcoil = coolingcoil
-        self.heatingcoil = heatingcoil
+        self.coolingcoil = 0
+        self.heatingcoil = 0
 
         self.t_border_water = self.t_border_air = 0
         self.zd = self.wd = self.v1 = self.v2 = self.zw = self.ww = self.v3 = self.v4 = self.v5 = self.v6 = 0
         if self.g_air <= 0 or self.g_water <= 0 or self.tdb_in_air == self.tin_water:
             self.tout_air = self.tdb_in_air
             self.tout_water = self.tin_water
-            self.wout_air = self.w_air_inlet
+            self.wout_air = self.w_in_air
             self.rhout_air = w_tdb2rh(self.wout_air, self.tout_air)
             self.ratio_drywet = 1
-            q = 0
-            return self.tout_air, self.wout_air, self.rhout_air, self.tout_water, self.ratio_drywet, q, self.g_water
+            self.q = 0
+            return self.tout_air, self.wout_air, self.rhout_air, self.tout_water, self.ratio_drywet, self.q, self.g_water
 
         # capacity of water and wet air [kW/s]
-        self.cpma = w2cpair(self.w_air_inlet)
+        self.cpma = w2cpair(self.w_in_air)
         self.cap_air = self.g_air * self.cpma
         self.cap_water = self.g_water * 4.186
 
@@ -2183,7 +2210,7 @@ class W2a_hex():
 
         if self.tdb_in_air < self.tin_water:
             self.heatingcoil = 1
-            ratio_drywet = 1
+            self.ratio_drywet = 1
 
             cap_min = min(self.cap_air, self.cap_water)
             cap_max = max(self.cap_air, self.cap_water)
@@ -2191,18 +2218,18 @@ class W2a_hex():
             # efficient of heat gain
             eff = hex_effectiveness(ntu, cap_min / cap_max, 'counterflow')
             # outlet condition and heat change
-            q = eff * cap_min * (self.tin_water - self.tdb_in_air)
-            tout_air = self.tdb_in_air + q / self.cap_air
-            tout_water = self.tin_water - q / self.cap_water
-            wout_air = self.w_air_inlet
-            rhout_air = w_tdb2rh(wout_air, tout_air)
+            self.q = eff * cap_min * (self.tin_water - self.tdb_in_air)
+            self.tout_air = self.tdb_in_air + self.q / self.cap_air
+            self.tout_water = self.tin_water - self.q / self.cap_water
+            self.wout_air = self.w_in_air
+            self.rhout_air = w_tdb2rh(self.wout_air, self.tout_air)
 
         else:
             # cooling
             # consider as saturate temperature
             self.coolingcoil = 1
-            t_border = w_rh2tdb(self.w_air_inlet, self.rh_border)
-            hin_air = tdb_w2h(self.tdb_in_air, self.w_air_inlet)
+            t_border = w_rh2tdb(self.w_in_air, self.rh_border)
+            hin_air = tdb_w2h(self.tdb_in_air, self.w_in_air)
 
             # saturation enthalpy based on Tdb
             # p_a parameter of temperature
@@ -2245,46 +2272,45 @@ class W2a_hex():
                     efunc(drate)
 
             # outlet condition
-            tout_water = self.tdb_in_air - self.v2 * (self.tdb_in_air - self.t_border_water)
+            self.tout_water = self.tdb_in_air - self.v2 * (self.tdb_in_air - self.t_border_water)
             h_border_air = self.cpma * (self.t_border_air - self.tdb_in_air) + hin_air
             h_water_inlet = p_a * self.tin_water + p_b
             hout_air = self.v3 * h_border_air + self.v4 * h_water_inlet
-            q = self.cap_air * (self.tdb_in_air - self.t_border_air) + self.g_air * (h_border_air - hout_air)
-            ratio_drywet = drate
+            self.q = self.cap_air * (self.tdb_in_air - self.t_border_air) + self.g_air * (h_border_air - hout_air)
+            self.ratio_drywet = drate
 
             if drate < 1:
-                wout_air = h_rh2w(hout_air, self.rh_border)
+                self.wout_air = h_rh2w(hout_air, self.rh_border)
             else:
-                wout_air = self.w_air_inlet
+                self.wout_air = self.w_in_air
 
-            tout_air = w_h2tdb(wout_air, hout_air)
-            rhout_air = w_tdb2rh(wout_air, tout_air)
+            self.tout_air = w_h2tdb(self.wout_air, hout_air)
+            self.rhout_air = w_tdb2rh(self.wout_air, self.tout_air)
 
-        return tout_air, wout_air, rhout_air, tout_water, self.ratio_drywet, q, self.g_water, self.area_surface
+        return self.tout_air, self.wout_air, self.rhout_air, self.tout_water, self.ratio_drywet, self.q, self.g_water, self.area_surface
 
 
 # ダンパ特性と圧力損失計算
-class Damper():
-    def __init__(self, coef=[[1.0, 0.0000203437802163088], [0.8, 0.0000495885440290287],
-                             [0.6, 0.000143390887269431], [0.4, 0.000508875127863876], [0.2, 0.00351368187709778]]):
+class Damper:
+    def __init__(self, coef=[[1.0, 0.020], [0.8, 0.2],
+                             [0.6, 1.0], [0.4, 2.0], [0.2, 5.0], [0.0, 999.9]]):
         # damp  :ダンパ開度[0.0~1.0]
-        # dp    :圧力損失[kPa]  # 単位注意
+        # dp    :圧力損失[Pa]  # 単位注意
         # g     :流量[m^3/min]
         # dp = a * g^2
-        # coef = [[damp1, a_damp1], ... , [dampn, a_dampnf2p]]
+        # coef = [[damp1, a_damp1], ... , [dampn, a_dampnf2p]] 各ダンパ開度時の圧損係数
         # (x1 >...> xn, n>=3)
         self.coef = coef
         self.g = 0
         self.damp = 0
         self.dp = 0
 
-    def f2p(self, damp, g):
+    def f2p(self, g):
         n = len(self.coef)
         self.g = g
-        self.damp = damp
-        if damp >= self.coef[0][0]:
+        if self.damp >= self.coef[0][0]:
             self.dp = self.coef[0][1] * self.g ** 2  # [kPa]
-        elif damp <= self.coef[n - 1][0]:
+        elif self.damp <= self.coef[n - 1][0]:
             self.dp = self.coef[n - 1][1] * self.g ** 2  # [kPa]
         else:
             for i in range(1, n):  # 線形補間の上限・下限となる曲線を探す
@@ -2297,19 +2323,18 @@ class Damper():
             self.dp = (a - b) / (coef_a[0] - coef_b[0]) * (self.damp - coef_b[0]) + b
 
         if g >= 0:
-            self.dp = self.dp
+            self.dp = -self.dp
         else:
             self.dp = -self.dp
 
         return self.dp
 
-    def p2f(self, damp, dp):
+    def p2f(self, dp):
         n = len(self.coef)
         self.dp = abs(dp)
-        self.damp = damp
-        if damp >= self.coef[0][0]:
+        if self.damp >= self.coef[0][0]:
             self.g = pow(self.dp / self.coef[0][1], 0.5)
-        elif damp <= self.coef[n - 1][0]:
+        elif self.damp <= self.coef[n - 1][0]:
             self.g = pow(self.dp / self.coef[n - 1][1], 0.5)
         else:
             for i in range(1, n):  # 線形補間の上限・下限となる曲線を探す
@@ -2332,7 +2357,7 @@ class Damper():
 # ファン特性と消費電力計算
 class Fan:
     # 定格値の入力
-    def __init__(self, pg=[0.6467, 0.0082, -0.0004, 0], eg=[-0.0166, 0.0399, -0.0008], r_ef=0.6):
+    def __init__(self, pg=[948.66, -0.5041, -0.097, 0], eg=[0.0773, 0.0142, -1.00e-04], r_ef=0.6, g_d=80, inv=1.0, figure=1):
         # pg    :圧力-流量(pg)曲線の係数（切片、一次、二次、三次）
         # eg    :効率-流量(eg)曲線の係数（切片、一次、二次）
         # r_ef  :定格時の最高効率(本来は計算によって求める？)rated efficiency
@@ -2342,16 +2367,26 @@ class Fan:
         # pw    :消費電力[kW]
         # flag  :計算に問題があったら1、なかったら0
         # ef    :効率(0.0~1.0)
+        # g_d   :定格風量[m3/min]
+        # figure :1だったらポンプの性能曲線を表示する、1でなかったら表示しない
+
+        (filename, line_number, function_name, text) = traceback.extract_stack()[-2]
+        self.name = text[:text.find('=')].strip()  # インスタンス名の取得、'__init__'の最初でなければならない
+
         self.pg = pg
         self.eg = eg
         self.r_ef = r_ef
-        self.inv = 0.0
+        self.inv = inv
         self.dp = 0.0
         self.g = 0.0
         self.ef = 0.0
         self.pw = 0.0
         self.flag = 0
         self.num = 1
+        self.g_d = g_d
+
+        if figure == 1:
+            self.figure_curve()
 
     def f2p(self, g):  # flow to pressure for fan
         self.g = g
@@ -2397,13 +2432,15 @@ class Fan:
 
             self.dp = (self.pg[0] + self.pg[1] * (self.g / self.inv) + self.pg[2] * (
                     self.g / self.inv) ** 2 + self.pg[3] * (self.g / self.inv) ** 3) * self.inv ** 2
+
             if self.dp < 0:
                 self.dp = 0
                 self.flag = 1
 
             #  軸動力を求める
             if self.ef > 0:
-                self.pw = self.g * (self.dp / 1000) / (60 * 0.8 * self.ef)  # 0.8は実測値から求めたモーター損失
+                self.pw = self.g * (self.dp / 1000) / (60 * 0.8 * self.ef)
+                # self.pw = self.g * (self.dp / 1000) / (60 * 0.8 * self.ef) + 1.293/2*(self.g/60)**2/(0.8 * self.ef) # 0.8は実測値から求めたモーター損失。動圧も考慮。
                 self.flag = 0
             else:
                 self.pw = 0
@@ -2412,6 +2449,33 @@ class Fan:
         else:
             self.pw = 0.0
             self.flag = 0
+
+    def figure_curve(self):
+        x_max, _ = quadratic_formula(self.pg[0], self.pg[1], self.pg[2])
+        x = np.linspace(0, self.g_d, 50)
+        y_p = (self.pg[0] + self.pg[1] * (x/self.inv) + self.pg[2] * (x/self.inv) ** 2) * self.inv ** 2
+        x2_max, _ = quadratic_formula(self.pg[0] * self.inv ** 2, self.pg[1] * self.inv, self.pg[2])
+        # x2 = np.linspace(0, min(self.g_d, x2_max), 50)
+        x2 = np.linspace(0, self.g_d * self.inv, 50)
+        k = (1.0 - (1.0 - self.r_ef) / (self.inv ** 0.2)) / self.r_ef
+        y_e = k * (self.eg[0] + self.eg[1] * (x2/self.inv) + self.eg[2] * (x2/self.inv) ** 2)
+        fig, ax1 = plt.subplots()
+        color1 = 'tab:orange'
+        ax1.set_xlabel('Flow [m3/min]')
+        ax1.set_ylabel('Pressure [Pa]', color=color1)
+        ax1.plot(x, y_p, color=color1)
+        ax1.tick_params(axis='y', labelcolor=color1)
+        ax1.set_ylim(0, self.pg[0] + 10)
+
+        ax2 = ax1.twinx()
+        color2 = 'tab:blue'
+        ax2.set_ylabel('Efficiency [-]', color=color2)
+        ax2.plot(x2, y_e, color=color2)
+        ax2.tick_params(axis='y', labelcolor=color2)
+        ax2.set_ylim(0, 1)
+        plt.title('{}'.format(self.name))
+
+        return plt.show()
 
 
 # 蒸気噴霧式加湿器
@@ -2499,12 +2563,12 @@ class SteamSprayHumidifier:
 # pid制御（プログラムの中身はd成分を無視したpi制御）
 class PID:
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
-    def __init__(self, mode=1, a_max=1, a_min=0, kp=0.8, ti=10, sig=0, t_reset=30, kg=1, t_step=1):
+    def __init__(self, mode=1, a_max=1, a_min=0, kp=0.8, ti=10, sig=0, t_reset=30, kg=1, t_step=1,a=0.0):
         # mode          :運転時1, 非運転時0
         # a_max,a_min   :制御値の最大・最小範囲
         # kp            :比例ゲイン
         # ti            :積分時間
-        # sv            :現時刻の制御する要素の設定値 (温度や圧力)  S0:前時刻(S0は不使用)
+        # sp            :現時刻の制御する要素の設定値 (温度や圧力)  S0:前時刻(S0は不使用)
         # mv            :現時刻の制御する要素の値   P0:前時刻(P0は不使用)
         # sig           :積分総和
         # a             :現時刻の制御に使用する要素の値(周波数比、バルブ開度など)
@@ -2523,17 +2587,17 @@ class PID:
         self.sig = sig
         self.t_step = t_step
         self.t_step_cnt = -1  # 計算ステップのための内部パラメータ
-        self.a = 0
+        self.a = a
 
-    def control(self, sv, mv):
+    def control(self, sp, mv):
         if self.mode == 1:
 
             self.t_step_cnt += 1
             if self.t_step_cnt % self.t_step == 0:
                 self.t_step_cnt = 0
 
-                self.sig += sv - mv
-                ctrl = self.kp * ((sv - mv) + 1 / self.ti * self.sig)
+                self.sig += sp - mv
+                ctrl = self.kp * ((sp - mv) + 1 / self.ti * self.sig)
 
                 # 前時刻からの偏差は5%未満とする
                 if ctrl > 0.05:
@@ -2553,9 +2617,9 @@ class PID:
                 t_reset = self.flag_reset.size
                 for ii in range(t_reset - 1, 0, -1):
                     self.flag_reset[ii] = self.flag_reset[ii - 1]
-                if sv - mv > 0:
+                if sp - mv > 0:
                     self.flag_reset[0] = 1
-                elif sv - mv < 0:
+                elif sp - mv < 0:
                     self.flag_reset[0] = -1
                 else:
                     self.flag_reset[0] = 0
@@ -2585,11 +2649,11 @@ class PumpWithBypassValve:  # コンポジションというpython文法を使�
         self.t_wait = t_wait
         self.flag_switch = np.zeros(self.t_wait)
         self.switch = 0
-        self.sv = 0
+        self.sp = 0
         self.mv = 0
 
-    def control(self, sv, mv):
-        self.sv = sv
+    def control(self, sp, mv):
+        self.sp = sp
         self.mv = mv
 
         for i in range(self.t_wait - 1, 0, -1):
@@ -2616,10 +2680,10 @@ class PumpWithBypassValve:  # コンポジションというpython文法を使�
         if self.switch == 0:
             self.valve_pid.a = 0
             self.pump_pid.mode = 1
-            self.pump_pid.control(sv=self.sv, mv=self.mv)
+            self.pump_pid.control(sp=self.sp, mv=self.mv)
 
         elif self.switch == 1:
-            self.valve_pid.control(sv=self.sv, mv=self.mv)
+            self.valve_pid.control(sp=self.sp, mv=self.mv)
             self.pump_pid.mode = 1
             self.pump_pid.a = self.pump_pid.a_min
 
@@ -2641,8 +2705,8 @@ class BypassValve:  # コンポジションというpython文法を使う
         self.thre = 0
         self.switch = 0
 
-    def control(self, sv, mv, thre):
-        self.sv = sv
+    def control(self, sp, mv, thre):
+        self.sp = sp
         self.mv = mv
         self.thre = thre
 
@@ -2679,7 +2743,7 @@ class BypassValve:  # コンポジションというpython文法を使う
             self.valve_pid.a = 0
 
         elif self.switch == 1:
-            self.valve_pid.control(sv=self.sv, mv=self.mv)
+            self.valve_pid.control(sp=self.sp, mv=self.mv)
 
         return self.valve_pid.a
 
@@ -3271,9 +3335,9 @@ class Branch001:  # コンポジションというpython文法を使う
 
 # 空気系
 # ファン・ダンパ・機器が直列に1台以下の枝。デフォルトではファン・ダンパ・機器はなし。
-class Branch100:  # コンポジションというpython文法を使う
+class Branch_a:  # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
-    def __init__(self, fan=None, damper=None, kr_eq=0.0, kr_duct=0.5):
+    def __init__(self, fan=None, damper=None, kr_eq=0.0, kr_duct=0.0):
         # fan       :ファンのオブジェクト
         # damper    :ダンパのオブジェクト
         # kr_eq     :機器の圧損係数[Pa/(m3/min)^2]
@@ -3378,3 +3442,35 @@ class Branch100:  # コンポジションというpython文法を使う
             self.fan.g = self.g
 
         return self.g
+
+# 瞬時一様拡散、シンプルな部屋空気状態計算モデル
+class SimpleRoom:
+    def __init__(self, volume=400.0, timeinterval=1):
+        self.volume = volume #気積[m3]
+        self.cp_a = 1020 #比熱 [J/kgK]
+        self.rho_a = 1.293 #密度[kg/m3]
+        self.t_room = 26.0
+        self.rh_room = 50.0
+        # self.timeinterval = timeinterval #計算時間間隔[min]
+
+    def cal(self, q, gin, tin, rhin, cal_interval):
+        # q   :負荷熱量 [kW]
+        # gin :風量[m3/min]
+        # tin :給気温度[℃]
+        # rhin :給気相対湿度[%, 0~1]
+        [h_room, w_room] = tdb_rh2h_x(self.t_room, self.rh_room) #比エンタルピー、絶対湿度
+        tdp = tdb_rh2tdp(self.t_room, self.rh_room) # 露点温度
+        [hin, win] = tdb_rh2h_x(tin, rhin) #比エンタルピー、絶対湿度
+
+        if self.volume < gin/60*cal_interval:
+            t_room = tin
+            rh_room = rhin
+        else:
+            w_room = (w_room * (self.volume - gin/60*cal_interval) + win * gin/60*cal_interval) / self.volume
+            self.t_room = ((self.t_room + q*cal_interval/1.02/(self.volume*1.293)) * (self.volume - gin/60*cal_interval) + tin * gin/60*cal_interval) / self.volume
+
+            # h_room = tdb_w2h(self.t_room, w_room)
+            # h_room += q/(self.volume*1.293)*cal_interval
+            #
+            # self.t_room = w_h2tdb(w_room, h_room)
+            self.rh_room = w_tdb2rh(w_room, self.t_room)
