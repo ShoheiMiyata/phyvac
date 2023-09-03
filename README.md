@@ -29,6 +29,10 @@ The programs are validated based on Guideline of Test Procedure for the Evaluati
 - 2021/06/28 Branch00系の廃止、Branch_wの追加（水系Branch）
 - 2021/04/02 Branch100の追加（空気系Branch）
 
+## License  
+The program "phyvac" is available under a 3-clause BSD-license.
+
+
 ### [To Do リスト](https://github.com/ShoheiMiyata/phyvac/projects/1)
 
 
