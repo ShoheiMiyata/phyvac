@@ -13,8 +13,22 @@ room_dataから読み込まれる室情報(例)
 |schedule_data|pandas.core.frame.DataFrame|各種スケジュールデータ|
 |walls|list|壁インスタンスのリスト|
 |windows|list|窓インスタンスのリスト|
+|rooms|list|室インスタンスのリスト|
+|step|int|計算ステップ|
+|rooms|list|室インスタンスのリスト|
+|g_sa|float|給気風量 /[m3/min]|
+|t_sa|float|給気温度 /['C]|
+|w_sa|float|給気絶対湿度 /[kg/kg]|
+|cp2_sa|float|給気CO2濃度 /[ppm]|
+|g_infiltration|float|隙間風風量 /[m3/min] (流入:+, 流出: -)|
+|t_outdoor|float|外気温度 /['C]|
+|w_outdoor|float|外気絶対湿度 /[kg/kg]|
 
-
+## pv.Room.cal(rooms, step, g_sa, t_sa, w_sa, co2_sa, g_infiltration, t_outdoor, w_outdoor)
+流量から圧力差を求める
+  
+### returns:
+枝の圧力差（変数dpにも値は格納される）
   
 ## サンプルコード
 ```
