@@ -34,7 +34,7 @@ print(material_df.iloc[0])
 >volumetric specific heat[kJ/m3K]    1934.0  
 >Name: concrete, dtype: float64  
 ```
-print(schedule_dp)
+print(schedule_df)
 ```
   0    1    2    3    4    5    6    7    8    9   10   11  
 schedule_id  
