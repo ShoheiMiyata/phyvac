@@ -33,8 +33,10 @@
 - [UnitNum (台数制御)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.UnitNum_JP.md)
 
 ## 室温計算  
+#### 読み込み用関数  
 - [read_condisions (計算条件の読み込み)]
 - [convert_weatherdata (気象データの変換・読み込み)]
+#### 要素クラス  
 - [Wall (壁)]
 - [Window (窓)]
 - [Room (室)]
