@@ -8,9 +8,11 @@ room_dataから読み込まれる室情報(例)
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
-|room_data|pandas.core.series.Series|1つの壁の情報|
+|room_data|pandas.core.series.Series|1つの室の情報|
 |project_data|dict|プロジェクト情報|
-|schedule_data|pandas.core.frame.DataFrame|気象データ|
+|schedule_data|pandas.core.frame.DataFrame|各種スケジュールデータ|
+|walls|list|壁インスタンスのリスト|
+|windows|list|窓インスタンスのリスト|
   
 ## サンプルコード
 ```
@@ -28,16 +30,18 @@ cal_dt = 60  # 計算時間間隔[s]
 
 # 気象データの読み込み・変換
 weather_df = pv.convert_weatherdata('Input/WeatherData.xlsx', project_df, start, end)
-
-# 窓インスタンスの作成
-Window1 = pv.Window(windows_df.loc[1], project_df, weather_df)
-print(Window1.window_id, Window1.window_area)
-```
-> 1 21.6
-```
-# 窓リストの作成(main文ではこの書き方)
+# 壁・窓インスタンスのリストの作成
+walls = [pv.Wall(walls_df.loc[i], project_df, material_df, weather_df) for i in list(walls_df.index)]
 windows = [pv.Window(windows_df.loc[i], project_df, weather_df) for i in list(windows_df.index)]
-print(windows[0].window_id)
+
+Room1 = pv.Room(rooms_df.loc[1], project_df, schedule_df, walls, windows)
+print(Room1.room_id, Room1.volume)
 ```
-> 1
+> 1 566.4000000000001
+```
+# 室インスタンスのリストの作成(main文ではこの書き方)
+rooms = [pv.Room(rooms_df.loc[i], project_df, schedule_df, walls, windows) for i in list(rooms_df.index)]
+print(rooms[0].room_id, rooms[0].volume)
+```
+> 1 566.4000000000001
 
