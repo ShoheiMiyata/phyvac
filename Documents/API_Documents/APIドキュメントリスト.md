@@ -36,7 +36,7 @@
 - [convert_weatherdata (気象データの変換・読み込み)]
 #### 要素クラス  
 - [Wall (壁)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Wall.md)
-- [Window (窓)]
+- [Window (窓)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Window.md)
 - [Room (室)]
 ## 空気状態関数
 - [tdb_rh2tdp (乾球温度, 相対湿度→露点温度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.tdb_rh2tdp_JP.md)
