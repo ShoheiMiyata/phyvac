@@ -25,10 +25,10 @@ room_dataから読み込まれる室情報(例)
 |w_outdoor|float|外気絶対湿度 /[kg/kg]|
 
 ## pv.Room.cal(rooms, step, g_sa, t_sa, w_sa, co2_sa, g_infiltration, t_outdoor, w_outdoor)
-流量から圧力差を求める
+給気と隙間風から室温を算出する
   
 ### returns:
-枝の圧力差（変数dpにも値は格納される）
+なし（各インスタンスに更新された値が格納される）
   
 ## サンプルコード
 ```
@@ -50,16 +50,25 @@ weather_df = pv.convert_weatherdata('Input/WeatherData.xlsx', project_df, start,
 walls = [pv.Wall(walls_df.loc[i], project_df, material_df, weather_df) for i in list(walls_df.index)]
 windows = [pv.Window(windows_df.loc[i], project_df, weather_df) for i in list(windows_df.index)]
 
-Room1 = pv.Room(rooms_df.loc[1], project_df, schedule_df, walls, windows)
-print(Room1.room_id, Room1.volume)
-```
-> 1 566.4000000000001
-```
-# 室インスタンスのリストの作成(main文ではこの書き方)
-rooms = [pv.Room(rooms_df.loc[i], project_df, schedule_df, walls, windows) for i in list(rooms_df.index)]
-print(rooms[0].room_id, rooms[0].volume)
-```
-> 1 566.4000000000001
-```
+# 室インスタンスの作成
+Room2 = pv.Room(rooms_df.loc[2], project_df, schedule_df, walls, windows)
+print(Room2.room_id, Room2.volume)
+
 
 ```
+> 2 566.4000000000001
+```
+# 室インスタンスのリストの作成
+rooms = [pv.Room(rooms_df.loc[i], project_df, schedule_df, walls, windows) for i in list(rooms_df.index)]
+print(rooms[1].room_id, rooms[1].volume, rooms[1].t_room, rooms[1].w_room)
+```
+> 2 566.4000000000001 26 0.010496860875
+```
+# 非空調時（給気風量=0.0）の計算
+for cal_step in range(int((end - start).total_seconds() / cal_dt + 1)):
+    for Room in rooms:
+        Room.cal(rooms=rooms, step=cal_step, g_sa=0.0, t_sa=14.0, w_sa=0.005, co2_sa=600.0, g_infiltration=10.0, t_outdoor=weather_df['Temperature'].iat[cal_step], w_outdoor=weather_df['Humidity'].iat[cal_step])
+
+print(rooms[1].t_room, rooms[1].w_room)
+```
+> 33.32135674803487 0.0313833700943817
