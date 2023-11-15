@@ -35,7 +35,7 @@
 - [read_condisions (計算条件の読み込み)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.read_conditions.md)  
 - [convert_weatherdata (気象データの変換・読み込み)]
 #### 要素クラス  
-- [Wall (壁)]
+- [Wall (壁)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Wall.md)
 - [Window (窓)]
 - [Room (室)]
 ## 空気状態関数
