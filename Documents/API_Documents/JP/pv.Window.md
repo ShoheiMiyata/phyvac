@@ -35,7 +35,7 @@ print(Window1.window_id, Window1.window_area)
 ```
 > 1 21.6
 ```
-# 窓リストの作成(main文ではこの書き方)
+# 窓インスタンスのリストの作成(main文ではこの書き方)
 windows = [pv.Window(windows_df.loc[i], project_df, weather_df) for i in list(windows_df.index)]
 print(windows[0].window_id)
 ```
