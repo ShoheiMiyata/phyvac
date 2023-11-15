@@ -4,7 +4,7 @@
 <img src="https://github.com/ShoheiMiyata/phyvac/assets/27459538/1479c01f-ec8e-4aa3-9aa6-5b0c16b97383.png" width=70%>  
 
   
-wall_dataで読み込まれる壁情報(例)  
+window_dataから読み込まれる窓情報(例)  
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
