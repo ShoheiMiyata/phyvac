@@ -1,4 +1,5 @@
 ### APIドキュメントリスト
+### 空調システム  
 #### 機器  
 - [Chiller]
 - [AirSourceHeatPump (空冷ヒートポンプ)]
@@ -31,6 +32,12 @@
 - [PID (PID制御)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.PID_JP.md)
 - [UnitNum (台数制御)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.UnitNum_JP.md)
 
+## 室温計算  
+- [read_condisions (計算条件の読み込み)]
+- [convert_weatherdata (気象データの変換・読み込み)]
+- [Wall (壁)]
+- [Window (窓)]
+- [Room (室)]
 #### 空気状態関数
 - [tdb_rh2tdp (乾球温度, 相対湿度→露点温度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.tdb_rh2tdp_JP.md)
 - [tdb_rh2h_x (乾球温度, 相対湿度→比エンタルピー, 絶対湿度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.tdb_rh2h_x_JP.md)
