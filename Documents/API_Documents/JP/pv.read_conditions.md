@@ -1,8 +1,9 @@
 ## pv.read_conditions(filename, start, end, timedelta)
 室温計算のための計算条件を読み込む関数。Rooms.xlsxの各シートの情報をpandas dataframeに格納する。  
-スケジュール情報は指定した計算開始・終了時刻と計算時間間隔に基づき変換される。
-![image](https://github.com/ShoheiMiyata/phyvac/assets/27459538/704b9aa7-9b7a-4769-a3bb-fa14776a8a17)
-
+スケジュール情報は指定した計算開始・終了時刻と計算時間間隔に基づき変換される。  
+  
+<img src="https://github.com/ShoheiMiyata/phyvac/assets/27459538/704b9aa7-9b7a-4769-a3bb-fa14776a8a17.png" width=50%>  
+  
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
