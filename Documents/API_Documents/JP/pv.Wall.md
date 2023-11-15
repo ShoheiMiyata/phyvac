@@ -36,7 +36,7 @@ print(Wall1.wall_type, Wall1.wall_id)  # Wall1の部屋番号
 > outer_wall 1
 ```
 # 壁のインスタンスをまとめて作成し、リスト化 (main文ではこの記述方法)
-walls = [pv.Wall(walls_df.loc[i], project_df, material_df, weather_df, cal_dt) for i in list(walls_df.index)]
+walls = [pv.Wall(walls_df.loc[i], project_df, material_df, weather_df) for i in list(walls_df.index)]
 print(walls[0].wall_id)
 ```
 > 1
