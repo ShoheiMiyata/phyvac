@@ -1,7 +1,7 @@
 ## pv.AirSourceHeatPump(filename='equipment_spec.xlsx', sheet_name='Chiller')
 冷凍機の性能曲線に基づく運転点の計算  
   
-<img src="https://github.com/ShoheiMiyata/phyvac/assets/27459538/5ad1f231-fa98-4c6c-a09e-64674bdcc7f7" width=80%>  
+<img src="https://github.com/ShoheiMiyata/phyvac/assets/27459538/5ad1f231-fa98-4c6c-a09e-64674bdcc7f7" width=60%>  
   
 入力ファイル例  
   
@@ -22,7 +22,7 @@
 |pw|float||
 |pl|float||
 |cop|float||
-|tdb|float||
+|tdb|float|外気乾球温度 ['C]|
 |kr_ch|float||
 |dp_ch|float||
 |flag|int||
@@ -38,10 +38,10 @@
 ```
 import phyvac as pv
 
-Chiller1 = pv.Chiller(filename='equipment_spec.xlsx', sheet_name='Chiller')  # Chiller1の定義
-Chiller1.cal(tout_ch_sp=7.0, tin_ch=15.0, g_ch=2.5, tin_cd=28.0, g_cd=5.5)  # 運転条件の入力と計算
-print(Chiller1.pw, Chiller1.pl, Chiller1.cop)  # 計算結果例のプリント
+ASHP1 = pv.AirSourceHeatPump(filename='equipment_spec.xlsx', sheet_name='AirSourceHeatPump')  # ASHP1の定義
+ASHP1.cal(tout_ch_sp = 7.0, tin_ch = 12.0, g_ch=0.15, tdb=25.0)  # 運転条件の入力と計算
+print(ASHP1.pw, ASHP1.pl, ASHP1.tout_ch)  # 計算結果例のプリント
 ```
-> phyvac: ver20231116
-> 191.53281318240622 0.7949125596184419 7.2850876575623
+> phyvac: ver20231116  
+> 5.579090966913902 0.6976744186046512 7.0
   
