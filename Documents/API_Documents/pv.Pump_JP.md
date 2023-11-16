@@ -1,12 +1,12 @@
-## pv.Pump(pg=[233,5.9578,-4.95], eg=[0.0099,0.4174,-0.0508], r_ef=0.8)
+## pv.Pump(pg=, eg=None, r_ef=0.8)
 ### ポンプ単体機器モジュール  
 <img src="https://user-images.githubusercontent.com/27459538/112824603-b2f09380-90c5-11eb-8e10-45acdd9ef187.png" width=40%>
   
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
-|pg|list|圧力-流量(pg)曲線の係数 [切片、一次、二次]|
-|eg|list|効率-流量(eg)曲線の係数 [切片、一次、二次]|
+|pg|list|圧力-流量(pg)曲線の係数 [切片、一次、二次] Noneの場合は[233, 5.9578, -4.95]が読み込まれる|
+|eg|list|効率-流量(eg)曲線の係数 [切片、一次、二次] Noneの場合は[0.0099, 0.4174, -0.0508]が読み込まれる|
 |inv|float|インバータ周波数比(0.0~1.0)|
 |dp|float|ポンプ揚程 [kPa]|
 |g|float|流量[m3/min]|
