@@ -26,7 +26,7 @@
 - [TotalHeatExchanger (全熱交換器)]
 #### Branch（配管・ダクト枝）  
 - [Branch_w (ポンプ、機器、弁を有する基本的な配管系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch_w_JP.md)
-- [Branch_w1（ポンプ、機器、バイパス弁を有する配管系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch12_JP.md)
+- [Branch_w1（ポンプ、機器、バイパス弁を有する配管系枝)]([https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch12_JP.md](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Branch_w1.md))
 - [Branch_a（ファン、機器、ダンパを有する基本的なダクト系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch12_JP.md)
 #### 制御  
 - [PID (PID制御)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.PID_JP.md)
