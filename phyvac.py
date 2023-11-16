@@ -4,8 +4,8 @@
 """
 # phyvacモジュール。hvac + python ->phyvac
 # 空調システムの計算を極力物理原理・詳細な制御ロジックに基づいて行う。
-# ver20230422
-print("phyvac: ver20230425_1")
+# ver20231116
+print("phyvac: ver20231116")
 import math
 import traceback
 import numpy as np
@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import RegularGridInterpolator
 from scipy import optimize
 from sklearn.linear_model import LinearRegression
+
 
 # 空気状態関数　###############################################################
 # 空気調和・衛生工学会編：空気調和・衛生工学便覧14版，1基礎編，第3章, pp.39-56，2010.
@@ -398,9 +399,9 @@ class Valve:
 
 
 # ポンプ特性と消費電力計算
-class Pump():
+class Pump:
     # 定格値の入力
-    def __init__(self, pg=[233, 5.9578, -4.95], eg=[0.0099, 0.4174, -0.0508], r_ef=0.8, g_d=0.25, inv=1.0, figure=1):
+    def __init__(self, pg=None, eg=None, r_ef=0.8, g_d=0.25, inv=1.0, figure=1):
         # pg     :圧力-流量(pg)曲線の係数（切片、一次、二次）
         # eg     :効率-流量(eg)曲線の係数（切片、一次、二次）
         # r_ef   :定格時の最高効率(本来は計算によって求める？)rated efficiency
@@ -417,9 +418,14 @@ class Pump():
 
         (filename, line_number, function_name, text) = traceback.extract_stack()[-2]
         self.name = text[:text.find('=')].strip()  # インスタンス名の取得、'__init__'の最初でなければならない
-
-        self.pg = pg
-        self.eg = eg
+        if pg is None:
+            self.pg = [233, 5.9578, -4.95]
+        else:
+            self.pg = pg
+        if eg is None:
+            self.eg = [0.0099, 0.4174, -0.0508]
+        else:
+            self.eg = eg
         self.r_ef = r_ef
         self.inv = inv
         self.g_d = g_d
@@ -458,14 +464,13 @@ class Pump():
         if self.g > 0 and self.inv > 0:
 
             # G: INV=1.0時（定格）の流量
-            G = self.g / self.inv
+            g = self.g / self.inv
             # K: 効率換算係数
             k = (1.0 - (1.0 - self.r_ef) / (self.inv ** 0.2)) / self.r_ef
             # ef: 効率
-            self.ef = k * (self.eg[0] + self.eg[1] * G + self.eg[2] * G ** 2)
+            self.ef = k * (self.eg[0] + self.eg[1] * g + self.eg[2] * g ** 2)
 
-            self.dp = (self.pg[0] + self.pg[1] * (self.g / self.inv) + self.pg[2] * (
-                        self.g / self.inv) ** 2) * self.inv ** 2
+            self.dp = (self.pg[0] + self.pg[1] * g + self.pg[2] * g ** 2) * self.inv ** 2
             if self.dp < 0:
                 self.dp = 0.0
                 self.flag = 1
@@ -516,7 +521,7 @@ class Pump():
 # 負荷率-COP曲線に基づく冷凍機COP計算。表は左から右、上から下に負荷率や冷却水入口温度が上昇しなければならない。
 class Chiller:
     # 定格値の入力
-    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='Chiller', header=None)):
+    def __init__(self, filename='equipment_spec.xlsx', sheet_name='Chiller'):
         # tin   :入口温度[℃]
         # tout  :出口温度[℃]
         # g     :流量[m3/min]
@@ -529,6 +534,7 @@ class Chiller:
         # kr_ch :蒸発器圧力損失係数[kPa/(m3/min)**2]
         # kr_cd :凝縮器圧力損失係数[kPa/(m3/min)**2]
         # dp    :機器による圧力損失[kPa]
+        spec_table = pd.read_excel(filename, sheet_name=sheet_name, header=None)
         self.tout_ch_d = float(spec_table.iat[1, 0])
         self.tin_ch_d = float(spec_table.iat[1, 1])
         self.g_ch_d = float(spec_table.iat[1, 2])
@@ -548,6 +554,8 @@ class Chiller:
         # 以下、毎時刻変わる可能性のある値
         self.tout_ch = 7
         self.tout_cd = 37
+        self.g_ch = 0
+        self.g_cd = 0
         self.pw = 0
         self.q_ch = 0
         self.pl = 0  # 負荷率(0.0~1.0)
@@ -557,6 +565,7 @@ class Chiller:
         self.dp_cd = 0
         self.tin_cd = 15
         self.tin_ch = 7
+        self.tout_ch_sp = 7.0
 
         pl_cop = spec_table.drop(spec_table.index[[0, 1, 2]])
         pl_cop.iat[0, 0] = '-'
@@ -597,7 +606,7 @@ class Chiller:
                 pl_cop = pl[-1]
                 self.flag = 2
 
-            tin_cd_cop = self.tin_cd - (self.tout_ch - self.tout_ch_d)
+            tin_cd_cop = self.tin_cd - (self.tout_ch - self.tout_ch_d) # 冷水出口温度に関する補正
 
             if tin_cd_cop < temp[0]:
                 tin_cd_cop = temp[0]
@@ -609,7 +618,6 @@ class Chiller:
             self.cop = float(cop([[tin_cd_cop, pl_cop]]))
             self.pw = self.q_ch / self.cop + self.pw_sub
             self.tout_cd = (self.q_ch + self.pw) / (4.186 * self.g_cd * 1000 / 60) + self.tin_cd
-
 
         elif self.q_ch == 0:
             self.pw = 0
@@ -632,7 +640,7 @@ class Chiller:
 # https://salamann.com/python-multi-dimension-data-interpolation
 class AirSourceHeatPump:
     # 定格値の入力
-    def __init__(self, spec_table=pd.read_excel('equipment_spec.xlsx', sheet_name='AirSourceHeatPump', header=None)):
+    def __init__(self, filename='equipment_spec.xlsx', sheet_name='AirSourceHeatPump'):
         # tin   :入口温度[℃]
         # tout  :出口温度[℃]
         # g     :流量[m3/min]
@@ -644,6 +652,7 @@ class AirSourceHeatPump:
         # kr_ch :冷水圧力損失係数[kPa/(m3/min)**2]
         # dp    :機器による圧力損失[kPa]
         # tdb   :外気乾球温度['C]
+        spec_table = pd.read_excel(filename, sheet_name=sheet_name, header=None)
         self.tout_ch_d = float(spec_table.iat[1, 0])
         self.tin_ch_d = float(spec_table.iat[1, 1])
         self.g_ch_d = float(spec_table.iat[1, 2])
@@ -669,6 +678,7 @@ class AirSourceHeatPump:
         self.tin_ch = 15.0
         self.tout_ch = 7.0
         self.tout_ch_sp = 7.0
+        self.tdb = 25.0  # この表現は統一したい
 
         pl_cop = spec_table.drop(spec_table.index[[0, 1, 2]])
         pl_cop.iat[0, 0] = '-'
@@ -677,6 +687,7 @@ class AirSourceHeatPump:
 
     # 機器特性表に基づく空冷HPのCOPの算出
     def cal(self, tout_ch_sp, tin_ch, g_ch, tdb):
+        self.tdb = tdb
         self.flag = 0
         self.tout_ch_sp = tout_ch_sp
         self.tin_ch = tin_ch
@@ -1490,6 +1501,258 @@ class VRFEPHeatingMode:
             cop = capacity / input_power
 
             return capacity, input_power, cop
+
+
+class GeoThermalHeatPump_LCEM:  # 松田氏作成（2022年）
+    def __init__(self,
+                 temp_c: float = 7.0,  # deg.C
+                 temp_h: float = 45.0,  # deg.C
+                 rank_c: int = 1,
+                 rank_h: int = 1,
+                 rated_cap_c: float = 53.0,
+                 rated_cap_h: float = 61.0,
+                 rated_flow_c: float = 153.0,  # L/min
+                 rated_flow_h: float = 167.0,  # L/min
+                 rated_flow_cd_c: float = 183.0,  # L/min
+                 rated_flow_cd_h: float = 133.0,  # L/min
+                 rated_power_c: float = 10.8,  # kW
+                 rated_power_h: float = 15.2,  # kW
+                 rated_freq: float = 50.0,  # Hz
+                 coefficient_ele_a: float = 1.0,
+                 coefficient_ele_b: float = 0.0,
+                 mod_temp_chs: float = 0.01,
+                 ):
+        self.temp_c = temp_c
+        self.temp_h = temp_h
+        self.rank_c = rank_c
+        self.rank_h = rank_h
+        self.rated_cap_c = rated_cap_c
+        self.rated_cap_h = rated_cap_h
+        self.rated_flow_c = rated_flow_c
+        self.rated_flow_h = rated_flow_h
+        self.rated_flow_cd_c = rated_flow_cd_c
+        self.rated_flow_cd_h = rated_flow_cd_h
+        self.rated_power_c = rated_power_c
+        self.rated_power_h = rated_power_h
+        self.rated_freq = rated_freq
+        self.coefficient_ele_a = coefficient_ele_a
+        self.coefficient_ele_b = coefficient_ele_b
+        self.mod_temp_chs = mod_temp_chs
+
+    def get_config(self):
+        config = {"temp_c": self.temp_c,
+                  "temp_h": self.temp_h,
+                  "rank_c": self.rank_c,
+                  "rank_h": self.rank_h,
+                  "rated_cap_c": self.rated_cap_c,
+                  "rated_cap_h": self.rated_cap_h,
+                  "rated_flow_c": self.rated_flow_c,
+                  "rated_flow_h": self.rated_flow_h,
+                  "rated_flow_cd_c": self.rated_flow_cd_c,
+                  "rated_flow_cd_h": self.rated_flow_cd_h,
+                  "rated_power_c": self.rated_power_c,
+                  "rated_power_h": self.rated_power_h,
+                  "rated_freq": self.rated_freq,
+                  "coefficient_ele_a": self.coefficient_ele_a,
+                  "coefficient_ele_b": self.coefficient_ele_b,
+                  "mod_temp_chs": self.mod_temp_chs,
+                  }
+        return config
+
+    def set_config(self,
+                   temp_c: float = None,  # deg. C
+                   temp_h: float = None,  # deg. C
+                   rank_c: int = None,
+                   rank_h: int = None,
+                   rated_cap_c: float = None,  # kW
+                   rated_cap_h: float = None,  # kW
+                   rated_flow_c: float = None,  # L/min
+                   rated_flow_h: float = None,  # L/min
+                   rated_flow_cd_c: float = None,  # L/min
+                   rated_flow_cd_h: float = None,  # L/min
+                   rated_power_c: float = None,  # kW
+                   rated_power_h: float = None,  # kW
+                   coefficient_ele_a: float = None,
+                   coefficient_ele_b: float = None,
+                   mod_temp_chs: float = None,
+                   ):
+        if not temp_c is None:
+            self.temp_c = temp_c
+        if not temp_h is None:
+            self.temp_h = temp_h
+        if not rank_c is None:
+            self.rank_c = rank_c
+        if not rank_h is None:
+            self.rank_h = rank_h
+        if not rated_cap_c is None:
+            self.rated_cap_c = rated_cap_c
+        if not rated_cap_h is None:
+            self.rated_cap_h = rated_cap_h
+        if not rated_flow_c is None:
+            self.rated_flow_c = rated_flow_c
+        if not rated_flow_h is None:
+            self.rated_flow_h = rated_flow_h
+        if not rated_flow_cd_c is None:
+            self.rated_flow_cd_c = rated_flow_cd_c
+        if not rated_flow_cd_h is None:
+            self.rated_flow_cd_h = rated_flow_cd_h
+        if not rated_power_c is None:
+            self.rated_power_c = rated_power_c
+        if not rated_power_h is None:
+            self.rated_power_h = rated_power_h
+        if not rated_freq is None:
+            self.rated_freq = rated_freq
+        if not coefficient_ele_a is None:
+            self.coefficient_ele_a = coefficient_ele_a
+        if not coefficient_ele_b is None:
+            self.coefficient_ele_b = coefficient_ele_b
+        if not mod_temp_chs is None:
+            self.mod_temp_chs = mod_temp_chs
+
+    def run(self,
+            state: int,  # 0:stop, 1:run
+            mode: int,  # 0:stop, 1:cooling, 2: heating
+            flow_ch: float,  # L/min
+            temp_chr: float,  # deg. C
+            flow_cd: float,  # L/min
+            temp_cds: float,  # deg. C
+            ):
+        error = 0
+        # calculate temperature
+        if mode == 2:
+            tmp_temp_chs = float(self.temp_h)
+        else:
+            tmp_temp_chs = float(self.temp_c)
+
+        # calculate
+        if state * mode == 0:
+            work_ch = 0.0
+            upper_work_ch = 0.0
+            full_power = 0.0
+            full_cop = 0.0
+            plr = 0.0
+            mod_plr = 0.0
+        else:
+            if mode == 1:
+                work_ch = self.rated_cap_c
+            else:
+                work_ch = self.rated_cap_h
+            upper_work_ch = 0.0
+
+            if mode == 1:
+                temp1 = self.temp_c * 2
+                temp2 = 0.0
+            else:
+                temp1 = self.temp_h * 2
+                temp2 = 0.0
+
+            while work_ch > upper_work_ch * 1.05:
+                self.upper_work_ch = upper_work_ch
+                self.temp_chs = tmp_temp_chs
+                self.work_ch = work_ch
+
+                work_ch = abs(tmp_temp_chs - temp_chr) * flow_ch * 60 / 860  # kW
+                if mode == 1:
+                    if self.rated_freq == 50.0:
+                        upper_work_ch = 0.02251 * tmp_temp_chs ** 2 + (-0.01407) * tmp_temp_chs * temp_cds + (
+                            -0.00126) * temp_cds ** 2 + 1.738 * tmp_temp_chs + (-0.305) * temp_cds + 51.32
+                        full_power = (-0.001418) * tmp_temp_chs ** 2 + 0.005793 * tmp_temp_chs * temp_cds + (
+                            -0.0001034) * temp_cds ** 2 + (-0.1244) * tmp_temp_chs + 0.2912 * temp_cds + 3.218
+                    else:
+                        upper_work_ch = 0.02386 * tmp_temp_chs ** 2 + (-0.0165) * tmp_temp_chs * temp_cds + (
+                            -0.001652) * temp_cds ** 2 + 1.997 * tmp_temp_chs + (-0.3499) * temp_cds + 60.22
+                        full_power = (
+                                         -0.0006445) * tmp_temp_chs ** 2 + 0.006063 * tmp_temp_chs * temp_cds + 0.0004485 * temp_cds ** 2 + (
+                                         -0.1096) * tmp_temp_chs + 0.319 * temp_cds + 4.412
+                    upper_work_ch = upper_work_ch / 53.0 * self.rated_cap_c
+                    full_power = full_power / 10.8 * self.rated_power_c
+
+                else:
+                    if self.rated_freq == 50.0:
+                        upper_work_ch = (-0.001352) * tmp_temp_chs ** 2 + (
+                            -0.008325) * tmp_temp_chs * temp_cds + 0.02112 * temp_cds ** 2 + 0.03779 * tmp_temp_chs + 1.445 * temp_cds + 46.62
+                        full_power = (-0.0001136) * tmp_temp_chs ** 2 + 0.005796 * tmp_temp_chs * temp_cds + (
+                            -0.001418) * temp_cds ** 2 + 0.264 * tmp_temp_chs + (-0.1393) * temp_cds + 2.48
+                    else:
+                        upper_work_ch = (-0.001202) * tmp_temp_chs ** 2 + (
+                            -0.01049) * tmp_temp_chs * temp_cds + 0.02322 * temp_cds ** 2 + 0.02972 * tmp_temp_chs + 1.709 * temp_cds + 55.42
+                        full_power = 0.0004311 * tmp_temp_chs ** 2 + 0.006065 * tmp_temp_chs * temp_cds + (
+                            -0.0006446) * temp_cds ** 2 + 0.28542 * tmp_temp_chs + (-0.1335) * temp_cds + 3.489
+                    upper_work_ch = upper_work_ch / 61.0 * self.rated_cap_h
+                    full_power = full_power / 15.2 * self.rated_power_c
+                full_cop = upper_work_ch / full_power
+
+                if work_ch > upper_work_ch * 1.05:
+                    if mode == 1:
+                        tmp_temp_chs += self.mod_temp_chs
+                    else:
+                        tmp_temp_chs -= self.mod_temp_chs
+
+            plr = work_ch / upper_work_ch
+            mod_plr = max(0.3, plr)
+
+        if state * mode == 0:
+            rate_power = 0.0
+            power = 0.0
+            cop = 0.0
+            temp_cdr = temp_cds
+            if mode == 1:
+                work_c = work_ch
+                work_h = 0.0
+            else:
+                work_c = 0.0
+                work_h = work_ch
+
+        else:
+            if mode == 1:
+                if self.rated_freq == 50.0:
+                    rate_power = 4.899 * mod_plr ** 4 + (-12.81) * mod_plr ** 3 + 12.05 * mod_plr ** 2 + (
+                        -3.792) * mod_plr + 0.6557
+                else:
+                    rate_power = (-1.304) * mod_plr ** 4 + 4.172 * mod_plr ** 3 + (
+                        -4.376) * mod_plr ** 2 + 2.747 * mod_plr + (-0.2371)
+            else:
+                if self.rated_freq == 50.0:
+                    rate_power = 1.804 * mod_plr ** 4 + (-4.428) * mod_plr ** 3 + 3.858 * mod_plr ** 2 + (
+                        -0.4286) * mod_plr + 0.1962
+                else:
+                    rate_power = (-0.3699) * mod_plr ** 4 + 1.255 * mod_plr ** 3 + (
+                        -1.309) * mod_plr ** 2 + 1.477 * mod_plr + (-0.04922)
+            if work_ch == 0.0:
+                power = 0.0
+                cop = 0.0
+            else:
+                power = max(0, self.coefficient_ele_a * full_power * rate_power + self.coefficient_ele_b)  # kW
+                cop = work_ch / power
+            if flow_ch == 0:
+                temp_cdr = temp_cds
+            else:
+                if mode == 1:
+                    temp_cdr = temp_cds + (work_ch + power) * 860 / 60 / flow_cd
+                else:
+                    temp_cdr = temp_cds + (-work_ch + power) * 860 / 60 / flow_cd
+            if mode == 1:
+                work_c = work_ch
+                work_h = 0.0
+            else:
+                work_c = 0.0
+                work_h = work_ch
+
+        # print(upper_work_ch, work_ch, temp_cdr, temp_cds, tmp_temp_chs)
+        # print(upper_work_ch, work_ch, plr)
+        # result
+        res = {"temp_chs": tmp_temp_chs,
+               "temp_cdr": temp_cdr,
+               "flow_cd": flow_cd,
+               "cooling": work_c,
+               "heating": work_h,
+               "PLR": mod_plr,
+               "COP": cop,
+               "power": power,
+               "gas": 0.0,
+               "error": error,
+               }
+        return res
 
 
 # 冷却塔
@@ -3253,7 +3516,7 @@ class Branch_w:  # 水配管の基本的な枝（ポンプ（並列ポンプ（�
 
 
 # ポンプ、機器、バイパス弁を有する枝
-class Branch001:  # コンポジションというpython文法を使う
+class Branch_w1:  # コンポジションというpython文法を使う
     def __init__(self, valve, pump, kr_eq=0.5, kr_pipe=0.5, kr_pipe_bypass=0.5):
         # valve         :バルブのオブジェクト
         # pump          :ポンプのオブジェクト
