@@ -7,16 +7,16 @@
 - [WaterSourceHeatPumpLCEM (水冷ヒートポンプ LCEMモデル)]
 - [AbsorptionChillerESS (吸収式冷温水発生機 省エネ基準モデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.AbsorptionChillerESS_JP.md) 
 - [Pump (ポンプ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Pump_JP.md)
-- [Pump_para (並列ポンプ複数台とバイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Pump_para_JP.md)
+- [PumpPara (並列ポンプ複数台とバイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Pump_para_JP.md)
 - [Valve (弁)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Valve_JP.md)
-- [HEX_w2w（水-水プレート式熱交換器)]
+- [HeatExchangerW2W（水-水プレート式熱交換器)]
+- [HeatExchangerW2A（水-空気熱交換器)]
+- [HeatExchangerSimple (簡略熱交換器)]
 - [CoolingTower (冷却塔)]
-- [CoolingTower_closed (密閉式冷却塔)]
-- [AHU (エアハンドリングユニット）]
-- [AHU_simple (簡略AHU)]
+- [CoolingTowerClosed (密閉式冷却塔)]
+- [AirHandlingUnit (エアハンドリングユニット)]
 - [Fan (ファン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Fan_JP.md)  
 - [Damper (ダンパ)]
-- [Coil (コイル)]
 - [SprayHumidifier (気化式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SprayHumidifier_JP.md) 
 - [SteamSprayHumidifier (蒸気噴霧式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SteamSprayHumidifier_JP.md) 
 - [ThermalEnergySystem (蓄熱槽)]
@@ -25,9 +25,9 @@
 - [VariableRefrigerantFlowESS (ビル用マルチエアコン 省エネ基準モデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.VariableRefrigerantFlowESS_JP.md)
 - [TotalHeatExchanger (全熱交換器)]
 #### Branch（配管・ダクト枝）  
-- [Branch_w (ポンプ、機器、弁を有する基本的な配管系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch_w_JP.md)
-- [Branch_w1（ポンプ、機器、バイパス弁を有する配管系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Branch_w1.md)
-- [Branch_a（ファン、機器、ダンパを有する基本的なダクト系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Branch12_JP.md)
+- [BranchW (ポンプ、機器、弁を有する基本的な配管系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.BranchW.md)
+- [BranchW1（ポンプ、機器、バイパス弁を有する配管系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.BranchW1.md)
+- [BranchA（ファン、機器、ダンパを有する基本的なダクト系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.BranchA.md)
 #### 制御  
 - [PID (PID制御)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.PID_JP.md)
 - [UnitNum (台数制御)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.UnitNum_JP.md)
@@ -40,6 +40,7 @@
 - [Wall (壁)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Wall.md)
 - [Window (窓)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Window.md)
 - [Room (室)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Room.md)
+- [RoomSimple (簡略室)]
 ## 空気状態関数
 - [tdb_rh2tdp (乾球温度, 相対湿度→露点温度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.tdb_rh2tdp_JP.md)
 - [tdb_rh2h_x (乾球温度, 相対湿度→比エンタルピー, 絶対湿度)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.tdb_rh2h_x_JP.md)
