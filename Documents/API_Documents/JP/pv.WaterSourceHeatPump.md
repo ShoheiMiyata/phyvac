@@ -50,6 +50,6 @@ Chiller1 = pv.Chiller(filename='equipment_spec.xlsx', sheet_name='Chiller')  # C
 Chiller1.cal(tout_ch_sp=7.0, tin_ch=15.0, g_ch=2.5, tin_cd=28.0, g_cd=5.5)  # 運転条件の入力と計算
 print(Chiller1.pw, Chiller1.pl, Chiller1.cop)  # 計算結果例のプリント
 ```
-> phyvac: ver20231116
+> phyvac: ver20231116  
 > 191.53281318240622 0.7949125596184419 7.2850876575623
   
