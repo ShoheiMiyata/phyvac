@@ -31,6 +31,7 @@
 #### 制御  
 - [PID (PID制御)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.PID_JP.md)
 - [UnitNum (台数制御)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.UnitNum_JP.md)
+- [AHUVAVControl]()
 
 ## 室温計算  
 #### 読み込み用関数  
