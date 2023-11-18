@@ -1,6 +1,6 @@
 ## pv.Damper(coef=[[1.0, -0.00001944, 0.018, 0.18, -0.007], [0.8, 0.0000864, 0.036, 0.132, 0.0684],[0.6, 0.001296, 0.072, 0.384, 0.1001], [0.4, 0.00108, 0.36, -0.582, 0.0662],[0.2, -0.0216, 4.32, -5.34, 0.2527]])
 ダンパ特性と圧力損失計算  
-<img src="https://user-images.githubusercontent.com/78840483/112942379-fb15c180-916a-11eb-9a60-bea897372748.png" width=40%>
+<img src="https://user-images.githubusercontent.com/78840483/112942379-fb15c180-916a-11eb-9a60-bea897372748.png" width=70%>  
 <img src="https://user-images.githubusercontent.com/78840483/112946860-fb18c000-9170-11eb-8b8f-59299ecc4ccd.png" width=20%>
 
   
