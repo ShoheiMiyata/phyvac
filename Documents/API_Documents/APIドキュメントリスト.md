@@ -16,7 +16,7 @@
 - [CoolingTowerClosed (密閉式冷却塔)]
 - [AirHandlingUnit (エアハンドリングユニット)]
 - [Fan (ファン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Fan_JP.md)  
-- [Damper (ダンパ)]
+- [Damper (ダンパ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Damper.md)
 - [SprayHumidifier (気化式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SprayHumidifier_JP.md) 
 - [SteamSprayHumidifier (蒸気噴霧式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SteamSprayHumidifier_JP.md) 
 - [ThermalEnergySystem (蓄熱槽)]
