@@ -18,7 +18,7 @@
 - [Damper (ダンパ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Damper.md)
 - [SprayHumidifier (気化式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SprayHumidifier_JP.md) 
 - [SteamSprayHumidifier (蒸気噴霧式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SteamSprayHumidifier_JP.md) 
-- [ThermalEnergySystem (蓄熱槽)]
+- [ThermalEnergySystem (蓄熱槽)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.VerticalWaterThermalStorageTank.md)
 - [BatteryEnergySystem (蓄電池)]
 - [VariableRefrigerantFlowEP (ビル用マルチエアコン EnergyPlusモデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.VariableRefrigerantFlowEP_JP.md)
 - [VariableRefrigerantFlowESS (ビル用マルチエアコン 省エネ基準モデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.VariableRefrigerantFlowESS_JP.md)
