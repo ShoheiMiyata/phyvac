@@ -13,7 +13,6 @@
 - [HeatExchangerW2A（水-空気熱交換器)]
 - [HeatExchangerSimple (簡略熱交換器)]
 - [CoolingTower (冷却塔)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.CoolingTower.md)
-- [CoolingTowerClosed (密閉式冷却塔)]
 - [AirHandlingUnit (エアハンドリングユニット)]
 - [Fan (ファン)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Fan_JP.md)  
 - [Damper (ダンパ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Damper.md)
