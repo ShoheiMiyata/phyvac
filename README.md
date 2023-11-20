@@ -22,6 +22,7 @@ The programs are validated based on Guideline of Test Procedure for the Evaluati
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md)  
 
 ## Update  
+- 2023/11    update classes and API document in JP
 - 2023/01/18 add validation(AirSourceHeatPump, AbsorptionChiller, CoolingTower)
 - 2022/08/31 Pumpモデルで定義時に性能曲線を図示するよう修正
 - 2022/08/22 VRFモデル、GeoThermalHPモデル、吸収式冷凍機モデルの追加　その他微修正
