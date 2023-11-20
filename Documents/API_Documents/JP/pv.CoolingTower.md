@@ -1,5 +1,5 @@
 ## pv.CoolingTower(tin_w_d=37.0, tout_w_d=32.0, twb_d=27.0, g_w_d=0.26, g_a_d=123.0, pw_d=2.4, actual_head=2.0, kr=1.0)
-冷却塔モデル
+冷却塔モデル。熱交換面積と熱伝達係数は定格地から__init__にて推定する。
   
 ### Parameters:
 |  name  |  type  | description |
