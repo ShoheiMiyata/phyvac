@@ -1,48 +1,43 @@
-## pv.CoolingTower(ua=143000, kr=1.0)
+## pv.CoolingTower(tin_w_d=37.0, tout_w_d=32.0, twb_d=27.0, g_w_d=0.26, g_a_d=123.0, pw_d=2.4, actual_head=2.0, kr=1.0)
 冷却塔モデル
   
 ### Parameters:
 |  name  |  type  | description |
 | ---- | ---- | ---- |
-|pg|list|圧力-流量(pg)曲線の係数 [切片、一次、二次]|
-|eg|list|効率-流量(eg)曲線の係数 [切片、一次、二次]|
-|inv|float|インバータ周波数比(min:0.0~max:1.0)|
-|dp|float|ファン揚程 [Pa]|
-|g|float|流量[m3/min]|
-|pw|float|消費電力[kW]|
-|ef|float|効率(0.0~1.0)|
-|flag|float|計算に問題があったら1、なかったら0|
+|tin_w_d|float|定格冷却水入口温度 ['C]|
+|tout_w_d|float|定格冷却水出口温度 ['C]|
+|twb_d|float|定格湿球温度 ['C]|
+|g_w_d|float|定格冷却水流量 [m3/min]|
+|g_a_d|float|定格風量 [m3/min]|
+|pw_d|float|定格消費電力[kW]|
+|actual_head|float|実揚程 [m]|
+|kr|float|圧力損失係数 [kPa/(m3/min)2]|
+|tin_w|float|冷却水入口温度 ['C]|
+|tout_w|float|冷却水出口温度 ['C]|
+|g_w|float|冷却水流量 [m3/min]|
+|inv|float|ファンインバーター周波数比 [-] (0.0~1.0)|
+|pw|float|ファン消費電力 [kW]|
+|tdb|float|乾球温度 ['C]|
+|rh|float|相対湿度[%] (0.0~100.0)|
   
-## pv.Fan.f2p(g)
-流量gに基づいて揚程を算出する
-  
-### returns:
-揚程dp
-  
-## pv.Fan.f2p_co()
-揚程を表す流量の関数の係数を出力する
-  
-### returns:
-リスト[切片, 1次, 2次]
-  
-## pv.Pump.cal()
-消費電力を算出する
+## pv.CoolingTower.cal(g_w, tin_w, tdb, rh)
+冷却水流量g_w, 冷却水入口温度, 外気乾球温度・外気相対湿度に基づいて冷却水出口温度を算出する。
+ファン周波数比は事前の入力が必要。
   
 ### returns:
-消費電力pw
-  
+冷却水出口温度tout_w
   
 ## サンプルコード  
 ```
 import phyvac as pv # 必要なモジュールのインポート
 
-SA1 = pv.Fan() # SA1の定義(特性はデフォルト値を利用)
-SA1.inv = 0.8 # invの入力
-SA1.f2p(g=1.5) # invが0.8, 流量1.5 m3/min時の揚程を算出
-SA1.cal() # 上記条件下での消費電力を算出
-
-print(SA1.g, SA1.dp, SA1.pw)
+CT1 = pv.CoolingTower()
+CT1.inv = 1.0
+print(CT1.inv)
+CT1.cal(g_w=0.2, tin_w=37.0, tdb=33.0, rh=50.0)
+print(CT1.tout_w)
 ```
 > 結果  
-> 1.5 0.4228280000000001 0.25833930910242614
+> 1.0  
+> 29.784495260341608  
   
