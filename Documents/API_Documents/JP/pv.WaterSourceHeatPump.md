@@ -1,4 +1,4 @@
-## pv.Chiller(filename='equipment_spec.xlsx', sheet_name='Chiller')
+## pv.WaterSourceHeatPump(filename='equipment_spec.xlsx', sheet_name='Chiller')
 冷凍機の性能曲線に基づく運転点の計算  
   
 <img src="https://github.com/ShoheiMiyata/phyvac/assets/27459538/fbe5eb70-bb6e-4bd2-96f8-1dceb7a4b7d2.png" width=80%>  
