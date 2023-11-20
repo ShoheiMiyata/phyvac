@@ -4,8 +4,8 @@
 """
 # phyvacモジュール。hvac + python ->phyvac
 # 空調システムの計算を極力物理原理・詳細な制御ロジックに基づいて行う。
-# ver20231116
-print("phyvac: ver20231116")
+# ver20231120
+print("phyvac: ver20231120")
 import math
 import traceback
 import numpy as np
@@ -1757,37 +1757,67 @@ class GeoThermalHeatPump_LCEM:  # 松田氏作成（2022年）
 
 # 冷却塔
 class CoolingTower:
-    def __init__(self, ua=143000, kr=1.0):
-        # ua        :交換面積
+    def __init__(self, tin_w_d=37.0, tout_w_d=32.0, twb_d=27.0, g_w_d=0.26, g_a_d=123.0, pw_d=2.4, actual_head=2.0, kr=1.0):
+        # ua        :UA値(熱交換面積[m2]×熱伝達係数[W/(m2'C)]
         # g_w       :冷却水流量[kg/s]
         # g_a       :風量[kg/s]
         # tin_w     :冷却水入口温度[℃]
-        # t_da      :外気乾球温度[℃]
-        # rh        :外気相対湿度(0~100)
+        # tdb       :(外気)乾球温度[℃]
+        # rh        :(外気)相対湿度(0~100)
         # inv       :ファンインバーター周波数比（0.0~1.0）
         # flag      :収束計算確認のフラグ
-        self.ua = ua
+        # actual head: 実揚程 [m]
+        # g_a_d     :定格風量 [m3/min]
+        # pw_d      :定格消費電力 [kW]
         self.kr = kr
         self.g_w = 0
-        self.tin_w = 15
+        self.tin_w = 15.0
+        self.tou_w = 15.0
         self.g_a = 0
-        self.t_da = 15
+        self.tdb = 15
         self.rh = 50
-        self.inv = 0
+        self.inv = 1.0
         self.flag = 0
         self.pw = 0
         self.dp = 0
         self.tout_w = 15
+        self.actual_head = actual_head
+        self.g_a_d = g_a_d
+        self.pw_d = pw_d
+        self.tin_w_d = tin_w_d
+        self.tout_w_d = tout_w_d
+        self.twb_d = twb_d
+        self.g_w_d = g_w_d
 
-    def cal(self, g_w, Twin, Tda, rh):
+        # UA値の探索
+        ua_min = 0.1
+        ua_max = 9999999999
+        tout_w0 = self.tout_w_d + 1
+        cnt = 0
+        while abs(tout_w0 - self.tout_w_d) > 0.001:
+            self.ua = (ua_min + ua_max)/2
+            tout_w0 = self.cal(self.g_w_d, self.tin_w_d, self.twb_d, 100)
+            if tout_w0 - self.tout_w_d > 0:
+                ua_min = self.ua
+            else:
+                ua_max = self.ua
+            cnt += 1
+            if cnt == 100:
+                print("The ua value for cooling tower is not calibrated appropriately")
+                break
+
+        self.inv = 0.0  # 初期値0とする
+
+    def cal(self, g_w, tin_w, tdb, rh):
         # cpw       :冷却水の比熱 [J/kg'C]
         # cp        :湿り空気（外気）の比熱 [J/kg'C]
         self.g_w = g_w
-        self.Tda = Tda
+        self.tdb = tdb
         self.rh = rh
-        self.tin_w = Twin
-        self.g_a = self.inv * 2000  # [m3/min]。ここで風量を与えてしまう
-        self.pw = -35.469 * self.inv ** 3 + 59.499 * self.inv ** 2 - 1.6185 * self.inv + 0.7  # [kW]ここで計算してしまう
+        self.tin_w = tin_w
+        self.g_a = self.inv * self.g_a_d  # [m3/min]
+        self.pw = self.pw_d * self.inv ** 3  # [kW]3乗則の仮定に基づく計算。
+
         if self.g_a < 10:  # natural wind
             self.g_a = 10
 
@@ -1800,64 +1830,65 @@ class CoolingTower:
         if g_w > 0:
 
             # 乾球温度と湿球温度から外気比エンタルピーを求める
-            [hin, xin] = tdb_rh2h_x(Tda, rh)
-            Twbin = tdb_rh2twb(Tda, rh)
+            [hin, xin] = tdb_rh2h_x(tdb, rh)
+            twbin = tdb_rh2twb(tdb, rh)
 
             # 湿球温度の飽和空気の比エンタルピーを求める
             # print(Twin,Twbin)
             # 空気出口湿球温度の最大値・最小値
-            Twboutmax = max(Twin, Twbin);
-            Twboutmin = min(Twin, Twbin);
+            twboutmax = max(self.tin_w, twbin)
+            twboutmin = min(self.tin_w, twbin)
 
             # 収束計算に入るための適当な初期値設定
-            Twbout0 = 1;
-            Twbout = 0;
+            twbout0 = 1
+            twbout = 0
             cnt = 0
+            q = 0.0
+            cw = 0.0
             self.flag = 0
 
-            while (Twbout0 - Twbout < - 0.01) or (Twbout0 - Twbout > 0.01):
+            while (twbout0 - twbout < - 0.01) or (twbout0 - twbout > 0.01):
 
                 # 空気出口湿球温度の仮定
-                Twbout0 = (Twboutmax + Twboutmin) / 2
-                # print(Twbout0)
+                twbout0 = (twboutmax + twboutmin) / 2
                 # 出口空気は飽和空気という仮定で、出口空気の比エンタルピーを求める。
-                [hout, xout] = tdb_rh2h_x(Twbout0, 100)
+                [hout, xout] = tdb_rh2h_x(twbout0, 100)
 
                 # 空気平均比熱cpeの計算
                 dh = (hout - hin) * 1000  # 比エンタルピーの単位をJ/kgに！
-                dTwb = Twbout0 - Twbin
-                cpe = dh / dTwb
+                dtwb = twbout0 - twbin
+                cpe = dh / dtwb
 
                 ua_e = self.ua * cpe / cp
 
-                Cw = g_w * cpw
-                Ca = g_a * cpe
-                Cmin = min(Cw, Ca)
-                Cmax = max(Cw, Ca)
-                if Cmin == 0:  # 苦肉の策
-                    Cmin = 0.001
-                if Cmax == 0:
-                    Cmax = 0.001
+                cw = g_w * cpw
+                ca = g_a * cpe
+                cmin = min(cw, ca)
+                cmax = max(cw, ca)
+                if cmin == 0:  # 苦肉の策
+                    cmin = 0.001
+                if cmax == 0:
+                    cmax = 0.001
 
-                NTU = ua_e / Cmin
+                ntu = ua_e / cmin
 
-                eps = (1 - math.exp(-NTU * (1 - Cmin / Cmax))) / (1 - Cmin / Cmax * math.exp(-NTU * (1 - Cmin / Cmax)))
+                eps = (1 - math.exp(-ntu * (1 - cmin / cmax))) / (1 - cmin / cmax * math.exp(-ntu * (1 - cmin / cmax)))
 
-                Q = eps * Cmin * (Twin - Twbin)
+                q = eps * cmin * (self.tin_w - twbin)
 
-                Twbout = Twbin + Q / Ca
+                twbout = twbin + q / ca
                 # print(Q,Twbout)
-                if Twbout < Twbout0:
-                    Twboutmax = Twbout0
+                if twbout < twbout0:
+                    twboutmax = twbout0
                 else:
-                    Twboutmin = Twbout0
+                    twboutmin = twbout0
 
                 cnt += 1
                 if cnt > 30:
                     self.flag = 1
                     break
 
-            self.tout_w = Twin - Q / Cw
+            self.tout_w = self.tin_w - q / cw
 
         self.dp = -self.kr * self.g_w ** 2
 
@@ -1865,11 +1896,11 @@ class CoolingTower:
 
     def f2p(self, g_w):
         self.g_w = g_w
-        self.dp = -self.kr_w * self.g_w ** 2
+        self.dp = -self.kr * self.g_w ** 2 - 9.8*self.actual_head  # 実揚程はmAq->kPaに変換
         return self.dp
 
     def f2p_co(self):
-        return [0, 0, -self.kr]
+        return [- 9.8*self.actual_head, 0, -self.kr]
 
 
 # 簡易なAHUモデル
@@ -1916,15 +1947,14 @@ class AHU_simple:
         return [0, 0, -self.kr]
 
 
-# 蓄熱槽
-class TES():
+# 温度成層型蓄熱槽（popoloのモデルに基づく）
+class VerticalWaterThermalStorageTank:
     def water_density(self, temp):
-        # https://www.sit.ac.jp/user/konishi/JPN/Lecture/ThermalFluid/ThermalFluid_1stAll.pdf
         # temp ℃
         # density kg/m^3
         return (
-                           999.83952 + 16.945176 * temp - 7.987041 * 10e-3 * temp ** 2 - 46.170461 * 10e-6 * temp ** 3 + 105.56302 * 10e-9 * temp ** 4 - 280.54253 * 10e-12 * temp ** 5) / (
-                           1 + 16.879850 * 10e-3 * temp)
+                    999.83952 + 16.945176 * temp - 7.987041 * 10e-3 * temp ** 2 - 46.170461 * 10e-6 * temp ** 3 + 105.56302 * 10e-9 * temp ** 4 - 280.54253 * 10e-12 * temp ** 5) / (
+                1 + 16.879850 * 10e-3 * temp)
 
     def water_thermal_conductivity(self, temp):
         # 水の伝導率　W/(m*K)
@@ -1972,59 +2002,60 @@ class TES():
 
         return xc
 
-    def __init__(self, dt):
+    def __init__(self, timedelta, depth=6.0, base_area=10.0):
         # 0：蓄熱槽上部
         # XXX：蓄熱槽下部
-        self.pipeinstal_height = 2.8  # 設置高さm
+        self.pipeinstal_height = depth - 0.2  # 設置高さm
         self.d_in = 0.1  # 0.5  # 流出入口円管直径 m
-        self.l_deepth = 3  # 水槽深さ m
-        self.area_section = 4 * 4  # 断面積 m
-        self.timestep = dt  # sec
-        self.temp_water_inlet = 7  # 送水温度
-        self.flowrate_water = 15 / 3600  # 送水流量 m^3/s
+        self.depth = depth  # 水槽深さ m
+        self.base_area = base_area  # 断面積 m2
+        self.timedelta = timedelta  # sec
+        self.tin = 7  # 流入温度
+        self.g_w = 15 / 60  # 送水流量 m^3/min
         self.heatloss_coef = 0.001 * 4.8 ** 2 * 6 * 0.04 / 0.4  # 熱損失率kw/k  0.04 W/(m*K)  100mm
-        self.temp_ambient = 25  # 周囲温度
+        self.t_ambient = 25  # 周囲温度
         self.sig_downflow = 0  # 下向き:1　上向き:0　信号
-        self.num_layer = 250  # 分割数
+        # self.num_layer = 250  # 分割数
+        self.num_layer = 100  # 分割数
 
         # 計算行列式
         self.cal_mat = np.array([[0] * self.num_layer] * 3, dtype=float)
         self.vec1 = np.array([0] * self.num_layer, dtype=float)
         self.vec2 = np.array([0] * self.num_layer, dtype=float)
 
-        self.dz = self.l_deepth / self.num_layer  # 分割幅
+        self.dz = self.depth / self.num_layer  # 分割幅
         self.pipeinstal_layer = int(self.pipeinstal_height / self.dz)  # 流入口設置層番号　（下部）
-        self.temp_reference = 15  # 基準温度は冷凍機の入口温度と同じとする
-        self.tes_temp = np.array([self.temp_reference] * self.num_layer, dtype=float)
+        self.t_ref = 15  # 基準温度は冷凍機の入口温度と同じとする
+        self.tes_temp = np.array([self.t_ref] * self.num_layer, dtype=float)
+        self.heat = 0  # 蓄熱量 [MJ] 蓄熱がプラス　蓄冷がマイナス
+        self.tout = 15.0  # 流出温度 ['C]
 
-        # self.tes_temp_p = np.array([12]*self.num_layer, dtype=float)
-        # print(self.heat_cal())
-
-    def tes_cal(self, temp_water_inlet=7, flowrate_water=15 / 3600, sig_downflow=0, temp_ambient=25):
-        self.temp_water_inlet = temp_water_inlet
-        self.flowrate_water = flowrate_water
+    def cal(self, tin, g_w, sig_downflow=0, t_ref=15, t_ambient=25):
+        self.tin = tin
+        self.g_w = g_w  # [m3/min]
         self.sig_downflow = sig_downflow
-        self.temp_ambient = temp_ambient
-        self.temp_avg = sum(self.tes_temp) / self.num_layer  # 蓄熱槽平均温度
+        self.t_ambient = t_ambient
+        self.t_ref = t_ref
+        self.temp_avg = np.sum(self.tes_temp) / self.num_layer  # 蓄熱槽平均温度
         # 混合域の噴流配分計算
-        if self.flowrate_water == 0:
+        if self.g_w == 0:
             # 流量がない場合、熱拡散と外部への熱損失のみ
             self.cal_mat = np.array([[0] * self.num_layer] * 3, dtype=float)
             self.vec1 = np.array([0] * self.num_layer, dtype=float)
             self.vec2 = np.array([0] * self.num_layer, dtype=float)
 
-        elif (self.sig_downflow and self.temp_water_inlet <= self.tes_temp[0]) or (
-                not self.sig_downflow and self.tes_temp[self.num_layer - 1] <= self.temp_water_inlet):
+        elif (self.sig_downflow and self.tin <= self.tes_temp[0]) or (
+                not self.sig_downflow and self.tes_temp[self.num_layer - 1] <= self.tin):
             # 下部から温水が流入と上部から冷水が流入の場合、水の密度が逆転するため、逆転の続く層までが完全混合になるとする
             # 平均温度を計算
             if self.sig_downflow:
                 temp_mixavg = self.tes_temp[0]
-                temp_mix = self.tes_temp[0] + self.timestep / (self.area_section * self.dz) * (
-                            self.temp_water_inlet - self.tes_temp[0]) * self.flowrate_water
+                temp_mix = self.tes_temp[0] + self.timedelta / (self.base_area * self.dz) * (
+                        self.tin - self.tes_temp[0]) * self.g_w / 60
             else:
                 temp_mixavg = self.tes_temp[len(self.tes_temp) - 1]
-                temp_mix = self.tes_temp[len(self.tes_temp) - 1] + self.timestep / (self.area_section * self.dz) * (
-                            self.temp_water_inlet - self.tes_temp[len(self.tes_temp) - 1])
+                temp_mix = self.tes_temp[len(self.tes_temp) - 1] + self.timedelta / (self.base_area * self.dz) * (
+                        self.tin - self.tes_temp[len(self.tes_temp) - 1])
 
             for num_mixed in range(1, self.num_layer):
                 if self.sig_downflow:
@@ -2040,7 +2071,7 @@ class TES():
                     temp_mixavg += self.tes_temp[tgtlayer]
 
             temp_mixavg /= num_mixed
-            bf = self.flowrate_water / (num_mixed * self.dz)
+            bf = self.g_w / 60 / (num_mixed * self.dz)
 
             # 平均温度と噴流配分
             for i in range(0, self.num_layer):
@@ -2052,7 +2083,7 @@ class TES():
                 if i < num_mixed:
                     self.vec1[tgtlayer] = bf
                     self.tes_temp[tgtlayer] = temp_mixavg
-                    self.vec2[tgtlayer] = self.dz / self.area_section * self.vec1[tgtlayer]
+                    self.vec2[tgtlayer] = self.dz / self.base_area * self.vec1[tgtlayer]
                 else:
                     self.vec1[tgtlayer] = 0
                     self.vec2[tgtlayer] = 0
@@ -2064,8 +2095,8 @@ class TES():
                         self.vec2[tgtlayer] += self.vec2[tgtlayer + 1]
         else:
             area_pipe = math.pow(self.d_in / 2, 2) * math.pi  # 流入断面積 m^2
-            u_waterin2 = math.pow(self.flowrate_water / area_pipe, 2)  # 流入速度2乗 (m/s)^2
-            rho = self.water_density(self.temp_water_inlet)
+            u_waterin2 = math.pow(self.g_w / 60 / area_pipe, 2)  # 流入速度2乗 (m/s)^2
+            rho = self.water_density(self.tin)
 
             # 噴流が到達する層を求める
             tgt = rho * u_waterin2 / (9.8 * self.dz)  # 到達層の密度
@@ -2082,9 +2113,9 @@ class TES():
 
             # 混合域深さの計算
             temp_lmax = self.tes_temp[lmax]
-            if temp_lmax == self.temp_water_inlet:
+            if temp_lmax == self.tin:
                 # 到達層の温度が流入温度と同じの場合、混合域を100％とする
-                lm = self.l_deepth
+                lm = self.depth
             else:
                 rho0 = self.water_density(temp_lmax)
                 self.ar = self.d_in * 9.8 * abs(rho0 - rho) / (rho0 * u_waterin2)  # アルキメデス数
@@ -2096,11 +2127,11 @@ class TES():
                 else:
                     for i in range(lmax, self.num_layer):
                         ndt += (self.tes_temp[i] - temp_lmax)
-                ndt = (ndt * self.dz) / (self.l_deepth * (self.temp_water_inlet - temp_lmax))
-                lm = self.l_deepth * 0.8 * math.pow(self.ar, -0.5) * self.d_in / self.l_deepth + 0.5 * ndt  # 混合域深さ
+                ndt = (ndt * self.dz) / (self.depth * (self.tin - temp_lmax))
+                lm = self.depth * 0.8 * math.pow(self.ar, -0.5) * self.d_in / self.depth + 0.5 * ndt  # 混合域深さ
 
             z1 = 0
-            bf = self.flowrate_water / (2 * lm ** 3)
+            bf = self.g_w / 60 / (2 * lm ** 3)
             for i in range(0, self.num_layer):
                 ln = i
                 if not self.sig_downflow:
@@ -2116,11 +2147,11 @@ class TES():
 
                 # vec2 第ｌｎ層の垂直方向の水速Uｍ　積算流入水量を用いて計算する
                 if i == 0:
-                    self.vec2[ln] = self.dz / self.area_section * self.vec1[ln]
+                    self.vec2[ln] = self.dz / self.base_area * self.vec1[ln]
                 elif self.sig_downflow:
-                    self.vec2[ln] = self.vec2[ln - 1] + self.dz / self.area_section * self.vec1[ln]
+                    self.vec2[ln] = self.vec2[ln - 1] + self.dz / self.base_area * self.vec1[ln]
                 else:
-                    self.vec2[ln] = self.vec2[ln + 1] + self.dz / self.area_section * self.vec1[ln]
+                    self.vec2[ln] = self.vec2[ln + 1] + self.dz / self.base_area * self.vec1[ln]
                 z1 = z2
 
         # 行列式を解く
@@ -2129,17 +2160,17 @@ class TES():
             # 　上向きの場合、流出口が上にある、流入口が下にある
             outlet_layer = self.num_layer - self.pipeinstal_layer - 1
 
-        s = self.timestep * self.water_thermal_diffusivity(self.temp_avg) / (self.dz ** 2)
-        p = self.heatloss_coef * self.timestep / (
-                    self.water_density(self.temp_avg) * 4.186 * self.l_deepth * self.area_section)
+        s = self.timedelta * self.water_thermal_diffusivity(self.temp_avg) / (self.dz ** 2)
+        p = self.heatloss_coef * self.timedelta / (
+                self.water_density(self.temp_avg) * 4.186 * self.depth * self.base_area)
 
         for i in range(0, self.num_layer):
             r1 = 0
             r2 = 0
             if self.sig_downflow and i != 0 and i <= outlet_layer:
-                r1 = self.vec2[i - 1] * self.timestep / self.dz
+                r1 = self.vec2[i - 1] * self.timedelta / self.dz
             if not self.sig_downflow and i != self.num_layer - 1 and i >= outlet_layer:
-                r2 = self.vec2[i + 1] * self.timestep / self.dz
+                r2 = self.vec2[i + 1] * self.timedelta / self.dz
 
             if i == self.num_layer - 1:
                 self.cal_mat[0, i] = -(2 * s + r1)
@@ -2152,31 +2183,30 @@ class TES():
                 self.cal_mat[2, i] = -(s + r2)
 
             self.cal_mat[1, i] = 2 * s + r1 + r2 + 1 + p
-            self.tes_temp[i] += p * self.temp_ambient
+            self.tes_temp[i] += p * self.t_ambient
 
             if self.vec1[i] != 0:
-                q = self.timestep * self.vec1[i] / self.area_section
+                q = self.timedelta * self.vec1[i] / self.base_area
                 self.cal_mat[1, i] += q
-                self.tes_temp[i] += q * self.temp_water_inlet
-        # aa = cal_mat[0, 1:num_layer]
-        # cc = cal_mat[2, 0:num_layer-1]
-        self.tes_temp_out_p = self.tes_temp[outlet_layer]
+                self.tes_temp[i] += q * self.tin
+
         self.tes_temp = self.TDMA_solver(self.cal_mat[0, 1:self.num_layer], self.cal_mat[1, :],
                                          self.cal_mat[2, 0:self.num_layer - 1], self.tes_temp)
-        self.tes_temp_out = self.tes_temp[outlet_layer]
+        self.tout = self.tes_temp[outlet_layer]
 
-    def heat_cal(self):
         # 蓄熱量　MJ
         # 　蓄熱がプラス　蓄冷がマイナス
         sum = 0
         for i in range(0, len(self.tes_temp)):
-            sum += (self.tes_temp[i] - self.temp_reference)
-        rho_ref = self.water_density(self.temp_reference)
-        return 0.001 * sum * rho_ref * 4.186 * self.dz * self.area_section
+            sum += (self.tes_temp[i] - self.t_ref)
+        rho_ref = self.water_density(self.t_ref)
+        self.heat = 0.001 * sum * rho_ref * 4.186 * self.dz * self.base_area
+
+        return self.tout
 
 
 # 水・水熱交換器
-class Water_to_water():
+class HeatExchangerW2W():
     def __init__(self):
         self.flowrate_high = 0  # 高温側の流速[m**3/min]
         self.flowrate_low = 0  # 低温側の流速[m**3/min]
@@ -2320,7 +2350,7 @@ class Water_to_water():
 
 
 # 水-空気熱交換器
-class W2a_hex():
+class HeatExchangerW2A:
     # HVACSIM+
     # 宇田川光弘：パソコンによる空気調和計算法，オーム社，p.8-219，1986 年.
     # 富樫 英介 : Popolo.2.2.0_熱環境計算戯法, 第8-9章, 2016 年.
@@ -3330,7 +3360,7 @@ class Pump_para:
 
 
 # 水系
-class Branch_w:  # 水配管の基本的な枝（ポンプ（並列ポンプ（バイパス弁付き）ユニットも可）、弁、機器が直列に並んだ基本的な枝）
+class BranchW:  # 水配管の基本的な枝（ポンプ（並列ポンプ（バイパス弁付き）ユニットも可）、弁、機器が直列に並んだ基本的な枝）
     # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
     def __init__(self, pump=None, valve=None, kr_eq=0.0, kr_pipe=0.0, actual_head=0.0):
@@ -3516,7 +3546,7 @@ class Branch_w:  # 水配管の基本的な枝（ポンプ（並列ポンプ（�
 
 
 # ポンプ、機器、バイパス弁を有する枝
-class Branch_w1:  # コンポジションというpython文法を使う
+class BranchW1:  # コンポジションというpython文法を使う
     def __init__(self, valve, pump, kr_eq=0.5, kr_pipe=0.5, kr_pipe_bypass=0.5):
         # valve         :バルブのオブジェクト
         # pump          :ポンプのオブジェクト
@@ -3598,7 +3628,7 @@ class Branch_w1:  # コンポジションというpython文法を使う
 
 # 空気系
 # ファン・ダンパ・機器が直列に1台以下の枝。デフォルトではファン・ダンパ・機器はなし。
-class Branch_a:  # コンポジションというpython文法を使う
+class BranchA:  # コンポジションというpython文法を使う
     # def __init__()の中の値はデフォルト値。指定しなければこの値で計算される。
     def __init__(self, fan=None, damper=None, kr_eq=0.0, kr_duct=0.0):
         # fan       :ファンのオブジェクト
@@ -3706,8 +3736,9 @@ class Branch_a:  # コンポジションというpython文法を使う
 
         return self.g
 
-# 瞬時一様拡散、シンプルな部屋空気状態計算モデル
-class SimpleRoom:
+
+# 瞬時一様拡散・完全断熱、シンプルな部屋空気状態計算モデル
+class RoomSimple:
     def __init__(self, volume=400.0, timeinterval=1):
         self.volume = volume #気積[m3]
         self.cp_a = 1020 #比熱 [J/kgK]
