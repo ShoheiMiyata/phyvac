@@ -3,8 +3,8 @@
 #### 機器  
 - [Chiller (冷凍機)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Chiller.md)
 - [AirSourceHeatPump (空冷ヒートポンプ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.AirSourceHeatPump.md)
-- [GeoThermalHeatPumpLCEM (地中熱ヒートポンプ LCEMモデル)]
 - [WaterSourceHeatPumpLCEM (水冷ヒートポンプ LCEMモデル)]
+- [GeoThermalHeatPumpLCEM (地中熱ヒートポンプ LCEMモデル)]
 - [AbsorptionChillerESS (吸収式冷温水発生機 省エネ基準モデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.AbsorptionChillerESS_JP.md) 
 - [Pump (ポンプ)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Pump_JP.md)
 - [PumpPara (並列ポンプ複数台とバイパス弁を有する枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.Pump_para_JP.md)
@@ -19,7 +19,6 @@
 - [SprayHumidifier (気化式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SprayHumidifier_JP.md) 
 - [SteamSprayHumidifier (蒸気噴霧式加湿器)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.SteamSprayHumidifier_JP.md) 
 - [ThermalEnergySystem (蓄熱槽)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.VerticalWaterThermalStorageTank.md)
-- [BatteryEnergySystem (蓄電池)]
 - [VariableRefrigerantFlowEP (ビル用マルチエアコン EnergyPlusモデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.VariableRefrigerantFlowEP_JP.md)
 - [VariableRefrigerantFlowESS (ビル用マルチエアコン 省エネ基準モデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.VariableRefrigerantFlowESS_JP.md)
 - [TotalHeatExchanger (全熱交換器)]
