@@ -21,6 +21,21 @@ The programs are validated based on Guideline of Test Procedure for the Evaluati
 本プログラムは、空気調和・衛生工学会（SHASE）が提供する建物エネルギーシミュレーションツールの評価手法に関するガイドライン（SHASE-G 0023-2022）に基づき検証されています。  
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md)  
 
+##  Application/Paper  
+本シミュレーションの事例とその詳細を記述した論文一覧
+概要はこちら
+省エネ効果・最適制御：
+- VAV・VWV・CO2濃度制御の省エネ効果：https://doi.org/10.18948/shase.46.293_23
+- 室圧中立化制御：
+不具合検知・診断
+- データセット作成：BS2023
+- 深層学習による自動不具合検知・診断：https://doi.org/10.18948/shase.47.306_1, https://doi.org/10.1016/j.enbuild.2023.112877
+デマンドレスポンス
+- 電力デマンドと室内温熱環境の挙動算出：https://doi.org/10.18948/shase.46.286_21
+- モデル予測制御による熱源機器の低炭素制御：https://doi.org/10.3130/aije.85.827
+
+
+
 ## Update  
 - 2023/11    update classes and API document in JP
 - 2023/01/18 add validation(AirSourceHeatPump, AbsorptionChiller, CoolingTower)
@@ -33,10 +48,6 @@ The programs are validated based on Guideline of Test Procedure for the Evaluati
 ## License  
 The phyvac is available under a 3-clause BSD-license.
   
-
-### [To Do リスト](https://github.com/ShoheiMiyata/phyvac/projects/1)
-
-
 ### python命名規則
 https://qiita.com/naomi7325/items/4eb1d2a40277361e898b
   
