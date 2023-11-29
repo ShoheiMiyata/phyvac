@@ -21,23 +21,33 @@ The programs are validated based on Guideline of Test Procedure for the Evaluati
 本プログラムは、空気調和・衛生工学会（SHASE）が提供する建物エネルギーシミュレーションツールの評価手法に関するガイドライン（SHASE-G 0023-2022）に基づき検証されています。  
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md)  
 
-##  Application/Paper  
-本シミュレーションの事例とその詳細を記述した論文一覧  
-概要はこちら  
-省エネ効果・最適制御：  
-- VAV・VWV・CO2濃度制御の省エネ効果：https://doi.org/10.18948/shase.46.293_23  
-- 室圧中立化制御：https://publications.ibpsa.org/conference/paper/?id=bs2023_1293  
+##  Application/Paper 活用事例と関連論文   
+Overview [概要]()  
+####  Energy saving quantification/control optimization－省エネ効果・最適制御  
+- Energy saving effect on VAV・VWV・CO2 concentration control－VAV・VWV・CO2濃度制御の省エネ効果  
+https://doi.org/10.18948/shase.46.293_23  
+- Room pressure neutraization－室圧中立化制御：  
+https://publications.ibpsa.org/conference/paper/?id=bs2023_1293  
 
-不具合検知・診断  
-- データセット作成：https://publications.ibpsa.org/conference/paper/?id=bs2023_1370  
-- 深層学習による自動不具合検知・診断：https://doi.org/10.18948/shase.47.306_1, https://doi.org/10.1016/j.enbuild.2023.112877  
+####  Automated fault detection and diagnosis－不具合検知・診断  
+- Dataset generation－データセット作成：  
+https://publications.ibpsa.org/conference/paper/?id=bs2023_1370  
+- AFDD using deep learning－深層学習による自動不具合検知・診断：  
+https://doi.org/10.18948/shase.47.306_1, https://doi.org/10.1016/j.enbuild.2023.112877  
 
-デマンドレスポンス  
-- 電力デマンドと室内温熱環境の挙動算出：https://doi.org/10.18948/shase.46.286_21  
-- モデル予測制御による熱源機器の低炭素制御：https://doi.org/10.3130/aije.85.827  
+####  Demand response－デマンドレスポンス  
+- Behavior of power demand and indoor thermal environment－電力デマンドと室内温熱環境の挙動算出：  
+https://doi.org/10.18948/shase.46.286_21  
+- Low carbon emission control of chiller using model predictive control－モデル予測制御による熱源機器の低炭素制御：  
+https://doi.org/10.3130/aije.85.827  
 
-最適設計  
-- 運用時の各種パラメータを考慮した設計手法：https://doi.org/10.26868/25222708.2021.30429
+####  Design optimizaion－最適設計  
+- Design method considering operating parameters－運用時の各種パラメータを考慮した設計手法：  
+https://doi.org/10.26868/25222708.2021.30429
+
+##  Engineering Reference 解説書
+Please click [here]() to access.  
+[こちら]()より確認できます。
 
 ## Update  
 - 2023/11    update classes and API document in JP
