@@ -26,7 +26,7 @@ Overview [概要]()
 ####  Energy saving quantification/control optimization－省エネ効果・最適制御  
 - Energy saving effect on VAV・VWV・CO2 concentration control－VAV・VWV・CO2濃度制御の省エネ効果  
 https://doi.org/10.18948/shase.46.293_23  
-- Room pressure neutraization－室圧中立化制御：  
+- Room pressure neutralization－室圧中立化制御：  
 https://publications.ibpsa.org/conference/paper/?id=bs2023_1293  
 
 ####  Automated fault detection and diagnosis－不具合検知・診断  
