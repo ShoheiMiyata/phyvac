@@ -41,7 +41,7 @@ https://doi.org/10.18948/shase.46.286_21
 - Low carbon emission control of chiller using model predictive control－モデル予測制御による熱源機器の低炭素制御：  
 https://doi.org/10.3130/aije.85.827  
 
-####  Design optimizaion－最適設計  
+####  Design optimization－最適設計  
 - Design method considering operating parameters－運用時の各種パラメータを考慮した設計手法：  
 https://doi.org/10.26868/25222708.2021.30429
 
