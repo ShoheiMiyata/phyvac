@@ -1,4 +1,4 @@
-## pv.Pump(pg=, eg=None, r_ef=0.8)
+## pv.Pump(pg=None, eg=None, r_ef=0.8, g_d=0.25, inv=1.0, figure=1)
 ### ポンプ単体機器モジュール  
 <img src="https://user-images.githubusercontent.com/27459538/112824603-b2f09380-90c5-11eb-8e10-45acdd9ef187.png" width=40%>
   
@@ -12,6 +12,8 @@
 |g|float|流量[m3/min]|
 |pw|float|消費電力[kW]|
 |r_ef|float|定格効率(0.0~1.0)|
+|g_d|float|定格流量[m3/min]|
+|figure|integer|性能曲線の表示(1),非表示(0)|
   
 ## pv.Pump.f2p(g)
 gに基づいて揚程を算出する
