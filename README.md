@@ -43,7 +43,7 @@ https://doi.org/10.3130/aije.85.827
 
 ####  Design optimization－最適設計  
 - Design method considering operating parameters－運用時の各種パラメータを考慮した設計手法：  
-https://doi.org/10.26868/25222708.2021.30429
+to be published...
 
 ##  Engineering Reference 解説書
 Please click [here]() to access.  
