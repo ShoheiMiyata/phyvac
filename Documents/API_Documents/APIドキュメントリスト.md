@@ -23,7 +23,7 @@
 - [VariableRefrigerantFlowESS (ビル用マルチエアコン 省エネ基準モデル)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/pv.VariableRefrigerantFlowESS_JP.md)
 - [TotalHeatExchanger (全熱交換器)]
 #### Branch（配管・ダクト枝）  
-- [BranchW (ポンプ、機器、弁を有する基本的な配管系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.BranchW.md)
+- [BranchW (ポンプ、機器、弁を有する基本的な配管系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.Branch_w_JP.md)
 - [BranchW1（ポンプ、機器、バイパス弁を有する配管系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.BranchW1.md)
 - [BranchA（ファン、機器、ダンパを有する基本的なダクト系枝)](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/API_Documents/JP/pv.BranchA.md)
 #### 制御  
