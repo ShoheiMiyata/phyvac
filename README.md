@@ -22,7 +22,10 @@ The programs are validated based on Guideline of Test Procedure for the Evaluati
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md)  
 
 ##  Application/Paper 活用事例と関連論文   
-Overview [概要](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/application_overview_JP.pdf)  
+[Overview](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/application_overview_EN.pdf) /  [概要](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/application_overview_JP.pdf)  
+Introduction of phyvac:  
+Shohei Miyata, Shanrui Shi, Yasuhori Akashi, Takao Sawachi, Phyvac: a Python module for highly flexible HVAC system simulation, and fault dataset generation as an application example, Proceedings of the 18th IBPSA Conference, pp.915 – 922, https://doi.org/10.26868/25222708.2023.1370  
+
 ####  Energy saving quantification/control optimization－省エネ効果・最適制御  
 - Energy saving effect on VAV・VWV・CO2 concentration control－VAV・VWV・CO2濃度制御の省エネ効果  
 https://doi.org/10.18948/shase.46.293_23  
@@ -43,7 +46,7 @@ https://doi.org/10.3130/aije.85.827
 
 ####  Design optimization－最適設計  
 - Design method considering operating parameters－運用時の各種パラメータを考慮した設計手法：  
-to be published...
+https://doi.org/10.1016/j.jobe.2024.109112
 
 ##  Engineering Reference 解説書
 Please click [here]() to access.  
