@@ -4,9 +4,8 @@ python+hvac => phyvac [fívək | fái-]
 
 ## Tutorial  
 [How to create a main code](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/How%20to%20create%20a%20main%20code.md) - [メイン文のつくり方](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/%E3%83%A1%E3%82%A4%E3%83%B3%E6%96%87%E3%81%AE%E3%81%A4%E3%81%8F%E3%82%8A%E6%96%B9.md)  
-[流量バランス計算(水側)：AHU1台、Chiller3台](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/%E6%B5%81%E9%87%8F%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E8%A8%88%E7%AE%97(%E6%B0%B4%E5%81%B4)%EF%BC%9AAHU1%E5%8F%B0%E3%80%81Chiller3%E5%8F%B0.md)  
-[流量バランス計算(水側)：AHU2台、Chiller2台、送水二次ポンプ](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/%E6%B5%81%E9%87%8F%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E8%A8%88%E7%AE%97(%E6%B0%B4%E5%81%B4)%EF%BC%9AAHU2%E5%8F%B0%E3%80%81Chiller2%E5%8F%B0%E3%80%81%E9%80%81%E6%B0%B4%E4%BA%8C%E6%AC%A1%E3%83%9D%E3%83%B3%E3%83%97.md)  
-[流量バランス計算(空気側)：1室、OAファン、RAファン、EAファン]()  
+[Flow balance calculation (water side): 1 AHU, 3 Chillers](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/%E6%B5%81%E9%87%8F%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E8%A8%88%E7%AE%97(%E6%B0%B4%E5%81%B4)%EF%BC%9AAHU1%E5%8F%B0%E3%80%81Chiller3%E5%8F%B0.md)  
+[Flow balance calculation (water side): 2 AHUs, 2 Chillers, secondary pump](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Tutorials/%E6%B5%81%E9%87%8F%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E8%A8%88%E7%AE%97(%E6%B0%B4%E5%81%B4)%EF%BC%9AAHU2%E5%8F%B0%E3%80%81Chiller2%E5%8F%B0%E3%80%81%E9%80%81%E6%B0%B4%E4%BA%8C%E6%AC%A1%E3%83%9D%E3%83%B3%E3%83%97.md)  
 
 ## Question and Discussion
 Please post anything you care to know!  
@@ -22,7 +21,7 @@ The programs are validated based on Guideline of Test Procedure for the Evaluati
 [List](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md) - [リスト](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/Validation/Validation_List_JP.md)  
 
 ##  Application/Paper 活用事例と関連論文   
-[Overview](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/application_overview_EN.pdf) /  [概要](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/application_overview_JP.pdf)  
+[Overview](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/application_overview_EN.pdf) -  [概要](https://github.com/ShoheiMiyata/phyvac/blob/main/Documents/application_overview_JP.pdf)  
 Introduction of phyvac:  
 Shohei Miyata, Shanrui Shi, Yasuhori Akashi, Takao Sawachi, Phyvac: a Python module for highly flexible HVAC system simulation, and fault dataset generation as an application example, Proceedings of the 18th IBPSA Conference, pp.915 – 922, https://doi.org/10.26868/25222708.2023.1370  
 
@@ -63,11 +62,4 @@ Please click [here]() to access.
 
 ## License  
 The phyvac is available under a 3-clause BSD-license.
-  
-### python命名規則
-https://qiita.com/naomi7325/items/4eb1d2a40277361e898b
-  
-### Markdown記法
-https://www.markdown.jp/syntax/  
-https://qiita.com/kamorits/items/6f342da395ad57468ae3  
-http://danpansa.blog.jp/archives/21332987.html
+
