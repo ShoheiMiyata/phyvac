@@ -31,7 +31,7 @@ Shohei Miyata, Shanrui Shi, Yasuhori Akashi, Takao Sawachi, Phyvac: a Python mod
 - Energy saving effect on VAV・VWV・CO2 concentration control－VAV・VWV・CO2濃度制御の省エネ効果  
 https://doi.org/10.18948/shase.46.293_23  
 - Room pressure neutralization 室圧中立化制御：  
-https://publications.ibpsa.org/conference/paper/?id=bs2023_1293  
+https://doi.org/10.1016/j.buildenv.2024.111464  
 
 ####  Automated fault detection and diagnosis 不具合検知・診断  
 - Dataset generation データセット作成：  
