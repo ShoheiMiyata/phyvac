@@ -37,8 +37,8 @@ https://doi.org/10.1016/j.buildenv.2024.111464
 - Dataset generation データセット作成：  
 https://publications.ibpsa.org/conference/paper/?id=bs2023_1370  
 - AFDD using deep learning 深層学習による自動不具合検知・診断（ASim2018 Best Paper Award）：  
-https://doi.org/10.1080/23744731.2019.1651619
-https://doi.org/10.18948/shase.47.306_1
+https://doi.org/10.1080/23744731.2019.1651619  
+https://doi.org/10.18948/shase.47.306_1  
 https://doi.org/10.1016/j.enbuild.2023.112877  
 
 ####  Demand response デマンドレスポンス  
